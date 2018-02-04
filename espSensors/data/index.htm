@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+      
+    <script type="text/javascript">
+        var svgns = 'http://www.w3.org/2000/svg';
+        var debug = true;
+        //  simple catcher for any errors
+   /*     window.addEventListener('error', function (e) {
+            if (!(e instanceof Error))return;
+            try {
+                if (debug)alert("Catch Error\n" + e.error.name + ':\n' + e.error.message);
+            } catch (e) {
+                console.log("Occurred on print error");
+            }
+        });
+   */
+    </script>
+    <!-- для сервера   -->
+    <link rel="stylesheet" href="src?css=simple.css" type="text/css">
+    <script src="src?js=measurer.js"></script>
+    <script src="src?js=plotter.js"></script>
+    <script src="src?js=meteo.js"></script>
+
+
+    <!-- для локального тестирования  
+    <link rel="stylesheet" href="src/css/simple.css" type="text/css">
+    <script src="src/js/plotter.js"></script>
+    <script src="src/js/measurer.js"></script>
+    <script src="src/js/meteo.js"></script>
+    -->
+</head>
+<body>
+<!--  devices board  -->
+<aside class="inlineTop">
+    <table class="deviceBoard">
+        <tr>
+            <td>
+                <span class="devLabel">Термометр<br>наружный</span>
+
+                <div name="outThermOwner" class="sensors"></div>
+            </td>
+            <td>
+                <span class="devLabel">Термометр<br>комнатный</span>
+
+                <div name="inThermOwner" class="sensors"></div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <div name="baroOwner" class="sensors"></div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <div name="hygroOwner" class="sensors"></div>
+            </td>
+        </tr>
+    </table>
+</aside>
+<!-- right side from device panel -->
+<div class="inlineTop" style="text-align: center">
+    <div name="activityPanel" class="panel inlineTop wavesBackGround ">
+        <form name="checkDuration">
+            <table class="inlineTop">
+                <tr>
+                    <td class="leftT"><span class="form labelColor">Датчик: </span></td>
+                    <td class="rightT"><select name="sensorSelect"></select></td>
+                    <td class="leftT"><label for="fYear" name="fYear" class="'label">Год: </label></td>
+                    <td class="rightT"><select id="fYear" name="yearSelect"></select></td>
+                </tr>
+                <tr>
+                    <td class="leftT"><span class="form labelColor">Интервал: </span></td>
+                    <td class="rightT"><select name="intervalSelect"></select></td>
+                    <td class="leftT"><label for="fMonth" name="fMonth" >Месяц: </label></td>
+                    <td class="rightT"><select id="fMonth" name="monthSelect"></select></td>
+                </tr>
+                <tr>
+                    <!--td></td-->
+                    <td colspan="2" style="text-align: right">
+                        <hr class="divider labelColor" />
+                            <button name="submitButton" type="button" >
+                                "Построить&nbsp;"
+                                <!--   <img width="36px" height="34px" src="./src/pic/submit.svg" style="vertical-align: middle"/>  -->
+								<img width="36px" height="34px" src="/src?pic=submit.svg" style="vertical-align: middle"/>
+                               </button>
+                           &nbsp;&nbsp;&nbsp;&nbsp;
+                       </td>
+                       <td class="leftT" style="vertical-align: top">
+                           <label class="form">День: </label></td>
+                       <td class="rightT" style="vertical-align: top">
+                           <select id="fDay" name="daySelect"></select></td>
+                   </tr>
+               </table>
+           </form>
+       </div>
+       <div name="informer" class="inlineTop right"></div>
+       <div id="graphCanvas"></div>
+   </div>
+   <!--   bottom side -->
+<footer style="clear: left">
+    <hr>
+    <div class="simply" align="center">
+        <span>_____ Cтраница сформирована чипoм esp8266 _____</span>
+    </div>
+</footer>
+<!--
+//                    ==================================
+//                 =================== SCRIPTS ===============
+//                    ==================================
+-->
+
+
+<script  src="src?js=test.js" > </script>    <!--   src="src/js/test.js"   -->
+</body>
+</html>
+
+
+
+

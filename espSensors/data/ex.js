@@ -1,0 +1,130 @@
+#!/usr/bin/nodejs
+
+/*
+ *	This script purpose - imitation ESP8266 chip
+ *	there emulate answers of chip on request`s from browser
+ *  query`s list:
+ * 		1) /src?resource_name=resource.file
+ *		2) /current
+ * 		3) /lastValues?sensor=sensor_name(tIn tOut baro humid)
+ * 		4) /availablePeriod
+ *
+ *   month names "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+ */
+
+
+
+console.log("Start node app on port 3000 !!!");
+
+var fs=require('fs');
+var http=require('http');
+var url = require('url');
+var path = require('path');
+
+
+
+
+http.createServer(function(req, res){
+	console.log('url: ' + req.url);
+	var all = url.parse(req.url,true);
+	var query = all.query;
+	var pathName = all.pathname;
+	var extension = path.extname(all.pathname);
+	if(pathName == '/')pathName = '/index.htm';
+	switch(pathName){
+		case '/current':
+			sendCurrent(res);  break;
+		case '/lastValues':
+			sendLast(query,res); break;
+		case '/src':
+			parseSrc(query, res); break;
+		case '/favicon.ico':
+				sendFile('image/png','/src/pic/okay.png',res);
+		case '/index.htm':
+			sendFile('text/html', './index.htm', res); break;
+		case '/availablePeriod':
+			sendPeriods(res); break;
+		case '/sensorData':
+			sendSensorData(query,res); break;	
+		default:
+		console.log('resource "' + pathName + '" Not Found');
+			notFound(res);			
+	}
+	
+}).listen(3000);
+
+function parseSrc(query, res){
+	var contentType = 'text/plain';
+	var fName = './src'
+	if(query['js']){
+		contentType = 'application/javascript'
+		fName += '/js/' + query['js'];
+	}
+	else if(query['css']){
+		contentType = 'text/css';
+		fName += '/css/' + query['css'];
+	}	
+	else if(query['pic']){
+		contentType = 'image/svg+xml';
+		fName += '/pic/' + query['pic'];
+	}else{
+		console.log('not found for query: ' + JSON.stringify(query) );
+		notFound(res);
+		return;
+	}
+	sendFile(contentType, fName, res);
+}
+
+function sendCurrent(res){
+	res.writeHead(200,{'Content-Type':'application/json'});
+	res.end('{"tIn": 20, "tOut": -10, "baro": 756, "humid":40}');
+}
+
+function sendLast(query, resp){
+	var lIn = '{ "tIn":[ 0,0,0,22,22,22,22,22,22,23,24,23,22], "last":3 }';
+	var lOut = '{"tOut":[0,0,0,-2,-2,-3,-3,-4,-5,-5,-3,-1, -1], "last":3 }';
+	var lBaro = '{"baro":[0,0,0,0,745,745,746,744,740,740,744,746,747], "last":4 }';
+	var lHumid = '{"humid":[0,20,20,20,21,20,20,20,21,22,22,23,22], "last":1}';
+	var res = query['sensor'];
+	if(res == 'tIn')res = lIn;
+	else if(res == 'tOut')res = lOut;
+	else if(res == 'baro')res = lBaro;
+	else if(res == 'humid')res = lHumid;
+	else res = '{"ERROR":["not have sensor for:' + JSON.stringify(query) + '",""],"last":0}';
+	resp.writeHead(200,{'Content-Type':'application/json'});
+	resp.end(res);
+}
+
+function sendFile(contentType, fName, res){
+	console.log('send file: ' + fName);
+	fs.readFile(fName, 'utf8', function(err, data){
+		if(err){
+			console.log('ERROR on load file: ' + fName + " error=" + err);
+			res.writeHead(500,{'Content-Type':'text/plain'});
+			res.end('can`t read file: '+ fName);
+		}
+		else {
+			res.writeHead(200,{'Content-Type':contentType});
+			res.end(data);
+		}
+	});
+}
+
+function sendPeriods(res){
+	var periods = '["/data/2018/Jan.txt", "/data/2018/Feb.txt"  , "/data/2018/Mar.txt" ' +
+	', "/data/2018/Jun.txt",  "/data/2018/Jul.txt", "/data/2018/summary.txt" , ' +
+			' "/data/2019/Oct.txt", "/data/2019/Nov.txt", "/data/2019/summary.txt"   ]';
+	res.writeHead(200,{'Content-Type':'application/json'});
+	res.end(periods);
+}
+
+function sendSensorData(query, res){
+	res.writeHead(200, {'Content-Type':'text/plain'});
+	res.end('sensors data Not Implemented\n\tI get query: ' + JSON.stringify(query));
+}
+
+
+function notFound(res){
+	res.writeHead(404,{'Content-Type':'text/html'});
+			res.end('<html><body><h1 align="center">Resource not found</h1></body></html>');
+}
