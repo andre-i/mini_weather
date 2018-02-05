@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+        <html>
+<head>
+    <script src="./espSensors/data/src/js/plotter.js"></script>
+    <meta charset="utf-8" lang="ru">
+</head>
+<body>
+<h1> test plotter.js</h1>
+<div name="chart"></div>
+<footer>
+    <hr width="80%" />
+    <h3 align="center">Ends of chart</h3>
+    <div name="mess"></div>
+</footer>
+<script type="text/javascript">
+    /*
+
+     setAxisLabels: setAxisLabels,   // labels beside axis ends(arrow)
+     create: buildGraph,  // starts process build and draw chart
+     hasVisibleValues: hasSetPointValues, // has visible values on points of chart
+     chartColor: setChartColor, // color of chart
+     simpleChart: drawEstimated,  // draw any count diagrams from gotten data
+     clearSimpleChart: clearEstimated
+
+     */
+    console.log('Start Draw Chart');
+    var owner = document.getElementsByName('chart')[0];
+    var plotter = new Plotter(owner, 500, 400);
+    plotter.setAxisLabels('xLabel','yLabel');
+    plotter.chartColor('#a77');
+
+</script>
+</body>
+        </html>

@@ -1,4 +1,19 @@
 //  здесь рисуем графику
+//
+/*
+ startProps object structure:
+ {
+   colors : {
+             borderCol: "#col1",
+             bgCol: "#col2",
+             axisCol: "#col3",
+             labelCol: "#col4"
+            }
+
+
+ }
+ */
+
 
 function Plotter(canvasOwner, width, height, startProps) {
 	/*
@@ -14,7 +29,7 @@ function Plotter(canvasOwner, width, height, startProps) {
         return null;
     }
     if (width !== width || height !== height || width < 40 || height < 40) {
-        console.log("painter WARNING wrong width or height parameters");
+        console.log("plotter.js:  WARNING wrong width or height parameters");
         return null;
     }
 
@@ -265,7 +280,7 @@ function Plotter(canvasOwner, width, height, startProps) {
     function drawBorder() {
         var rect = "<rect name='border' x='" + (offset - 2) + "' y='" + (offset - 2) + "' " + "" +
             "  rx='" + (4 * strokeWidth ) + "' ry='" + (4 * strokeWidth) + "' " +
-            "' height='" + (height + 4) + "' width='" + (width + 4) + "'" +
+            " height='" + (height + 4) + "' width='" + (width + 4) + "'" +
             " stroke='" + colors.borderCol + "' stroke-width='" + strokeWidth +
             "' fill='" + colors.bgCol + "' />";
         svgGraph.innerHTML = rect;
