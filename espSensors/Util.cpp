@@ -10,6 +10,7 @@ Util::Util(bool isDebug) {
 
 void Util::setDebug(bool isDebug) {
   DEBUG = isDebug;
+  if(isDebug)isNeedWrite = true;
 }
 
 

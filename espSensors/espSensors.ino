@@ -39,6 +39,8 @@ void tick() {
   tickCount++;
   isCheckSensors = true;
   if (tickCount == maxTickCount) {
+    // in debug mode write to file all minute
+    if(DEBUG) util.setDebug(true);
     isAddMinute = true;
     tickCount = 0;
   }
@@ -431,11 +433,12 @@ void setup() {
       isSetDate = false;
       break;
   }
+  /*
   // file system
   if (!SPIFFS.begin()) {
     Serial.println("WARNING: SPIFS not mount");
-
   }
+  */
   bool isMDNS = MDNS.begin(HOST) ;
   if (isMDNS) {
     Serial.println("MDNS responder started");
