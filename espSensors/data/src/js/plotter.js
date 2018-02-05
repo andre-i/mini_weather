@@ -1,25 +1,22 @@
-//  здесь рисуем графику
+//  здесь рисуем график
 //
 /*
  startProps object structure:
  {
-   colors : {
-             borderCol: "#col1",
-             bgCol: "#col2",
-             axisCol: "#col3",
-             labelCol: "#col4"
-            }
-
-
+ borderCol: "#col1",
+ bgCol: "#col2",
+ axisCol: "#col3",
+ labelCol: "#col4",
  }
+ is colors set to draw the chart.
  */
 
 
 function Plotter(canvasOwner, width, height, startProps) {
-	/*
-	 * small summ sign on right-top corner chart board flip 
-	 *  show or not values on chart points
-	 */
+    /*
+     * small summ sign on right-top corner chart board flip
+     *  show or not values on chart points
+     */
 
 //console.log("\n === canvas ===\n height: " + height + "  width:" + width);
 
@@ -108,7 +105,7 @@ function Plotter(canvasOwner, width, height, startProps) {
      * @param array - values for build the chart must be only numerical values
      * @returns {boolean} - true if success
      */
-    function buildGraph(chartName, array) {
+    function buildGraph(chartName, array, edges) {
         if (!array || !(array instanceof  Array) || array.length < 1) {
             console.log(
                 "buildGraph [wrong parameter:second parameter must be array with numerical values]");
@@ -120,22 +117,28 @@ function Plotter(canvasOwner, width, height, startProps) {
         }
         name = chartName;
         values = array;
-        edge.min = values[0], edge.max = values[0];
-        values.forEach(function (val) {
-            if (val !== val) {
-                console.log("array for chart contains not numbers:" + val);
-                return false;
-            }
-            if (edge.min > val) edge.min = val;
-            if (edge.max < val) edge.max = val;
-        });
-        if (edge.min == edge.max) {
-            if (edge.min == 0) {
-                edge.max = 10;
-                edge.min = -10;
-            } else {
-                edge.max = (edge.max > 0) ? edge.max * 2 : edge.min;
-                edge.min = (edge.min < 0) ? 2 * edge.min : edge.min;
+        if (edges && edges.hasOwnProperty('min') && edges.hasOwnProperty('max')) {
+            edge.min = edges['min]'];
+            edge.max = edges['max'];
+        } else {
+            edge.min = values[0];
+            edge.max = values[0];
+            values.forEach(function (val) {
+                if (val !== val) {
+                    console.log("array for chart contains not numbers:" + val);
+                    return false;
+                }
+                if (edge.min > val) edge.min = val;
+                if (edge.max < val) edge.max = val;
+            });
+            if (edge.min == edge.max) {
+                if (edge.min == 0) {
+                    edge.max = 10;
+                    edge.min = -10;
+                } else {
+                    edge.max = (edge.max > 0) ? edge.max * 2 : edge.min;
+                    edge.min = (edge.min < 0) ? 2 * edge.min : edge.min;
+                }
             }
         }
 // console.log("min=" + edge.min + "  max=" + edge.max);
@@ -233,11 +236,11 @@ function Plotter(canvasOwner, width, height, startProps) {
         // dash count on vertical axis
         var vAxisPar = {};
         var scale = Math.abs(edge.min - edge.max);
-        scale = (scale > 4 && scale < 10.1) ? 11:scale;
+        scale = (scale > 4 && scale < 10.1) ? 11 : scale;
         var pow = 0;
         var res, count = 0;
         var sign = (scale < 10) ? -1 : 1;
- //if(debug)console.log("before: scale=" + scale + ' sign=' + sign + '  10^(sign*pow)=' + Math.pow(10, sign*pow));
+        //if(debug)console.log("before: scale=" + scale + ' sign=' + sign + '  10^(sign*pow)=' + Math.pow(10, sign*pow));
         while (true) {
             res = scale / (Math.pow(10, sign * pow));
             if (res < 101 && res > 10)break;
@@ -382,7 +385,7 @@ function Plotter(canvasOwner, width, height, startProps) {
     }
 
     function numberToString(vAxisPar, number) {
- //console.log("get numb=" + number);
+        //console.log("get numb=" + number);
         if (number == 0 || Math.abs(number) < 0.0000001)return 0;
         if (Math.abs(number) < 0.1) {
             number = Math.round(number * 1000);
@@ -479,7 +482,7 @@ function Plotter(canvasOwner, width, height, startProps) {
             chart += "<line x1='" + x + "' y1='" + y1 +
                 "' x2='" + (x + xSpace) + "' y2='" + y2 + "' " + remainder;
             if (hasSetValues) {
-				chart += "<circle cx='" + x + "' cy='" + y1 + "' r='" + r + "' " + remainder;
+                chart += "<circle cx='" + x + "' cy='" + y1 + "' r='" + r + "' " + remainder;
                 chart += "<text x='" + x + "' y='" + (y1 - 4 * strokeWidth) + "' text-anchor='middle' " +
                     " fill='black' font-size='" + fontSize + "' >" + (values[i - 1] + "") + "</text>";
             }
@@ -534,14 +537,14 @@ function Plotter(canvasOwner, width, height, startProps) {
         // create svg canvas
         var contW = container.width - 3 * offset;
         var contH = container.height - 3 * offset;
-        var maxY = contH - 5 * offset, y0 = fontSize + 2*offset;
+        var maxY = contH - 5 * offset, y0 = fontSize + 2 * offset;
         var maxX = contW - 4 * offset, x0 = maxX / 6;
         var i, min, max, multiplier, minuend, stepX;
         container.innerHTML = "<svg  width='" + contW + "' height='" + contH +
             "' viewBox='" + "0,0 " + contW + " " + contH +
             "' xmlns='http://www.w3.org/2000/svg'></svg>";
         simpleChart = container.getElementsByTagName("svg")[0];
-        simpleChart.setAttribute('style','cursor:pointer')
+        simpleChart.setAttribute('style', 'cursor:pointer')
         simpleChart.onclick = function () {
             clearEstimated(container);
             container.setAttribute('class', 'noSize');
@@ -554,7 +557,7 @@ function Plotter(canvasOwner, width, height, startProps) {
 
 
         function prepareToDraw() {
-            i=1;
+            i = 1;
             min = values['min'];
             max = values['max'];
             stepX = 0;
@@ -567,27 +570,27 @@ function Plotter(canvasOwner, width, height, startProps) {
                 drawName(values[p]['name'], values[p]['color'], offset + i * fontSize);
                 i++;
             }
-            if(max > 0 && min < 0)drawNullLine(x0, maxX, minuend, fontSize);
+            if (max > 0 && min < 0)drawNullLine(x0, maxX, minuend, fontSize);
         }
 
-        function drawNullLine(x1, x2,nullY,fontSize){
-            simpleChart.innerHTML += '<text x="' + (x1 - offset) + '" y="' + (nullY + fontSize/2) + '" ' +
-                ' stroke="' + colors.axisCol + '" stroke-width="' + 2*strokeWidth/3 + '" ' +
-                ' font-size="' + 2*fontSize/3 + '" text-anchor="end" >' + 0 + '</text>';
+        function drawNullLine(x1, x2, nullY, fontSize) {
+            simpleChart.innerHTML += '<text x="' + (x1 - offset) + '" y="' + (nullY + fontSize / 2) + '" ' +
+                ' stroke="' + colors.axisCol + '" stroke-width="' + 2 * strokeWidth / 3 + '" ' +
+                ' font-size="' + 2 * fontSize / 3 + '" text-anchor="end" >' + 0 + '</text>';
             simpleChart.innerHTML += '<line x1="' + x1 + '" y1="' + nullY + '" x2="' + x2 + '" ' +
-                ' y2="' + nullY + '" stroke="' + colors.axisCol + '" stroke-width="' + strokeWidth/2 + '" />';
+                ' y2="' + nullY + '" stroke="' + colors.axisCol + '" stroke-width="' + strokeWidth / 2 + '" />';
         }
 
-        function drawCanvas(){
-           simpleChart.innerHTML += '<rect x="10" y="10" rx="' + strokeWidth*5 + '" ry="' + strokeWidth*5 +
+        function drawCanvas() {
+            simpleChart.innerHTML += '<rect x="10" y="10" rx="' + strokeWidth * 5 + '" ry="' + strokeWidth * 5 +
                 '" width="' + (contW - 20) +
-                '" height="' + (contH -20) + '" fill="' + colors.bgCol + '" stroke="' + colors.borderCol +
+                '" height="' + (contH - 20) + '" fill="' + colors.bgCol + '" stroke="' + colors.borderCol +
                 '" stroke-width="' + strokeWidth + '" />';
         }
 
         function drawName(name, color, y) {
 //console.log('drawName: ' + name + ' ' + color + ' ' + y);
-            simpleChart.innerHTML += '<text x="' + 3*offset + '" y="' + y + '" fill="' + color + '" ' +
+            simpleChart.innerHTML += '<text x="' + 3 * offset + '" y="' + y + '" fill="' + color + '" ' +
                 ' font-size="' + fontSize + '" >' + name + '</text>';
         }
 
@@ -603,8 +606,8 @@ function Plotter(canvasOwner, width, height, startProps) {
             var min = points[0], max = points[0];
             var chart = '<polyline points="';
             for (var j = 0; j < points.length; j++) {
-                if(points[j] > max)max = points[j];
-                if(points[j] < min) min = points[j];
+                if (points[j] > max)max = points[j];
+                if (points[j] < min) min = points[j];
                 chart += (x0 + j * stepX) + ',' + (minuend - multiplier * points[j]) + ' ';
             }
             chart += '" fill="none" stroke="' + values[i]['color'] + '" ' +
@@ -612,19 +615,19 @@ function Plotter(canvasOwner, width, height, startProps) {
             max = Math.round(max);
             min = Math.round(min);
 //console.log('max=' + max + '  min=' + min);
-            drawHorisontalsLines(max,min,minuend - multiplier*max, minuend - multiplier*min, values[i]['color']);
+            drawHorisontalsLines(max, min, minuend - multiplier * max, minuend - multiplier * min, values[i]['color']);
             simpleChart.innerHTML += chart;
         }
 
         function drawComplexChart(points) {
-            var legendFont = Math.round(2*fontSize/3);
+            var legendFont = Math.round(2 * fontSize / 3);
             var max = points[0]['val'], min = points[0]['val'];
             var chart = '<polyline points="';
             var svg, svgElements = [], dx, dy, curY;
             for (var j = 0; j < points.length; j++) {
                 curY = points[j]['val'];
-                if(curY > max)max = curY;
-                if(curY < min)min = curY;
+                if (curY > max)max = curY;
+                if (curY < min)min = curY;
                 dx = x0 + j * stepX;
                 dy = (minuend - multiplier * curY);
                 chart += dx + ',' + dy + ' ';
@@ -632,39 +635,39 @@ function Plotter(canvasOwner, width, height, startProps) {
                     if (dy < 60)dy = 60;
                     if (dy > (maxY - 60))dy = maxY - 60;
                     svg = points[j]['svg'];
-                    svg.setAttribute('x', dx - svg.getAttribute('width')/3);
+                    svg.setAttribute('x', dx - svg.getAttribute('width') / 3);
                     svg.setAttribute('y', dy - svg.getAttribute('height') + 4);
                     svgElements[j] = svg;
                 }
                 if (points[j]['text']) {
                     var text = (points[j]['text']).split(/\n/);
                     simpleChart.innerHTML += '<line x1="' + dx + '" y1 ="' + y0 + '" ' +
-                        ' x2="' + dx + '" y2="' + (maxY - text.length*legendFont) + '" stroke="'
+                        ' x2="' + dx + '" y2="' + (maxY - text.length * legendFont) + '" stroke="'
                         + colors.axisCol + '" ' + ' stroke-width="' + strokeWidth / 3 + '" />';
-                    if(text.length == 1){
-                    simpleChart.innerHTML += '<text x="' + dx + '" y="' + maxY + '" ' +
-                        ' font-size="' + legendFont + '" text-anchor="middle" ' +
-                        ' stroke="' + colors.labelCol + '" stroke-width="1" >' +
-                        points[j]['text'] + '</text>';
+                    if (text.length == 1) {
+                        simpleChart.innerHTML += '<text x="' + dx + '" y="' + maxY + '" ' +
+                            ' font-size="' + legendFont + '" text-anchor="middle" ' +
+                            ' stroke="' + colors.labelCol + '" stroke-width="1" >' +
+                            points[j]['text'] + '</text>';
                     } else drawManyStr(dx, text, legendFont);
                 }
             }
             chart += '" fill="none" stroke="' + values[i]['color'] + '" ' +
                 ' stroke-width="' + strokeWidth + '" />';
             simpleChart.innerHTML += chart;
-            max= Math.round(max);
+            max = Math.round(max);
             min = Math.round(min);
-            drawHorisontalsLines(max,min,minuend - multiplier*max, minuend - multiplier*min, values[i]['color']);
-            for(j in svgElements){
+            drawHorisontalsLines(max, min, minuend - multiplier * max, minuend - multiplier * min, values[i]['color']);
+            for (j in svgElements) {
                 simpleChart.appendChild(svgElements[j]);
             }
         }
 
-        function drawHorisontalsLines( maxText, minText, maxVal, minVal, color ){
+        function drawHorisontalsLines(maxText, minText, maxVal, minVal, color) {
             var fig = '';
             var stroke = 'stroke="' + color + '" ' +
-                ' stroke-width="' + strokeWidth/2 + '" ';
-            var font = 'font-size="' + 2*fontSize/3 + '" text-anchor="end" ';
+                ' stroke-width="' + strokeWidth / 2 + '" ';
+            var font = 'font-size="' + 2 * fontSize / 3 + '" text-anchor="end" ';
             fig += '<line x1="' + x0 + '" y1="' + minVal +
                 '" x2="' + maxX + '" y2="' + minVal + '" ' + stroke + ' />';
             fig += '<text x="' + maxX + '" y="' + (minVal - 2) + '" ' + stroke + font + '>' +
@@ -676,10 +679,10 @@ function Plotter(canvasOwner, width, height, startProps) {
             simpleChart.innerHTML += fig;
         }
 
-        function drawManyStr(x, arr, legendFont){
-            var y0 = maxY - (arr.length-1)*legendFont + 2*strokeWidth;
-            for(var i = 0; i < arr.length; i++){
-                simpleChart.innerHTML += '<text x="' + x + '" y="' + (y0 + i*legendFont) + '" ' +
+        function drawManyStr(x, arr, legendFont) {
+            var y0 = maxY - (arr.length - 1) * legendFont + 2 * strokeWidth;
+            for (var i = 0; i < arr.length; i++) {
+                simpleChart.innerHTML += '<text x="' + x + '" y="' + (y0 + i * legendFont) + '" ' +
                     'font-size="' + legendFont + '" text-anchor="middle" stroke="' + colors.labelCol + '" ' +
                     'stroke-width="1" >' + arr[i] + '</text>';
             }
@@ -688,9 +691,9 @@ function Plotter(canvasOwner, width, height, startProps) {
     }
 
     function clearEstimated(container) {
-        if (simpleChart){
+        if (simpleChart) {
             simpleChart.innerHTML = "";
-            container.innerHTML="";
+            container.innerHTML = "";
         }
 
     }
@@ -698,7 +701,7 @@ function Plotter(canvasOwner, width, height, startProps) {
 
     return {
         setAxisLabels: setAxisLabels,   // labels beside axis ends(arrow)
-        create: buildGraph,  // starts process build and draw chart
+        create: buildGraph,  // starts process build and draw chart have 3 parameters - name, array, edges(object)
         hasVisibleValues: hasSetPointValues, // has visible values on points of chart
         chartColor: setChartColor, // color of chart
         simpleChart: drawEstimated,  // draw any count diagrams from gotten data
