@@ -30,7 +30,16 @@
     plotter.setAxisLabels('xLabel','yLabel');
     plotter.chartColor('#a77');
    // plotter.create("TestChart", [ 16, 32, 17, 22, 25, 30, 35, 29, 22, 16, 15],{ edges : { min : 15, max : 40} });
+   console.log("drawChart 1");
     plotter.create("TestChart", [ 16, 16,16,16,16,16,16,16,16 ],{ edges : { min : 15, max : 40} });
+    console.log("Draw chart 2");
+    setTimeout(
+      function(){ plotter.create("TestChart",
+                      [ 16, 32, 17, 22, 25, 30, 35, 29, 22, 16, 15],
+                      { edges : { min : 15, max : 40} }
+                    )},
+       2000
+    );
 
 </script>
 </body>
