@@ -19,12 +19,14 @@ var chartBoard;
  * @param callback
  */
 function get(url, callback) {
+//debug
 //console.log("\nTry AJAX request to:'" + url + "'");
     var request = new XMLHttpRequest();
     request.open("GET", url);
     request.onreadystatechange = function () {
         if (request.readyState === 4 && request.status === 200) {
-            if (debug)console.log("Success get answer on:" + url);
+            //debug
+            //if (debug)console.log("Success get answer on:" + url);
             var type = request.getResponseHeader("Content-Type");
             if (type.indexOf("xml") !== -1 && request.responseXML)
                 callback(request.responseXML);              // Объект XML
@@ -32,6 +34,7 @@ function get(url, callback) {
                 callback(JSON.parse(request.responseText)); // Объект JSON
             else callback(request.responseText);             // строка
         } else {
+//debug
 // console.log('fail ajax request [ request readyState:' + request.readyState + ' status: ' + request.status + ' ]')
         }
     };
@@ -260,13 +263,14 @@ function get(url, callback) {
             arr = new Array(data[arrName].length);
             size = arr.length;
             // debug
-            if(debug)console.log('last=' + x + ' array-size=' + size);
+            // if(debug)console.log('last=' + x + ' array-size=' + size);
             for (var i = 0; i < size; i++)arr[i] = data[arrName][i];
             x = size + x + 1;
             for (var i = 0; i < size; i++) {
                 arr[i] = data[arrName][(x + i) % size ];
             }
-            if (debug)console.log('after shift lastValues: ' + arr.toString())
+            //debug
+            // if (debug)console.log('after shift lastValues: ' + arr.toString())
             return arr;
         }
     }

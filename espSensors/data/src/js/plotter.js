@@ -86,7 +86,7 @@ function Plotter(canvasOwner, width, height, startProps) {
         height = height - 2 * offset;
         width = width - 2 * offset;
         svgGraph = owner.getElementsByTagName("svg")[0];
-        startX = 4 * offset + fontSize;
+        startX = 4 * offset + 1.3*fontSize;
         delta = 3 * offset;
         startY = height - 2 * offset;
         endX = width - 2 * offset;
@@ -121,9 +121,11 @@ function Plotter(canvasOwner, width, height, startProps) {
         //  if(debug)console.log('getArray: ' + array.toString());
         name = chartName;
         values = array;
-        if (debug && edges)console.log('edges:' + edges + '  min:' + edges['min']);
+        // debug
+        // if (debug && edges)console.log('edges:' + edges + '  min:' + edges['min']);
         if (edges && edges.hasOwnProperty('min') && edges.hasOwnProperty('max')) {
-            console.log("get edges [ min=" + edges['min'] + '  max=' + edges.max + ' ]');
+            //debug
+            // console.log("get edges [ min=" + edges['min'] + '  max=' + edges.max + ' ]');
             edge.min = edges['min'];
             edge.max = edges['max'];
         } else {
@@ -149,7 +151,8 @@ function Plotter(canvasOwner, width, height, startProps) {
             edges.min = edge.min;
             edges.max = edge.max;
         }
-        console.log("min=" + edge.min + "  max=" + edge.max);
+        //debug
+        // if(debug)console.log("min=" + edge.min + "  max=" + edge.max);
         var vAxisPar = computeValuesParam();
         var xSpace = (endX - startX - 3 * offset) / (values.length + 1);
         prepareCanvas(values.length, xSpace, vAxisPar);
