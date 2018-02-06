@@ -61,8 +61,9 @@ function Plotter(canvasOwner, width, height, startProps) {
     var chartCol = "#776";
     var chartWidth = strokeWidth;
     var points = [];
-    var edge = { min: 0, max: 0};
+    var edge = { min: 0, max: 0}; // edge chart
     var name, values;
+    var edges;// hold edges values if it set, otherwise edges compute here
 
     // text
     var fontSize = Math.round(height / 25);
@@ -105,7 +106,8 @@ function Plotter(canvasOwner, width, height, startProps) {
      * @param array - values for build the chart must be only numerical values
      * @returns {boolean} - true if success
      */
-    function buildGraph(chartName, array, edges) {
+    function buildGraph(chartName, array, newEdges) {
+        edges = newEdges;
         if (!array || !(array instanceof  Array) || array.length < 1) {
             console.log(
                 "buildGraph [wrong parameter:second parameter must be array with numerical values]");
@@ -115,10 +117,14 @@ function Plotter(canvasOwner, width, height, startProps) {
             console.log("buildGraph [wrong parameter: first parameter must be string values");
             return false;
         }
+        //debug
+        //  if(debug)console.log('getArray: ' + array.toString());
         name = chartName;
         values = array;
+        if (debug && edges)console.log('edges:' + edges + '  min:' + edges['min']);
         if (edges && edges.hasOwnProperty('min') && edges.hasOwnProperty('max')) {
-            edge.min = edges['min]'];
+            console.log("get edges [ min=" + edges['min'] + '  max=' + edges.max + ' ]');
+            edge.min = edges['min'];
             edge.max = edges['max'];
         } else {
             edge.min = values[0];
@@ -140,8 +146,10 @@ function Plotter(canvasOwner, width, height, startProps) {
                     edge.min = (edge.min < 0) ? 2 * edge.min : edge.min;
                 }
             }
+            edges.min = edge.min;
+            edges.max = edge.max;
         }
-// console.log("min=" + edge.min + "  max=" + edge.max);
+        console.log("min=" + edge.min + "  max=" + edge.max);
         var vAxisPar = computeValuesParam();
         var xSpace = (endX - startX - 3 * offset) / (values.length + 1);
         prepareCanvas(values.length, xSpace, vAxisPar);
@@ -206,17 +214,17 @@ function Plotter(canvasOwner, width, height, startProps) {
      **/
     function computeStartPos(vAxisPar) {
         var i = 0;
-        if (edge.max <= 0) {
+        if (edge.max < 0) {
             while (edge.max + vAxisPar.vOd * i < 0)i++;
             vAxisPar.startDash = vAxisPar.count + i - 1;
             vAxisPar.xAxisPos = startY - (vAxisPar.count + 1) * vAxisPar.ySpace;
         }
-        else if (edge.min >= 0) {
+        else if (edge.min > 0) {
             while (edge.min + i * vAxisPar.vOd > 0)i--;
             vAxisPar.startDash = i + 1;
             vAxisPar.xAxisPos = startY;
         }
-        else if (edge.max > 0 && edge.min < 0) {
+        else if (edge.max >= 0 && edge.min <= 0) {
             while (edge.min + vAxisPar.vOd * i < 0) i++;
             vAxisPar.startDash = i;
             vAxisPar.xAxisPos = startY - i * vAxisPar.ySpace;
@@ -451,7 +459,7 @@ function Plotter(canvasOwner, width, height, startProps) {
                 elem.hasAttribute('name') &&
                 elem.getAttribute('name') == 'toggle')elem.onclick = function () {
                 hasSetValues = !hasSetValues;
-                buildGraph(name, values);
+                buildGraph(name, values, edges);
                 return 0;
             };
         }
@@ -477,6 +485,10 @@ function Plotter(canvasOwner, width, height, startProps) {
         var chart = "<g name='chart'>";
         var i = 1;
         for (var i = 1; i < values.length; i++) {
+            if (!isInsideEdges(values[i - 1], values[i])) {
+                x += xSpace;
+                continue;
+            }
             y1 = start - mult * values[i - 1];
             y2 = start - mult * values[i];
             chart += "<line x1='" + x + "' y1='" + y1 +
@@ -493,6 +505,20 @@ function Plotter(canvasOwner, width, height, startProps) {
             " fill='black' font-size='" + fontSize + "' >" + (values[i - 1] + "") + "</text>";
         chart += "</g>"
         svgGraph.innerHTML += chart;
+    }
+
+    /**
+     * return true if botch values lie inside edges
+     * @param first
+     * @param second
+     * @returns {boolean}
+     */
+    function isInsideEdges(first, second) {
+        // console.log('check bounds first=' +first + 'second=' + second + '[ ' +edges.min + ' , ' + edges.max + ' ]');
+        if (first < edges.min || first > edges.max)return false;
+        if (second < edges.min || second > edges.max) return false;
+        console.log('return TRUE');
+        return true;
     }
 
 

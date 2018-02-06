@@ -83,8 +83,8 @@ function sendCurrent(res){
 function sendLast(query, resp){
 	var lIn = '{ "tIn":[ 0,0,0,22,22,22,22,22,22,23,24,23,22], "last":3 }';
 	var lOut = '{"tOut":[0,0,0,-2,-2,-3,-3,-4,-5,-5,-3,-1, -1], "last":3 }';
-	var lBaro = '{"baro":[0,0,0,0,745,745,746,744,740,740,744,746,747], "last":4 }';
-	var lHumid = '{"humid":[0,20,20,20,21,20,20,20,21,22,22,23,22], "last":1}';
+	var lBaro = '{"baro":[0,0,0,0,650,745,746,744,740,740,744,746,747], "last":12 }';
+	var lHumid = '{"humid":[-1,20,20,20,21,20,20,20,21,22,22,23,22], "last":12}';
 	var res = query['sensor'];
 	if(res == 'tIn')res = lIn;
 	else if(res == 'tOut')res = lOut;
