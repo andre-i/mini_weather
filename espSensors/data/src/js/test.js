@@ -205,7 +205,7 @@ function get(url, callback) {
             if (month.selectedIndex > 0) {
                 monthName = '/' + getVal(month) + '.txt';
             } else {
-                monthName = '/summary.txt';
+                monthName = '/summary';
             }
             url = 'sensorData?period=' + getVal(year) + monthName;
             //if(!sButton.hasAttribute('disabled'))sButton.setAttribute('disabled','disabled');
@@ -226,7 +226,7 @@ function get(url, callback) {
         else {
             get(url, function (data) {
                 //console.log('\n URL="'+ url +'" get:\n' + data);
-                if (url.indexOf('summary') > 0) {
+                if (url.indexOf('summary') > 1) {
                     drawYearChart(sensor, data);
                 } else if (getVal(day) > 0) {
                     drawDayChart(sensor, data);
