@@ -137,6 +137,33 @@ function get(url, callback) {
     var month = form.elements['monthSelect'];
     var day = form.elements['daySelect'];
 
+    var sensors = {
+        'tIn': {
+            edges: { min: 0, max: 40},
+            yLabel: 'здание t ℃',
+            color: '#a85',
+            text: 'Термометр комната'
+        },
+        'tOut': {
+            edges: { min: -50, max: 50},
+            yLabel: 'улица ℃',
+            color: '#959',
+            text: 'Термометр улица'
+        },
+        'baro': {
+            edges: { min: 600, max: 800},
+            yLabel: 'мм.рт.ст',
+            color: 'gray',
+            text: 'Барометр'
+        },
+        'humid': {
+            edges: { min: 0, max: 100},
+            yLabel: 'влажность %',
+            color: '#46b',
+            text: 'Гигрометр'
+        }
+    }
+
 
     month.addEventListener('click', function () {
         if (month.selectedIndex > 0 && day.hasAttribute('disabled'))day.removeAttribute('disabled');
@@ -149,9 +176,9 @@ function get(url, callback) {
 
     // sensor name , text
     function getSensor() {
-        var sensor = {};
-        sensor.text = interval.getElementsByTagName('option')[interval.selectedIndex].innerHTML;
-        sensor.name = getVal(form.elements['sensorSelect']);
+        var name = getVal(form.elements['sensorSelect']);
+        var sensor = sensors[name];
+        sensor.name = name;
         return sensor;
     };
 
@@ -211,22 +238,22 @@ function get(url, callback) {
     }
 
     function drawYearChart(sensor, data) {
-        if (debug){
+        if (debug) {
             console.log('drawYearChart for sensor=' + sensor.name + '  year=' + getVal(year) +
                 " data:\n " + data + "\n____EOF___");
         }
     }
 
     function drawMonthChart(sensor, data) {
-        if (debug){
-            console.log('drawMonthChart for sensor=' + sensor.name + '  month=' + getVal(month)+
+        if (debug) {
+            console.log('drawMonthChart for sensor=' + sensor.name + '  month=' + getVal(month) +
                 "data:\n " + data + "\n____EOF___");
         }
     }
 
     function drawDayChart(sensor, data) {
-        if (debug){
-            console.log('drawDayChart for sensor=' + sensor.name + ' day=' + getVal(day)+
+        if (debug) {
+            console.log('drawDayChart for sensor=' + sensor.name + ' day=' + getVal(day) +
                 " data:\n " + data + "\n____EOF___");
         }
     }
@@ -236,30 +263,10 @@ function get(url, callback) {
     function drawLast(sensor, data) {
         if (debug)console.log("drawLast [ name:" + sensor.name + ' text:' + sensor.text + ' ]');
         // edges for sensors data
-        var edges = {};
-        var color;
+        var edges = sensor.edges;
+        var color = sensor.color;
+        var yLabel = sensor.yLabel;
         var arr, x, size;
-        var yLabel = '';
-        if (sensor.name == 'tIn') {
-            edges = { min: 0, max: 40};
-            yLabel = 'здание t ℃';
-            color = '#a85';
-        }
-        if (sensor.name == 'tOut') {
-            edges = { min: -50, max: 50};
-            yLabel = 'улица ℃';
-            color = '#959';
-        }
-        if (sensor.name == 'baro') {
-            edges = { min: 600, max: 800};
-            yLabel = 'мм.рт.ст';
-            color = 'gray';
-        }
-        if (sensor.name == 'humid') {
-            edges = { min: 0, max: 100};
-            yLabel = 'влажность %';
-            color = '#46b';
-        }
         var xlabel = 'деление 5 минут';
         chartBoard.setAxisLabels(xlabel, yLabel);
         var chartName = sensor.text;
@@ -309,7 +316,7 @@ function get(url, callback) {
     // inreval Option Listener fill availablePeriods object
     function computePeriods(data) {
         var mName = '';
-        if(debug)console.log("getPeriods:" + JSON.stringify(data));
+        //if(debug)console.log("getPeriods:" + JSON.stringify(data));
         if (!data || !(data instanceof Array) || data.length < 1) {
             availablePeriods = {};
             return;

@@ -25,7 +25,7 @@ class Sensors {
     //  numbers of last measurent value in values array
     int lastDS18B20 = REQUEST_COUNT, lastDHT = REQUEST_COUNT, lastBMP280 = REQUEST_COUNT;
     int tIn, tOut, humid, baro;
-    int bmpTemp = -200;
+    int dsTemp = -200;
     String currentInJSON = "";
     String allIn[REQUEST_COUNT] , allOut[REQUEST_COUNT] , allHumid[REQUEST_COUNT], allBaro[REQUEST_COUNT];
     //  methods
