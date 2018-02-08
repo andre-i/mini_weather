@@ -10,7 +10,7 @@ Util::Util(bool isDebug) {
 
 void Util::setDebug(bool isDebug) {
   DEBUG = isDebug;
-  if(isDebug)isNeedWrite = true;
+  if (isDebug)isNeedWrite = true;
 }
 
 
@@ -19,7 +19,7 @@ void Util::setDebug(bool isDebug) {
 //  public :
 bool Util::initFS() {
   if (DEBUG)Serial.print("init SPIFFS : ");
-  if(isFS){
+  if (isFS) {
     Serial.println(" already DONE");
     return isFS;
   }
@@ -34,6 +34,11 @@ bool Util::initFS() {
 }
 
 void Util::writeLog(String mess) {
+  if (DEBUG) {
+    Serial.print("Send to log: ");
+    Serial.println( mess );
+    return;
+  }
   if (isFS) {
     File logFile = SPIFFS.open(LOG_FILE, "a");
     if (logFile) {
@@ -46,30 +51,38 @@ void Util::writeLog(String mess) {
   Serial.println(fail);
 }
 
-String Util::fsINFO(){
+String Util::fsINFO() {
   String res = "\t\tFS info:\n";
-  if(!isFS)return res +="SPIFFS not init, INFO not available.";
+  if (!isFS)return res += "SPIFFS not init, INFO not available.";
   FSInfo fs_info;
-  if(SPIFFS.info(fs_info)){
- /*   FSInfo 
-size_t totalBytes;
-size_t usedBytes;
-size_t blockSize;
-size_t pageSize;
-size_t maxOpenFiles;
-size_t maxPathLength;
-*/
-  res += "\ttotalBytes: " + String(fs_info.totalBytes);
-  res += ",\tusedBytes: " + String(fs_info.usedBytes);
-  res += "\n\t files - maxOpen: " + String(fs_info.maxOpenFiles) + ",\tmaxPathLength: " + String(fs_info.maxPathLength); 
-  
-  }else{
+  if (SPIFFS.info(fs_info)) {
+    /*   FSInfo
+      size_t totalBytes;
+      size_t usedBytes;
+      size_t blockSize;
+      size_t pageSize;
+      size_t maxOpenFiles;
+      size_t maxPathLength;
+    */
+    res += "\ttotalBytes: " + String(fs_info.totalBytes);
+    res += ",\tusedBytes: " + String(fs_info.usedBytes);
+    res += "\n\t files - maxOpen: " + String(fs_info.maxOpenFiles) + ",\tmaxPathLength: " + String(fs_info.maxPathLength);
+
+  } else {
     res = "SPIFFS is available, but can`t read FS info";
   }
   return res;
 }
 
-String Util::getPeriodsAsJSON(){
+String Util::getPeriodsAsJSON() {
+  Dir dataDir = SPIFFS.openDir(SENSOR_DATA_DIR);
+  String files = "[";
+  while(dataDir.next())files += " \"" + dataDir.fileName() + "\",";
+  int last = files.lastIndexOf(",");
+  if(last > 0) files = files.substring(0, last) + " ]";
+  else files = "[ ]";
+  if(DEBUG)Serial.println((String("periodsAsJSON: ") + files));
+  return files;
   
 }
 
@@ -85,7 +98,7 @@ void Util::doWriteToSD() {
 
 void Util::writeSensorsValues(int tIn, int tOut, int baro, int humid) {
   if (DEBUG)Serial.println("Call write sensors values");
-    isNeedWrite = false;
+  isNeedWrite = false;
   String fullMonthFileName = sensorDataDir + pathSeparator + year + pathSeparator + month + ".txt";
   if (DEBUG) {
     Serial.print(" Try write data to file \"");
@@ -98,7 +111,7 @@ void Util::writeSensorsValues(int tIn, int tOut, int baro, int humid) {
     monthF.close();
     return;
   }
-  String output = day + valSeparator + hour + valSeparator + tIn + valSeparator + tOut + valSeparator + baro + valSeparator + humid;
+  String output = getDay() + valSeparator + getHour() + valSeparator + tIn + valSeparator + tOut + valSeparator + baro + valSeparator + humid;
   if (DEBUG) {
     Serial.print("Try Write sensors valuers to file: ");
     Serial.print(fullMonthFileName);
@@ -265,7 +278,7 @@ bool Util::sync() {
         index = dateAndTime.lastIndexOf(':');
         s_min = dateAndTime.substring(index, index - 2);
         setDateTime(true);
-        if (DEBUG)Serial.println("Success decode date-time");
+        if (DEBUG)Serial.println("Success sync date-time by WEB");
       }
     }
     disconnect();
@@ -384,7 +397,7 @@ bool Util::findDateAndTimeInResponseHeaders() {
 
 // Close the connection with the HTTP server
 void Util::disconnect() {
-  if ( DEBUG ) Serial.println("Disconnect from HTTP server");
+ // if ( DEBUG ) Serial.println("Disconnect from HTTP server");
   client.stop();
 }
 
@@ -393,7 +406,7 @@ void Util::disconnect() {
      if from user: isWeb false
 */
 void Util::setDateTime(bool isWeb) {
-
+/*
   if (DEBUG) {
     Serial.print( "Get date-time for decode: [  year = "); Serial.print(year);
     Serial.print( "  month = "); Serial.print(month);
@@ -402,7 +415,7 @@ void Util::setDateTime(bool isWeb) {
     Serial.print( "  minutes = "); Serial.print(s_min);
     Serial.println("  ]");
   }
-
+*/
   if (s_min.startsWith("0"))s_min = s_min.substring(1);
   minute = s_min.toInt();
   int i = 0;
@@ -410,6 +423,7 @@ void Util::setDateTime(bool isWeb) {
   while ( i < 24 ) {
     if ( hour.indexOf(num[i]) > -1) {
       h_count = isWeb ? (24 + i + timezone) % 24 : (24 + i) % 24;
+      hour = num[h_count];
       break;
     }
     i++;
@@ -434,7 +448,7 @@ void Util::setDateTime(bool isWeb) {
   }
   // set Year
   y_count = year.toInt();
-
+/*
   if (DEBUG) {
     Serial.print( "after decode date: [ year ="); Serial.print(String(y_count));
     Serial.print(";   month = "); Serial.print(num[m_count]);
@@ -443,7 +457,7 @@ void Util::setDateTime(bool isWeb) {
     Serial.print(";   minute = "); Serial.print((int)minute);
     Serial.println(" ]");
   }
-
+*/
 }
 
 

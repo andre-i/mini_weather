@@ -71,6 +71,7 @@ void Sensors::readBMP280() {
   allBaro[lastBMP280] = String(baro);
   if (lastBMP280 == 0)mediaBaro = baro;
   else mediaBaro = (int)((mediaBaro + baro) / 2 + 0.5);
+  if(DEBUG)bmpTemp = bme->readTemperature();
 }
 
 
@@ -83,8 +84,10 @@ void Sensors::makeCurrentToJSON(){
 
 String Sensors::getCurrentAsJSON() {
   if(DEBUG){
-    Serial.print("\"getCurrentAsJSON\" return:");
-    Serial.println(currentInJSON);
+    Serial.print("\"getCurrentAsJSON\": ");
+    Serial.print(currentInJSON);
+    String res = " [ BMP280 t= " + String(bmpTemp) + " Dallas t= " + String(tOut) + " ]";
+    Serial.println(res);
   }
   return currentInJSON;
 }

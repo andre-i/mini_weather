@@ -91,11 +91,10 @@
 //
 //#define CS_PIN 16
 //  SPIFFS
-#define SENSOR_DATA_DIR   "data"
-#define TEST_YEAR_DIR "2019"
-#define SEP " "
+#define SENSOR_DATA_DIR   "/data"
+#define SEP " "   // divide sensors data by write to file in one string. see top 
 // report to SPIFFS
-#define LOG_FILE "log.log"
+#define LOG_FILE "/log.log"
 
 
 //
@@ -118,10 +117,10 @@ enum wifiMODE { DEVICE_AP_MODE, DEVICE_STA_MODE, DEVICE_NOT_WIFI};
 //
 #define HOST "weather"
 #define PORT 80
-#define SERVER_ROOT  "/serv/"
-#define STA_PARAMS_FILE "/server/staParams.txt"
+#define SERVER_ROOT  "/"
+#define STA_PARAMS_FILE "staParams.txt"
 #define REQUEST_DATA_URL "www.yandex.ru"
-#define  NOT_FOUND "NotFound.htm"
+#define  NOT_FOUND "/NotFound.htm"
 
 //
 // ====================  semaphore ==================

@@ -10,6 +10,9 @@
 #include <ESP8266mDNS.h>
 #include <FS.h>
 
+// mark for version software
+String version = "0.1";
+
 bool DEBUG = true;
 int wifiMode = DEVICE_NOT_WIFI;
 
@@ -40,7 +43,7 @@ void tick() {
   isCheckSensors = true;
   if (tickCount == maxTickCount) {
     // in debug mode write to file all minute
-    if(DEBUG) util.setDebug(true);
+    if (DEBUG) util.setDebug(true);
     isAddMinute = true;
     tickCount = 0;
   }
@@ -58,28 +61,6 @@ void printFullDate() {
   String full = " NOW[ y:" + util.getYear() + "  m:" + util.getMonth() + "  d:" + util.getDay() + "   h:" + util.getHour() + " ]";
   Serial.println(full);
 }
-
-/*
-  // for check change date with util.addMinute() method
-  void checkShiftTime() {
-  Serial.println("\n--------------------------\nBefore change: ");
-  delay(100);
-  printFullDate();
-  Serial.println("After add 72 minutes: ");
-  for (int i = 0; i < 72; i++)util.addMinute();
-  delay(100);
-  printFullDate();
-  Serial.println("After add 5000 minutes: ");
-  for (int i = 0; i < 5000; i++)util.addMinute();
-  delay(100);
-  printFullDate();
-  Serial.println("After add 55000 minutes: ");
-  for (long i = 0; i < 55000; i++)util.addMinute();
-  delay(100);
-  printFullDate();
-  Serial.println("-----------------------------------\n");
-  }
-*/
 
 void readFile(char answ[]) {
   String fName = answ;
@@ -105,7 +86,7 @@ void readFile(char answ[]) {
   } else {
     Serial.println("\t______ file content : ____");
     while (file.available())Serial.write(file.read());
-    Serial.println("\t  ________   EOF  _______  ");
+    Serial.println("\n\t  ________   EOF  _______  ");
     file.close();
   }
 }
@@ -133,10 +114,12 @@ void handleSerial() {
   }
   answ[i] = '\0';
   r = answ;
-  if (DEBUG) {
+  /*
+    if (DEBUG) {
     Serial.print("I get:" );
     Serial.println(r);
-  }
+    }
+  */
   if (i < 3) {
     if (answ[0] == 'y' || answ[0]  == 'Y') {
       DEBUG = true;
@@ -145,10 +128,10 @@ void handleSerial() {
       DEBUG = false;
       Serial.println(" OFF DEBUG output!");
     } else if (answ[0] == 's' && answ[1] == 'p') {
-      util.initFS();
-    } else if(answ[0] == 's' && answ[1] == 'i'){
+      isFS = util.initFS();
+    } else if (answ[0] == 's' && answ[1] == 'i') {
       Serial.println(util.fsINFO());
-    }else {
+    } else {
       showManual();
     }
   } else {
@@ -156,13 +139,16 @@ void handleSerial() {
       readFile(answ);
       return;
     }
-    if (util.assignTime(r)) {
-      String answ = "(Ok) Success set date-time: " + util.getYear() + "/" + util.getMonth() + "/" + util.getDay() + " " + util.getHour() + "h";
-      Serial.println(answ);
-      isSetDate = true;
-      //    checkShiftTime();
-    } else {
-      Serial.println("(No) Fail set date-time");
+    //  set date-time
+    if (answ[0] == '2' && answ[1] == '0' ) {
+      if (util.assignTime(r)) {
+        String answ = "(Ok) Success set date-time: " + util.getYear() + "/" + util.getMonth() + "/" + util.getDay() + " " + util.getHour() + "h";
+        Serial.println(answ);
+        isSetDate = true;
+        //    checkShiftTime();
+      } else {
+        Serial.println("(No) Fail set date-time");
+      }
     }
   }
 
@@ -207,11 +193,8 @@ void handleNotFound() {
 
 void handleRoot() {
   Serial.println("Call \"handleRoot\"");
-  if (isFS) {
-    if (!loadFile(serverRoot + "index.htm"))Serial.println("WARNING : Can`t load root");
-  } else {
-    if (!loadFile("/index.htm"))Serial.println("ERROR : SPIFFS can`t get ROOT(\"index.htm\"");
-  }
+  if (isFS) loadFile(serverRoot + "index.htm");
+  else Serial.println("WARNING : Can`t load root");
 }
 
 
@@ -224,33 +207,6 @@ void sendErrorAsJson( String path) {
 }
 
 // ------ server read fileSystem ------
-
-bool readFromSD(String path, String dataType) {
-  File dataFile = SPIFFS.open(path.c_str(), "r");
-  bool res = false;
-  if (!dataFile) {
-    if ( path.startsWith(SENSOR_DATA_DIR)) {
-      sendErrorAsJson(path);
-      res = false;
-    }
-    Serial.print("SD : Can`t read File :");
-    Serial.print(path);
-    Serial.println("! [ Try read it from SPIFS ]");
-    path.replace(serverRoot, "/");
-    return readSPIFFS(path, dataType);
-  } else {
-    if (server.streamFile(dataFile, dataType) != dataFile.size()) {
-      Serial.println("WARNING : Sent less data than expected!");
-    } else {
-      if (DEBUG) {
-        String out = "SD send file: " + path + "   dataType: " + dataType;
-        Serial.println(out);
-      }
-    }
-  }
-  dataFile.close();
-  return true;
-}
 
 bool readSPIFFS(String path, String dataType) {
   fs::File dataFile = SPIFFS.open(path.c_str(), "r");
@@ -293,10 +249,9 @@ bool loadFile(String path) {
   if (DEBUG) {
     Serial.print("Try get file: ");
     Serial.print(path);
-    if (isFS)Serial.println("  from SD");
-    else Serial.println("  from FPIFFS");
+    Serial.println("  from FPIFFS");
   }
-  return isFS ? readFromSD(path, dataType) : readSPIFFS(path, dataType);
+  return readSPIFFS(path, dataType);
 }
 //   ends of read filesystem
 
@@ -307,6 +262,7 @@ void sendFileContent() {
   }
 }
 
+//  example request: /sensorData?period=2018/Jun.txt
 const String sensorDataDir = SENSOR_DATA_DIR;
 void sendSensorData() {
   if (server.hasArg("period")) {
@@ -319,7 +275,7 @@ void sendSensorData() {
 // if want file as arguments with name "date" it value must consist from
 //    "year/month" string where "month" is first 3 chars
 void handleGetSrc() {
-  String resPath = isFS ? serverRoot + "src/" : "/src/";
+  String resPath = serverRoot + "src/";
   if (server.hasArg("js"))resPath += "js/" + server.arg("js");
   else if (server.hasArg("pic")) resPath += "pic/" + server.arg("pic");
   else if (server.hasArg("css"))resPath += "css/" + server.arg("css");
@@ -349,9 +305,9 @@ void sendCurrent() {
 }
 
 /*
- *	send last values of checked sensors
- *  reques looks - /lastValues?sensor=sensor_name
- */
+ 	send last values of checked sensors
+    reques looks - /lastValues?sensor=sensor_name
+*/
 void sendLast() {
   if (DEBUG)Serial.print(" HTTP SERVER request of \"lastValues\" for: ");
   String sType = "";
@@ -369,9 +325,9 @@ void sendLast() {
   }
 }
 
-void sendPeriods(){
-  if(DEBUG) Serial.println("browser req: /availablePeriod ");
-  server.send(400, "application/json", util.getPeriodsAsJSON());
+void sendPeriods() {
+  if (DEBUG) Serial.println("browser req: /availablePeriod ");
+  server.send(200, "application/json", util.getPeriodsAsJSON());
 }
 
 void prepareServer() {
@@ -397,13 +353,14 @@ void prepareServer() {
 
 void setup() {
   Serial.begin(115200);
+  Serial.println(String("\n\t version:" + version));
   Serial.println("\n\n\tDHTxx DS18b20 BMP280 test!");
   Serial.print(" Flash size:\n\treal = ");
   Serial.print(ESP.getFlashChipRealSize());
   Serial.print("\t programm = ");
   Serial.println(ESP.getFlashChipSize());
   maxTickCount = cycleDuration / tickDuration;
-  bool sensInit = s.init();
+  int sensInit = s.init();
   // try init sd card
   if (!util.initFS()) {
     Serial.println("\tWARNING : SPIFFS not init");
@@ -416,8 +373,8 @@ void setup() {
       if (isSetDate) {
         printFullDate();
         if (isFS) {
-          String res = sensInit ? " success init" : " fail init";
-          res = "[ SD: init,  sensors: " + res + ",  wi-fi: STA_MODE ]";
+          String res = (sensInit == 0) ? " success init" : " fail init";
+          res = "[ SPIFFS: init,  sensors: " + res + ",  wi-fi: STA_MODE ]";
           res = getFullDate() + res;
           util.writeLog(res);
         }
@@ -434,10 +391,10 @@ void setup() {
       break;
   }
   /*
-  // file system
-  if (!SPIFFS.begin()) {
+    // file system
+    if (!SPIFFS.begin()) {
     Serial.println("WARNING: SPIFS not mount");
-  }
+    }
   */
   bool isMDNS = MDNS.begin(HOST) ;
   if (isMDNS) {
@@ -473,10 +430,10 @@ void loop() {
         sensorToCheck = BMP_SENSOR ;
         break;
       case BMP_SENSOR:
-        isCheckSensors = false;
         s.readBMP280();
         sensorToCheck = DHT_SENSOR;
         s.makeCurrentToJSON();
+        isCheckSensors = false;
         break;
       default:   delay(70);
     }

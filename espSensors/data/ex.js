@@ -114,8 +114,9 @@ function sendPeriods(res){
 	var periods = '["/data/2018/Jan.txt", "/data/2018/Feb.txt"  , "/data/2018/Mar.txt" ' +
 	', "/data/2018/Jun.txt",  "/data/2018/Jul.txt", "/data/2018/summary.txt" , ' +
 			' "/data/2019/Oct.txt", "/data/2019/Nov.txt", "/data/2019/summary.txt"   ]';
+    var curt = '[ "/data/2018/Feb.txt" ]';
 	res.writeHead(200,{'Content-Type':'application/json'});
-	res.end(periods);
+	res.end(curt);
 }
 
 function sendSensorData(query, res){
