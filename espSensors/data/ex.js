@@ -39,7 +39,7 @@ http.createServer(function(req, res){
 		case '/src':
 			parseSrc(query, res); break;
 		case '/favicon.ico':
-				sendFile('image/png','/src/pic/okay.png',res);
+				sendFile('image/png','./src/pic/okay.png',res);
 		case '/index.htm':
 			sendFile('text/html', './index.htm', res); break;
 		case '/availablePeriod':
@@ -96,7 +96,7 @@ function sendLast(query, resp){
 }
 
 function sendFile(contentType, fName, res){
-	console.log('send file: ' + fName);
+	console.log('try send file: ' + fName);
 	fs.readFile(fName, 'utf8', function(err, data){
 		if(err){
 			console.log('ERROR on load file: ' + fName + " error=" + err);
@@ -112,20 +112,90 @@ function sendFile(contentType, fName, res){
 
 function sendPeriods(res){
 	var periods = '["/data/2018/Jan.txt", "/data/2018/Feb.txt"  , "/data/2018/Mar.txt" ' +
-	', "/data/2018/Jun.txt",  "/data/2018/Jul.txt", "/data/2018/summary.txt" , ' +
-			' "/data/2019/Oct.txt", "/data/2019/Nov.txt", "/data/2019/summary.txt"   ]';
+	', "/data/2018/Jun.txt",  "/data/2018/Jul.txt", ' +
+			' "/data/2019/Oct.txt", "/data/2019/Nov.txt"  ]';
     var curt = '[ "/data/2018/Feb.txt" ]';
 	res.writeHead(200,{'Content-Type':'application/json'});
 	res.end(curt);
 }
 
 function sendSensorData(query, res){
+    //  period format: yyyy/month.txt
+    var answer = '';
+    var period = query['period'];
+    if(period.length < 1)answer = 'Can`t get query from request \"sensorData\"';
+    else answer = getPeriodData(period);
 	res.writeHead(200, {'Content-Type':'text/plain'});
-	res.end('sensors data Not Implemented\n\tI get query: ' + JSON.stringify(query));
+	res.end(answer);
 }
 
 
 function notFound(res){
 	res.writeHead(404,{'Content-Type':'text/html'});
 			res.end('<html><body><h1 align="center">Resource not found</h1></body></html>');
+}
+
+function getPeriodData(period){
+    //day hour tIn tOut pressure humidites
+    var periods = {
+        '2018/Jan.txt' :
+            ' 01 01 2 -2 777 10\n' +
+            ' 01 02 2 -2 773 10\n' +
+            ' 01 03 2 -2 774 10\n' +
+            ' 01 04 2 -2 776 10\n' +
+            ' 01 05 2 -2 775 10\n' +
+            ' 01 06 2 -2 772 10\n' +
+            ' 01 07 2 -2 777 10\n',
+        '2018/Feb.txt' :
+            ' 02 01 2 -2 777 10\n' +
+            ' 02 02 2 -2 727 10\n' +
+            ' 02 03 2 -2 737 10\n' +
+            ' 02 04 2 -2 747 10\n' +
+            ' 02 05 2 -2 757 10\n' +
+            ' 02 06 2 -2 767 10\n' +
+            ' 02 07 2 -2 727 10\n',
+        '2018/Mar.txt' :
+            ' 02 01 2 -21 777 10\n' +
+            ' 02 02 2 -21 777 10\n' +
+            ' 02 03 2 -22 777 10\n' +
+            ' 02 04 2 -23 777 10\n' +
+            ' 02 05 2 -24 777 10\n' +
+            ' 02 06 2 -25 777 10\n' +
+            ' 02 07 2 -26 777 10\n',
+        '2018/Jun.txt' :
+            ' 03 01 22 -2 777 10\n' +
+            ' 03 02 23 -2 777 10\n' +
+            ' 03 03 24 -2 777 10\n' +
+            ' 03 04 25 -2 777 10\n' +
+            ' 03 05 26 -2 777 10\n' +
+            ' 03 06 27 -2 777 10\n' +
+            ' 03 07 28 -2 777 10\n',
+        '2018/Jul.txt' :
+            ' 04 01 2 -2 777 12\n' +
+            ' 04 02 2 -2 777 14\n' +
+            ' 04 03 2 -2 777 14\n' +
+            ' 04 04 2 -2 777 14\n' +
+            ' 04 05 2 -2 777 16\n' +
+            ' 04 06 2 -2 777 16\n' +
+            ' 04 07 2 -2 777 17\n',
+        '2019/Oct.txt' :
+            ' 05 11 2 -2 777 10\n' +
+            ' 05 12 2 -2 777 10\n' +
+            ' 05 13 2 -2 777 10\n' +
+            ' 05 14 2 -2 777 10\n' +
+            ' 05 15 2 -2 777 10\n' +
+            ' 05 16 2 -2 777 10\n' +
+            ' 05 17 2 -2 777 10\n',
+        '2019/Nov.txt' :
+            ' 16 01 2 -2 777 10\n' +
+            ' 16 02 2 -2 777 10\n' +
+            ' 16 03 2 -2 777 10\n' +
+            ' 16 04 2 -2 777 10\n' +
+            ' 16 05 2 -2 777 10\n' +
+            ' 16 06 2 -2 777 10\n' +
+            ' 16 07 2 -2 777 10\n'
+    }
+    if(periods.hasOwnProperty(period))return periods[period];
+    console.log("Bad request for \"sensorData\"");
+    return 'ERROR: bad request \"' + period + '\"';
 }
