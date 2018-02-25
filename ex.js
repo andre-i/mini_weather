@@ -20,7 +20,7 @@ var fs=require('fs');
 var http=require('http');
 var url = require('url');
 var path = require('path');
-
+var root = './espSensors/data';
 
 
 
@@ -39,9 +39,9 @@ http.createServer(function(req, res){
 		case '/src':
 			parseSrc(query, res); break;
 		case '/favicon.ico':
-				sendFile('image/png','./src/pic/okay.png',res);
+				sendFile('image/png','/src/pic/okay.png',res);
 		case '/index.htm':
-			sendFile('text/html', './index.htm', res); break;
+			sendFile('text/html', '/index.htm', res); break;
 		case '/availablePeriod':
 			sendPeriods(res); break;
 		case '/sensorData':
@@ -55,7 +55,7 @@ http.createServer(function(req, res){
 
 function parseSrc(query, res){
 	var contentType = 'text/plain';
-	var fName = './src'
+	var fName = '/src';
 	if(query['js']){
 		contentType = 'application/javascript'
 		fName += '/js/' + query['js'];
@@ -96,6 +96,7 @@ function sendLast(query, resp){
 }
 
 function sendFile(contentType, fName, res){
+	fName = root + fName;
 	console.log('try send file: ' + fName);
 	fs.readFile(fName, 'utf8', function(err, data){
 		if(err){
