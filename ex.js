@@ -116,16 +116,20 @@ function sendPeriods(res){
 	', "/data/2018/Jun.txt",  "/data/2018/Jul.txt", ' +
 			' "/data/2019/Oct.txt", "/data/2019/Nov.txt"  ]';
     var curt = '[ "/data/2018/Feb.txt" ]';
+    var toSend = periods;
 	res.writeHead(200,{'Content-Type':'application/json'});
-	res.end(curt);
+    console.log("I send to client periods  " + toSend);
+	res.end(toSend);
 }
 
 function sendSensorData(query, res){
     //  period format: yyyy/month.txt
+    console.log("request \"sensorData\" query: " + query['period']);
     var answer = '';
     var period = query['period'];
     if(period.length < 1)answer = 'Can`t get query from request \"sensorData\"';
     else answer = getPeriodData(period);
+    console.log("SEND answer :\n" + answer);
 	res.writeHead(200, {'Content-Type':'text/plain'});
 	res.end(answer);
 }

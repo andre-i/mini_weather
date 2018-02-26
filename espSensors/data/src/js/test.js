@@ -122,7 +122,7 @@ function get(url, callback) {
  *    2. user request handler
  */
 (function () {
-    var cache = {};
+    var cache = {}; // cache for data by months
 
     //  form
     var form = document.forms['checkDuration'];
@@ -202,7 +202,7 @@ function get(url, callback) {
     function showChartByUserRequest() {
         var sensor = getSensor();
         var url, monthName, yearNum;
-        if (interval.selectedIndex === 1){
+        if (interval.selectedIndex === 1) {
             url = 'lastValues?sensor=' + sensor.name;
             get(url, function (data) {
                 if (data)drawLast(sensor, data);
@@ -210,64 +210,95 @@ function get(url, callback) {
             });
         }
         if (interval.selectedIndex === 2) {
+            yearNum = getVal(year);
             if (month.selectedIndex > 0) {
-                monthName = getVal(month) + '.txt';
-                yearNum = getVal(year);
-                if(!hasInterval(yearNum, monthName)){
+                monthName = getVal(month);
+                if (!hasInterval(yearNum, monthName)) {
                     console.log("test.js: such interval NOT FOUND \"" + yearNum + '/' + monthName + '\"');
                     alert("Error");
                     return;
                 }
-                url = 'sensorData?period=' + yearNum + '/' + monthName;
-                get(url, function(data){
-                    if(data){
-                        if(day.selectedIndex < 1)drawMonthChart(sensor, data);
-                        else drawDayChart(sensor, data, day.selectedIndex);
-                    }else console.log('not get data for month: ' + monthName);
-                });
+                url = 'sensorData?period=';
+                var period = yearNum + '/' + monthName + '.txt';
+                var res = getFromCache(period);
+                if (res) {
+                    if(debug)console.log('get data from cache');
+                    day.selectedIndex < 1 ? drawMonthChart(sensor, res) : drawDayChart(sensor, res, day.selectedIndex);
+                }else{
+                    get(url + period, function (data) {
+                        if (data) {
+                            addToCache(period, data);
+                            day.selectedIndex < 1 ? drawMonthChart(sensor, data) :
+                                drawDayChart(sensor, data, day.selectedIndex);
+                        } else console.log('not get data for month: ' + monthName);
+                    });
+                }
             } else {
                 // year chart
-                drawYearChart(sensor, getDataForYear(yearNum), yearNum);
+                drawYearChart(sensor, yearNum);
             }
         }
     }
 
+    var flag = true;
 
-    function getDataForYear(yNum){
-
+    function getDataForYear(yNum, callback) {
+        var next = (function () {
+            var n = 0;
+            return function () {
+                return n++;
+            };
+        }());
         var result = {};
-        var headURL = 'sensorData?period=' + yearNum + '/';
-        if(availablePeriods.hasOwnProperty(yNum)){
-            result.year = 'За ' + yNum + ' год';
+        var headURL = 'sensorData?period=';
+        if (debug)console.log("chart for year " + yNum);
+        if (availablePeriods.hasOwnProperty(yNum)) {
             var all = availablePeriods[yNum];
-            for( var i = 0; i < all.length; i++){
-                get(headURL + all[i], function(data){
-                 if(data){
-                     var mData = '' + all[i] + ' ';
-                     var values = data.split('\n');
-                     if(values.length < 1)return 'ERROR - empty month data for: \"' + all[i] + '\"';
 
-                 }
-                });
+            for (var i = 0; i < all.length; i++) {
+                var period = yNum + '/' + all[i] + '.txt';
+                var res = getFromCache(period);
+                if (res){
+                    if(debug)console.log('month ' + all[i] + ' get from cache');
+                    result[all[i]] = res;
+                    if(i == all.length - 1)callback(result);
+                }
+                else {
+                    get(headURL + period, function (data) {
+                        var j = next();
+                        if (debug)console.log("add " + all[j] + " month data from server");
+                        if (data) {
+                            addToCache(yNum + '/' + all[j] + '.txt', data);
+                            result[all[j]] = data;
+                            if (data.length < 1)return 'ERROR - empty month data for: \"' + all[j] + '\"';
+                            if (j == all.length - 1)callback(result);
+                        }
+                    });
+                }
             }
-        }else{
+        } else {
             console.log('test.js: can`t find year \"' + yNum + '\" for draw year chart');
             alert('Error for: ' + yNum);
             return 'ERROR - cant find data for year:\"' + yNum + '\"';
         }
     }
 
-    function drawYearChart(sensor, data, yearNum) {
-        if (debug) {
-            console.log('drawYearChart for sensor=' + sensor.name + '  year=' + getVal(year) +
-                " data:\n " + data + "\n____EOF___");
-        }
+    function drawYearChart(sensor, yearNum) {
+        getDataForYear(yearNum, function (res) {
+            if (JSON.stringify(res) == '{}') {
+                console.log("test.js(drawYearChart) - Get empty year data for " + yearNum);
+                alert("Не могу получить данные за " + yearNum + " год\nПроверьте работу погодной станции.");
+                return 1;
+            }
+
+        });
+
     }
 
     function drawMonthChart(sensor, data) {
         if (debug) {
             console.log('drawMonthChart for sensor=' + sensor.name + '  month=' + getVal(month) +
-                "data:\n " + data + "\n____EOF___");
+                "data: \n " + data + "\n____EOF___");
         }
     }
 
@@ -320,12 +351,12 @@ function get(url, callback) {
     var year = form.elements['yearSelect'];
     var month = form.elements['monthSelect'];
 
-    function checkInterval(){
+    function checkInterval() {
 
     }
 
     /**    interval Option Listener
-     *  get from server intervals and set it eabled on options
+     *  get from server intervals and set it enabled on options
      *
      */
     function setAvailableIntervals() {
@@ -337,7 +368,7 @@ function get(url, callback) {
         }
     }
 
-    // inreval Option Listener fill availablePeriods object
+    // interval Option Listener fill availablePeriods object
     function computePeriods(data) {
         var mName = '';
         //if(debug)console.log("getPeriods:" + JSON.stringify(data));
@@ -419,6 +450,27 @@ function get(url, callback) {
             if (sButton.hasAttribute('disabled'))sButton.removeAttribute('disabled');
             if (month.hasAttribute('disabled'))month.removeAttribute('disabled');
         }
+    }
+
+    function hasInterval(yearNum, monthName) {
+        var hasInterval = true;
+
+        hasInterval = availablePeriods.hasOwnProperty(yearNum) && availablePeriods[yearNum] instanceof Array;
+        if (debug)console.log("get yearNum=" + yearNum + "  monthName=" + monthName + " months_in_periods: " + availablePeriods[yearNum]);
+        if (hasInterval) {
+            hasInterval = availablePeriods[yearNum].indexOf(monthName) >= 0;
+        }
+        return hasInterval;
+    }
+
+    function addToCache(period, data) {
+        if (cache.hasOwnProperty(period))return false;
+        cache[period] = data;
+    }
+
+    function getFromCache(period) {
+        if (cache.hasOwnProperty(period))return cache[period];
+        return false;
     }
 
 }());
