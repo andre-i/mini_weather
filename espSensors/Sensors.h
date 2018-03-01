@@ -20,12 +20,14 @@ class Sensors {
     DallasTemperature *sensors;
     DHT *dht;
     Adafruit_BMP280 *bme;
+    //  max number members of values array init with -1 
+    int maxCounterNumber = - 1;
     //  media
     int mediaIn, mediaOut, mediaBaro, mediaHumid;
     //  numbers of last measurent value in values array
     int lastDS18B20 = REQUEST_COUNT, lastDHT = REQUEST_COUNT, lastBMP280 = REQUEST_COUNT;
     int tIn, tOut, humid, baro;
-    int bmpTemp = -200;
+    int dsTemp = -200;
     String currentInJSON = "";
     String allIn[REQUEST_COUNT] , allOut[REQUEST_COUNT] , allHumid[REQUEST_COUNT], allBaro[REQUEST_COUNT];
     //  methods

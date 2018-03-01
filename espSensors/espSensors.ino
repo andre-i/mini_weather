@@ -1,8 +1,8 @@
 
-
 #include "props.h"
 #include "Sensors.h"
 #include "Util.h"
+#include "SerialHandler.h"
 #include <Ticker.h>
 
 #include <ESP8266WiFi.h>
@@ -11,17 +11,18 @@
 #include <FS.h>
 
 // mark for version software
-String version = "0.1";
+String version = "0.01";
 
 bool DEBUG = true;
 int wifiMode = DEVICE_NOT_WIFI;
 
 Sensors s(ONE_WIRE_BUS, DHT_TYPE);
-Util util(true);
+Util util(DEBUG);
+SerialHandler sHandler(&util);
 Ticker timer;
 
 bool isSetDate = false; // if current date appointed must be set to true
-bool isFS = true; // set to true if server content place on SD else place is SPIFFS
+bool isFS = true; // access to SPIFFS 
 
 //  semaphore
 const byte DHT_SENSOR = 1;
@@ -31,21 +32,26 @@ byte sensorToCheck = DHT_SENSOR;
 
 bool isCheckSensors = false;
 bool isAddMinute = false;
+bool isWriteValues = false;
 
-long cycleDuration = CYCLE_DURATION;
-long tickDuration = SENSORS_REQUEST_PERIOD;
-int maxTickCount;
+int tickDuration = CYCLE_DURATION;
+int checkSensorsTick = SENSORS_REQUEST_PERIOD / CYCLE_DURATION ;
+int tickInMinute = 60 / CYCLE_DURATION;
+int tickInHour = 3600 / CYCLE_DURATION;
 int tickCount = 0;
 
 void tick() {
   // if (DEBUG)Serial.println("Tick");
   tickCount++;
-  isCheckSensors = true;
-  if (tickCount == maxTickCount) {
-    // in debug mode write to file all minute
-    if (DEBUG) util.setDebug(true);
-    isAddMinute = true;
+  if (tickCount == tickInMinute)isAddMinute = true;
+  if (tickCount == checkSensorsTick) isCheckSensors = true;
+  if (tickCount == tickInHour ) {
     tickCount = 0;
+    isWriteValues = true;
+  }
+  if (DEBUG){
+    isCheckSensors = true;
+    if(tickCount == tickInMinute) isWriteValues = true;
   }
 }
 
@@ -62,97 +68,7 @@ void printFullDate() {
   Serial.println(full);
 }
 
-void readFile(char answ[]) {
-  String fName = answ;
-  fName = fName.substring(2, fName.length());
-  File file = SPIFFS.open(fName.c_str(), "r");
-  if (!file) {
-    Serial.print("Can`t open file: ");
-    Serial.println(fName);
-    Dir dir = SPIFFS.openDir(fName.c_str());
-    String content = "";
-    while (dir.next()) {
-      content += "\t" + dir.fileName() + "\t";
-      File f = dir.openFile("r");
-      content += String(f.size()) + "\n";
-      f.close();
-      delay(60);
-    }
-    if (content.length() > 1) {
-      Serial.println("File is directory it contains:");
-      Serial.println(content);
-    }
-    return;
-  } else {
-    Serial.println("\t______ file content : ____");
-    while (file.available())Serial.write(file.read());
-    Serial.println("\n\t  ________   EOF  _______  ");
-    file.close();
-  }
-}
 
-void showManual() {
-  Serial.println(" Console command:\n1) DEBUG : \n\t\"y\" - ON  \n\t\"n\" - OFF ");
-  Serial.println("2) Check to work with SPIFFS :\n\t\"sp\" - print whether available SPIFFS");
-  Serial.println("3) Read file from SPIFFS : r_/full/path/with/fileName.ext  where:\n\t r_  - is signal on print file(or directory) content \n\t /full/path/with/fileName.ext - fullFile name");
-  Serial.println("4) See SPIFFS info : \n\t\"si\" - print info about SPIFFS of chip");
-  Serial.println("5) Set date/time - enter it in format:\"year/month/day/hour/minute\"");
-  Serial.println("\tWARNING - date must be strongly follow format, else date be break");
-  Serial.println("\tyear - 4 numbers\n\t\tmonth - 3 chars( first must be Upper Case)\n\t\tday, hour and minute consist from 2 numbers, if value less than 10 firs must be 0(null)");
-
-}
-
-void handleSerial() {
-  char *r;
-  char answ[40];
-  int i = 0;
-  delay(20);
-  while (Serial.available() > 0) {
-    answ[i] = Serial.read();
-    i++;
-    delay(20);
-  }
-  answ[i] = '\0';
-  r = answ;
-  /*
-    if (DEBUG) {
-    Serial.print("I get:" );
-    Serial.println(r);
-    }
-  */
-  if (i < 3) {
-    if (answ[0] == 'y' || answ[0]  == 'Y') {
-      DEBUG = true;
-      Serial.println(" ON DEBUG output!");
-    } else if (answ[0] == 'n' || answ[0] == 'N') {
-      DEBUG = false;
-      Serial.println(" OFF DEBUG output!");
-    } else if (answ[0] == 's' && answ[1] == 'p') {
-      isFS = util.initFS();
-    } else if (answ[0] == 's' && answ[1] == 'i') {
-      Serial.println(util.fsINFO());
-    } else {
-      showManual();
-    }
-  } else {
-    if (answ[0] == 'r' && answ[1] == '_') {
-      readFile(answ);
-      return;
-    }
-    //  set date-time
-    if (answ[0] == '2' && answ[1] == '0' ) {
-      if (util.assignTime(r)) {
-        String answ = "(Ok) Success set date-time: " + util.getYear() + "/" + util.getMonth() + "/" + util.getDay() + " " + util.getHour() + "h";
-        Serial.println(answ);
-        isSetDate = true;
-        //    checkShiftTime();
-      } else {
-        Serial.println("(No) Fail set date-time");
-      }
-    }
-  }
-
-}
 
 // ==========================================
 //          esp web server
@@ -224,7 +140,7 @@ bool readSPIFFS(String path, String dataType) {
       Serial.println("WARNING : Sent less data than expected!");
     } else {
       if (DEBUG) {
-        String out = "SPIFFS send file: " + path + "   dataType: " + dataType;
+        String out = "SPIFFS send file [ " + path + "   dataType: " + dataType + " ]";
         Serial.println(out);
       }
     }
@@ -245,11 +161,6 @@ bool loadFile(String path) {
   else if (path.endsWith(".jpg")) dataType = "image/jpeg";
   else if (path.endsWith(".svg")) {
     dataType = "image/svg+xml";
-  }
-  if (DEBUG) {
-    Serial.print("Try get file: ");
-    Serial.print(path);
-    Serial.println("  from FPIFFS");
   }
   return readSPIFFS(path, dataType);
 }
@@ -348,29 +259,31 @@ void prepareServer() {
 //            end sever
 //  ==========================================
 
-
+void showStartMessage() {
+  // print chip properties
+  Serial.println(String("\n\t version:" + version));
+  Serial.println("\n\n\tDHTxx DS18b20 BMP280 test!");
+  Serial.print(" Flash size:\treal = ");
+  Serial.print(ESP.getFlashChipRealSize());
+  Serial.print("\t programm = ");
+  Serial.println(ESP.getFlashChipSize());
+}
 
 
 void setup() {
   Serial.begin(115200);
-  Serial.println(String("\n\t version:" + version));
-  Serial.println("\n\n\tDHTxx DS18b20 BMP280 test!");
-  Serial.print(" Flash size:\n\treal = ");
-  Serial.print(ESP.getFlashChipRealSize());
-  Serial.print("\t programm = ");
-  Serial.println(ESP.getFlashChipSize());
-  maxTickCount = cycleDuration / tickDuration;
+  showStartMessage();
+  //
   int sensInit = s.init();
+  util.setDebug(DEBUG);
   // try init sd card
   if (!util.initFS()) {
-    Serial.println("\tWARNING : SPIFFS not init");
     isFS = false;
   } else isFS = true;
   wifiMode = util.initWIFI();
   switch (wifiMode) {
     case DEVICE_STA_MODE:
-      isSetDate = util.sync();
-      if (isSetDate) {
+      if (util.sync()) {
         printFullDate();
         if (isFS) {
           String res = (sensInit == 0) ? " success init" : " fail init";
@@ -381,42 +294,41 @@ void setup() {
       }
       break;
     case  DEVICE_AP_MODE:
-      Serial.println("Device start WiFi as AP");
-      if (isFS)Serial.println("Perhaps need set date for write sensors data to SD card.\nPrint \"h\" for detail");
-      isSetDate = false;
+      if (isFS)Serial.println("Perhaps need set date for write sensors data to storage.\nPrint \"h\" for detail");
       break;
     case DEVICE_NOT_WIFI:
-      Serial.println("WARNING: device can`t start of WiFi!!!\nPerhaps need set date for write sensors data to SD card.\nPrint \"h\" by serial for detail");
-      isSetDate = false;
+      if(isFS)Serial.println("WARNING: device can`t start of WiFi!!!\nPerhaps need set date for write sensors data to SPIFFS.\nPrint \"h\" by serial for detail");
       break;
   }
-  /*
-    // file system
-    if (!SPIFFS.begin()) {
-    Serial.println("WARNING: SPIFS not mount");
-    }
-  */
+  //  set FS state to serial handler
+  sHandler.setFSstate(isFS);
   bool isMDNS = MDNS.begin(HOST) ;
   if (isMDNS) {
     Serial.println("MDNS responder started");
     Serial.print("You can now connect to http://");
-    Serial.println(HOST);
+    Serial.print(HOST);
     Serial.println(".local");
   } else Serial.println("Can`t start mDNS");
   if (DEBUG) {
-    Serial.print("tickDuration = "); Serial.print(tickDuration);
-    Serial.print("    maxTickCount = "); Serial.println(maxTickCount);
+    Serial.print("tickDuration = "); Serial.println(tickDuration);
   }
   prepareServer();
   if (isMDNS)MDNS.addService("http", "tcp", PORT);
-
+  // start timer
   timer.attach(tickDuration, tick);
 }
 
+void writeSensorsValues() {
+  if (util.hasWrite()) {
+    util.writeSensorsValues(s.getMedia(T_IN), s.getMedia(T_OUT), s.getMedia(BARO), s.getMedia(HUMID));
+  } else {
+    Serial.println("WARNING - Can`t write sensors values (not access to storage or not set time)");
+  }
+}
 
 
 void loop() {
-  if (Serial.available() > 0)handleSerial();
+  if (Serial.available() > 0)sHandler.handle();
   // for WiFi
   server.handleClient();
   if (isCheckSensors) {
@@ -426,7 +338,7 @@ void loop() {
         sensorToCheck = DS_SENSOR;
         break;
       case DS_SENSOR:
-        s.readDS18B20();
+        if (DEBUG)s.readDS18B20();
         sensorToCheck = BMP_SENSOR ;
         break;
       case BMP_SENSOR:
@@ -435,10 +347,10 @@ void loop() {
         s.makeCurrentToJSON();
         isCheckSensors = false;
         break;
-      default:   delay(70);
     }
-  } else delay(70);
-  if (isSetDate && isAddMinute) {
+  }
+  delay(70);
+  if (isAddMinute) {
     if (DEBUG) {
       Serial.println("call util.addMinute()");
       Serial.println(s.getCurrentAsJSON());
@@ -446,10 +358,9 @@ void loop() {
     util.addMinute();   // shift time on 1 minute
     isAddMinute = false;
   }
-  if (util.hasWrite()) {
-    // if (DEBUG)Serial.println("Try write sensors values to SD card");
-    if (isFS)util.writeSensorsValues(s.getMedia(T_IN), s.getMedia(T_OUT), s.getMedia(BARO), s.getMedia(HUMID));
-    else("WARNING - not access to SD card - Can`t write sensors values");
+  if ( isWriteValues ) {
+    writeSensorsValues();
+    isWriteValues = false;
   }
 }
 
