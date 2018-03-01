@@ -79,7 +79,7 @@ void Sensors::readBMP280() {
 
 //  get sensors values
 void Sensors::makeCurrentToJSON(){
-  currentInJSON = String("{ \"tIn\":") + String(tIn) + String(", \"tOut\":") + String(tOut/10) +
+  currentInJSON = String("{ \"tIn\":") + String(tIn) + String(", \"tOut\":") + String(tOut) +
          String(", \"baro\":") + String(baro) + String(", \"humid\":") + String(humid) + String(" }");
 }
 
