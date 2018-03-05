@@ -159,16 +159,11 @@ bool Util::hasWrite() {
 }
 
 void Util::writeSensorsValues(int tIn, int tOut, int baro, int humid) {
-  if (DEBUG)Serial.println("Call write sensors values");
   String fullMonthFileName = sensorDataDir + pathSeparator + year + pathSeparator + month + ".txt";
-  if (DEBUG) {
-    Serial.print(" Try write data to file \"");
-    Serial.println( fullMonthFileName);
-  }
   File monthF = SPIFFS.open(fullMonthFileName, "a");
-  if (DEBUG)Serial.println("try open month file");
   if (!monthF) {
     writeLog("Failed to open : " + fullMonthFileName);
+    if(DEBUG)Serial.println("WARNING - fail open file for write sensors data to file system");
     monthF.close();
     return;
   }
@@ -178,12 +173,12 @@ void Util::writeSensorsValues(int tIn, int tOut, int baro, int humid) {
     Serial.print(fullMonthFileName);
     Serial.print(" [ ");
     Serial.print(output);
-    Serial.println(" ]");
+    Serial.print(" ] ");
   }
   monthF.println();
   monthF.print(output);
   monthF.close();
-  if (DEBUG) Serial.println( " Success write data to file!");
+  if (DEBUG) Serial.println( "- Success write!");
 }
 
 File Util::openFileToRead(const char *fName) {
@@ -193,7 +188,7 @@ File Util::openFileToRead(const char *fName) {
       return opened;
     } else opened.close();
   }
-  return SPIFFS.open("directory/not/found/FILE_NOT_FOUND", "r");
+  return SPIFFS.open("file/not/found/not.found.txt", "r");
 }
 
 void Util::closeFile() {

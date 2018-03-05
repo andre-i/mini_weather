@@ -11,7 +11,7 @@
 #include <FS.h>
 
 // mark for version software
-String version = "0.01";
+static String version = "0.02";
 
 bool DEBUG = true;
 int wifiMode = DEVICE_NOT_WIFI;
@@ -30,28 +30,46 @@ const byte DS_SENSOR = 2;
 const byte BMP_SENSOR = 3;
 byte sensorToCheck = DHT_SENSOR;
 
-bool isCheckSensors = false;
-bool isAddMinute = false;
-bool isWriteValues = false;
+static bool isCheckSensors = false;
+static bool isAddMinute = false;
+static bool isWriteValues = false;
 
-int tickDuration = CYCLE_DURATION;
-int checkSensorsTick = SENSORS_REQUEST_PERIOD / CYCLE_DURATION ;
-int tickInMinute = 60 / CYCLE_DURATION;
-int tickInHour = 3600 / CYCLE_DURATION;
-int tickCount = 0;
+//  semaphore
+static int tickDuration = CYCLE_DURATION;
+static int checkSensorsTick = SENSORS_REQUEST_PERIOD / CYCLE_DURATION ;
+static int tickInMinute = 60 / CYCLE_DURATION;
+static int tickInHour = 3600 / CYCLE_DURATION;
+static int currentInMinute = 0;
+static int currentInHour = 0;
+static int currentForCheck = 0;
 
+/**
+ *  set state for 
+ *  1.check sensors 
+ *  2.set current time  
+ *  3.write values to storage
+ *  in debud mode: any tick - check sensors, any minute - write sensors values to storage
+ */
 void tick() {
   // if (DEBUG)Serial.println("Tick");
-  tickCount++;
-  if (tickCount == tickInMinute)isAddMinute = true;
-  if (tickCount == checkSensorsTick) isCheckSensors = true;
-  if (tickCount == tickInHour ) {
-    tickCount = 0;
+  currentInMinute++;
+  currentInHour++;
+  currentForCheck++;
+  if (currentInMinute == tickInMinute){
+    isAddMinute = true;
+    currentInMinute = 0;
+  }
+  if (currentInHour == tickInHour){
     isWriteValues = true;
+    currentInHour = 0;
+  }
+  if(currentForCheck == checkSensorsTick){
+    isCheckSensors = true;
+    currentForCheck = 0;
   }
   if (DEBUG){
     isCheckSensors = true;
-    if(tickCount == tickInMinute) isWriteValues = true;
+    if(currentInMinute == 0)isWriteValues = true;
   }
 }
 
