@@ -38,10 +38,11 @@ int Sensors::init() {
 
 //  request sensors, compute media , fill arrays of values
 
+// ds 18B20 purpose comparison with themperature other senseos
 void Sensors::readDS18B20() {
   //if (++lastDS18B20 > maxCounterNumber)lastDS18B20 = 0;
   sensors->requestTemperatures(); // Send the command to get temperatures
-  dsTemp = (int)(sensors->getTempCByIndex(0) * 10 + 0.5)/10;
+dsTemp = (int)(sensors->getTempCByIndex(0) * 10 + 0.5)/10;
 }
 
 void Sensors::readDHT() {
@@ -73,6 +74,7 @@ void Sensors::readBMP280() {
   allOut[lastBMP280] = String(tOut);
   if (lastBMP280 == 0)mediaOut = tOut;
   else mediaOut = (int)((mediaOut + tOut) / 2 + 0.5);
+
 }
 
 
@@ -87,6 +89,7 @@ String Sensors::getCurrentAsJSON() {
   if(DEBUG){
     Serial.print("\"getCurrentAsJSON\": ");
     Serial.print(currentInJSON);
+ng res = " [ Dallas t= " + String(tOut) + " ]";
     String res = " [ BMP280 t= " + String(tOut) + " Dallas t= " + String(dsTemp) + " ]";
     Serial.println(res);
   }

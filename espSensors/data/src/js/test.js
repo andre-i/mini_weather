@@ -122,6 +122,8 @@ function get(url, callback) {
  *    2. user request handler
  */
 (function () {
+    var cache = {}; // cache for data by months
+
     //  form
     var form = document.forms['checkDuration'];
     // submit button
@@ -137,6 +139,33 @@ function get(url, callback) {
     var month = form.elements['monthSelect'];
     var day = form.elements['daySelect'];
 
+    var sensors = {
+        'tIn': {
+            edges: { min: 0, max: 40},
+            yLabel: 'здание t ℃',
+            color: '#a85',
+            text: 'Термометр комната'
+        },
+        'tOut': {
+            edges: { min: -50, max: 50},
+            yLabel: 'улица ℃',
+            color: '#959',
+            text: 'Термометр улица'
+        },
+        'baro': {
+            edges: { min: 600, max: 800},
+            yLabel: 'мм.рт.ст',
+            color: 'gray',
+            text: 'Барометр'
+        },
+        'humid': {
+            edges: { min: 0, max: 100},
+            yLabel: 'влажность %',
+            color: '#46b',
+            text: 'Гигрометр'
+        }
+    }
+
 
     month.addEventListener('click', function () {
         if (month.selectedIndex > 0 && day.hasAttribute('disabled'))day.removeAttribute('disabled');
@@ -149,9 +178,9 @@ function get(url, callback) {
 
     // sensor name , text
     function getSensor() {
-        var sensor = {};
-        sensor.text = interval.getElementsByTagName('option')[interval.selectedIndex].innerHTML;
-        sensor.name = getVal(form.elements['sensorSelect']);
+        var name = getVal(form.elements['sensorSelect']);
+        var sensor = sensors[name];
+        sensor.name = name;
         return sensor;
     };
 
@@ -172,61 +201,110 @@ function get(url, callback) {
      */
     function showChartByUserRequest() {
         var sensor = getSensor();
-        var url, monthName;
-        if (interval.selectedIndex === 1)url = 'lastValues?sensor=' + sensor.name;
-        if (interval.selectedIndex === 2) {
-            if (month.selectedIndex > 0) {
-                monthName = '/' + getVal(month) + '.txt';
-            } else {
-                monthName = '/summary.txt';
-            }
-            url = 'sensorData?period=' + getVal(year) + monthName;
-            //if(!sButton.hasAttribute('disabled'))sButton.setAttribute('disabled','disabled');
-        }
-        createChart(sensor, url);
-    }
-
-    /* get data from server and ship it functions for draw chart */
-    function createChart(sensor, url) {
-        if (debug)console.log('try create sensor ' + JSON.stringify(sensor) + '  url=' + url);
-        url = serverRoot + url;
-        if (url.indexOf('.txt') < 0) {
+        var url, monthName, yearNum;
+        if (interval.selectedIndex === 1) {
+            url = 'lastValues?sensor=' + sensor.name;
             get(url, function (data) {
                 if (data)drawLast(sensor, data);
                 else console.log("not get data");
             });
         }
-        else {
-            get(url, function (data) {
-                //console.log('\n URL="'+ url +'" get:\n' + data);
-                if (url.indexOf('summary') > 0) {
-                    drawYearChart(sensor, data);
-                } else if (getVal(day) > 0) {
-                    drawDayChart(sensor, data);
-                } else {
-                    drawMonthChart(sensor, data);
+        if (interval.selectedIndex === 2) {
+            yearNum = getVal(year);
+            if (month.selectedIndex > 0) {
+                monthName = getVal(month);
+                if (!hasInterval(yearNum, monthName)) {
+                    console.log("test.js: such interval NOT FOUND \"" + yearNum + '/' + monthName + '\"');
+                    alert("Error");
+                    return;
                 }
-            })
+                url = 'sensorData?period=';
+                var period = yearNum + '/' + monthName + '.txt';
+                var res = getFromCache(period);
+                if (res) {
+                    if(debug)console.log('get data from cache');
+                    day.selectedIndex < 1 ? drawMonthChart(sensor, res) : drawDayChart(sensor, res, day.selectedIndex);
+                }else{
+                    get(url + period, function (data) {
+                        if (data) {
+                            addToCache(period, data);
+                            day.selectedIndex < 1 ? drawMonthChart(sensor, data) :
+                                drawDayChart(sensor, data, day.selectedIndex);
+                        } else console.log('not get data for month: ' + monthName);
+                    });
+                }
+            } else {
+                // year chart
+                drawYearChart(sensor, yearNum);
+            }
         }
     }
 
-    function drawYearChart(sensor, data) {
-        if (debug){
-            console.log('drawYearChart for sensor=' + sensor.name + '  year=' + getVal(year) +
-                " data:\n " + data + "\n____EOF___");
+    var flag = true;
+
+    function getDataForYear(yNum, callback) {
+        var next = (function () {
+            var n = 0;
+            return function () {
+                return n++;
+            };
+        }());
+        var result = {};
+        var headURL = 'sensorData?period=';
+        if (debug)console.log("chart for year " + yNum);
+        if (availablePeriods.hasOwnProperty(yNum)) {
+            var all = availablePeriods[yNum];
+
+            for (var i = 0; i < all.length; i++) {
+                var period = yNum + '/' + all[i] + '.txt';
+                var res = getFromCache(period);
+                if (res){
+                    if(debug)console.log('month ' + all[i] + ' get from cache');
+                    result[all[i]] = res;
+                    if(i == all.length - 1)callback(result);
+                }
+                else {
+                    get(headURL + period, function (data) {
+                        var j = next();
+                        if (debug)console.log("add " + all[j] + " month data from server");
+                        if (data) {
+                            addToCache(yNum + '/' + all[j] + '.txt', data);
+                            result[all[j]] = data;
+                            if (data.length < 1)return 'ERROR - empty month data for: \"' + all[j] + '\"';
+                            if (j == all.length - 1)callback(result);
+                        }
+                    });
+                }
+            }
+        } else {
+            console.log('test.js: can`t find year \"' + yNum + '\" for draw year chart');
+            alert('Error for: ' + yNum);
+            return 'ERROR - cant find data for year:\"' + yNum + '\"';
         }
+    }
+
+    function drawYearChart(sensor, yearNum) {
+        getDataForYear(yearNum, function (res) {
+            if (JSON.stringify(res) == '{}') {
+                console.log("test.js(drawYearChart) - Get empty year data for " + yearNum);
+                alert("Не могу получить данные за " + yearNum + " год\nПроверьте работу погодной станции.");
+                return 1;
+            }
+
+        });
+
     }
 
     function drawMonthChart(sensor, data) {
-        if (debug){
-            console.log('drawMonthChart for sensor=' + sensor.name + '  month=' + getVal(month)+
-                "data:\n " + data + "\n____EOF___");
+        if (debug) {
+            console.log('drawMonthChart for sensor=' + sensor.name + '  month=' + getVal(month) +
+                "data: \n " + data + "\n____EOF___");
         }
     }
 
-    function drawDayChart(sensor, data) {
-        if (debug){
-            console.log('drawDayChart for sensor=' + sensor.name + ' day=' + getVal(day)+
+    function drawDayChart(sensor, data, dayNum) {
+        if (debug) {
+            console.log('drawDayChart for sensor=' + sensor.name + ' day=' + dayNum +
                 " data:\n " + data + "\n____EOF___");
         }
     }
@@ -236,30 +314,10 @@ function get(url, callback) {
     function drawLast(sensor, data) {
         if (debug)console.log("drawLast [ name:" + sensor.name + ' text:' + sensor.text + ' ]');
         // edges for sensors data
-        var edges = {};
-        var color;
+        var edges = sensor.edges;
+        var color = sensor.color;
+        var yLabel = sensor.yLabel;
         var arr, x, size;
-        var yLabel = '';
-        if (sensor.name == 'tIn') {
-            edges = { min: 0, max: 40};
-            yLabel = 'здание t ℃';
-            color = '#a85';
-        }
-        if (sensor.name == 'tOut') {
-            edges = { min: -50, max: 50};
-            yLabel = 'улица ℃';
-            color = '#959';
-        }
-        if (sensor.name == 'baro') {
-            edges = { min: 600, max: 800};
-            yLabel = 'мм.рт.ст';
-            color = 'gray';
-        }
-        if (sensor.name == 'humid') {
-            edges = { min: 0, max: 100};
-            yLabel = 'влажность %';
-            color = '#46b';
-        }
         var xlabel = 'деление 5 минут';
         chartBoard.setAxisLabels(xlabel, yLabel);
         var chartName = sensor.text;
@@ -293,8 +351,12 @@ function get(url, callback) {
     var year = form.elements['yearSelect'];
     var month = form.elements['monthSelect'];
 
+    function checkInterval() {
+
+    }
+
     /**    interval Option Listener
-     *  get from server intervals and set it eabled on options
+     *  get from server intervals and set it enabled on options
      *
      */
     function setAvailableIntervals() {
@@ -306,10 +368,10 @@ function get(url, callback) {
         }
     }
 
-    // inreval Option Listener fill availablePeriods object
+    // interval Option Listener fill availablePeriods object
     function computePeriods(data) {
         var mName = '';
-        if(debug)console.log("getPeriods:" + JSON.stringify(data));
+        //if(debug)console.log("getPeriods:" + JSON.stringify(data));
         if (!data || !(data instanceof Array) || data.length < 1) {
             availablePeriods = {};
             return;
@@ -388,6 +450,27 @@ function get(url, callback) {
             if (sButton.hasAttribute('disabled'))sButton.removeAttribute('disabled');
             if (month.hasAttribute('disabled'))month.removeAttribute('disabled');
         }
+    }
+
+    function hasInterval(yearNum, monthName) {
+        var hasInterval = true;
+
+        hasInterval = availablePeriods.hasOwnProperty(yearNum) && availablePeriods[yearNum] instanceof Array;
+        if (debug)console.log("get yearNum=" + yearNum + "  monthName=" + monthName + " months_in_periods: " + availablePeriods[yearNum]);
+        if (hasInterval) {
+            hasInterval = availablePeriods[yearNum].indexOf(monthName) >= 0;
+        }
+        return hasInterval;
+    }
+
+    function addToCache(period, data) {
+        if (cache.hasOwnProperty(period))return false;
+        cache[period] = data;
+    }
+
+    function getFromCache(period) {
+        if (cache.hasOwnProperty(period))return cache[period];
+        return false;
     }
 
 }());
