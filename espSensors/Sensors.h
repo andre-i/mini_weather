@@ -20,6 +20,8 @@ class Sensors {
     DallasTemperature *sensors;
     DHT *dht;
     Adafruit_BMP280 *bme;
+    //  max number members of values array init with -1 
+    int maxCounterNumber = - 1;
     //  media
     int mediaIn, mediaOut, mediaBaro, mediaHumid;
     //  numbers of last measurent value in values array

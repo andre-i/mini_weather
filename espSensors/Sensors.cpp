@@ -6,7 +6,7 @@ extern bool DEBUG;
 
 /** set class variables for sensors */
 Sensors::Sensors(uint8_t wBus, int dhtType) {
-  for(int i = 0; i < REQUEST_COUNT ; i++){
+  for(int i = 0; i < maxCounterNumber ; i++){
     allIn[i] = allOut[i] =allBaro[i] = allHumid[i] = "-100";
   }
   tIn = tOut = baro = humid = DEVICE_DISCONNECTED_C;
@@ -19,8 +19,9 @@ Sensors::Sensors(uint8_t wBus, int dhtType) {
 
 /** Try prepare sensors */
 int Sensors::init() {
+  maxCounterNumber = REQUEST_COUNT - 1;
   // ds18b20
-  sensors->begin();
+  if(DEBUG)sensors->begin();
   if(DEBUG)Serial.println("Init ds18b20");
   // dht 11
   dht->begin();
@@ -39,16 +40,13 @@ int Sensors::init() {
 
 // ds 18B20 purpose comparison with themperature other senseos
 void Sensors::readDS18B20() {
-  if (++lastDS18B20 > 59)lastDS18B20 = 0;
+  //if (++lastDS18B20 > maxCounterNumber)lastDS18B20 = 0;
   sensors->requestTemperatures(); // Send the command to get temperatures
-  if(DEBUG)dsTemp = (int)(sensors->getTempCByIndex(0) * 10 + 0.5);
-  allOut[lastDS18B20] = String(float(tOut / 10));
-  if (lastDS18B20 == 0)mediaOut = tOut;
-  else mediaOut = (int)((mediaOut + tOut) / 2 + 0.5);
+dsTemp = (int)(sensors->getTempCByIndex(0) * 10 + 0.5)/10;
 }
 
 void Sensors::readDHT() {
-  if (++lastDHT > 59)lastDHT = 0;
+  if (++lastDHT > maxCounterNumber)lastDHT = 0;
   tIn = (int)(dht->readTemperature() + 0.5);
   humid = (int)(dht->readHumidity() + 0.5);
   if ( isnan(tIn) || isnan(humid)) {
@@ -67,19 +65,23 @@ void Sensors::readDHT() {
 }
 
 void Sensors::readBMP280() {
-  if (++lastBMP280 > 59) lastBMP280 = 0;
+  if (++lastBMP280 > maxCounterNumber) lastBMP280 = 0;
   baro = (int)(bme->readPressure() / 133.32239F + 0.5);
   allBaro[lastBMP280] = String(baro);
   if (lastBMP280 == 0)mediaBaro = baro;
   else mediaBaro = (int)((mediaBaro + baro) / 2 + 0.5);
-  tOut = bme->readTemperature();
+  tOut = bme->readTemperature(); 
+  allOut[lastBMP280] = String(tOut);
+  if (lastBMP280 == 0)mediaOut = tOut;
+  else mediaOut = (int)((mediaOut + tOut) / 2 + 0.5);
+
 }
 
 
 
 //  get sensors values
 void Sensors::makeCurrentToJSON(){
-  currentInJSON = String("{ \"tIn\":") + String(tIn) + String(", \"tOut\":") + String(tOut/10) +
+  currentInJSON = String("{ \"tIn\":") + String(tIn) + String(", \"tOut\":") + String(tOut) +
          String(", \"baro\":") + String(baro) + String(", \"humid\":") + String(humid) + String(" }");
 }
 
@@ -87,7 +89,8 @@ String Sensors::getCurrentAsJSON() {
   if(DEBUG){
     Serial.print("\"getCurrentAsJSON\": ");
     Serial.print(currentInJSON);
-    String res = " [ Dallas t= " + String(tOut) + " ]";
+ng res = " [ Dallas t= " + String(tOut) + " ]";
+    String res = " [ BMP280 t= " + String(tOut) + " Dallas t= " + String(dsTemp) + " ]";
     Serial.println(res);
   }
   return currentInJSON;
@@ -96,7 +99,7 @@ String Sensors::getCurrentAsJSON() {
 
 String Sensors::getLastAsJSON(String dataType) {
   String *type;
-  int len = REQUEST_COUNT - 1, last ;
+  int len = maxCounterNumber, last ;
   String res = "{ \"" + dataType + "\" : [ ";
   if (dataType == T_IN ) {
     type = allIn;
