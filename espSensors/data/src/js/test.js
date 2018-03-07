@@ -118,7 +118,7 @@ function get(url, callback) {
 
 
 /**  1. check available for years and months for sensors data
- *    set enables for propertly options
+ *    set enables for appropriate options
  *    2. user request handler
  */
 (function () {
@@ -211,16 +211,24 @@ function get(url, callback) {
     }
 
     function drawYearChart(sensor, data) {
-        if (debug)console.log('drawYearChart for sensor=' + sensor.name + '  year=' + getVal(year));
-        var url = serverRoot + 'sensorData?period=year/summary.txt';
+        if (debug){
+            console.log('drawYearChart for sensor=' + sensor.name + '  year=' + getVal(year) +
+                " data:\n " + data + "\n____EOF___");
+        }
     }
 
     function drawMonthChart(sensor, data) {
-        if (debug)console.log('drawMonthChart for sensor=' + sensor.name + '  month=' + getVal(month));
+        if (debug){
+            console.log('drawMonthChart for sensor=' + sensor.name + '  month=' + getVal(month)+
+                "data:\n " + data + "\n____EOF___");
+        }
     }
 
     function drawDayChart(sensor, data) {
-        if (debug)console.log('drawDayChart for sensor=' + sensor.name + ' day=' + getVal(day));
+        if (debug){
+            console.log('drawDayChart for sensor=' + sensor.name + ' day=' + getVal(day)+
+                " data:\n " + data + "\n____EOF___");
+        }
     }
 
 
@@ -301,7 +309,7 @@ function get(url, callback) {
     // inreval Option Listener fill availablePeriods object
     function computePeriods(data) {
         var mName = '';
-        //	if(debug)console.log("getPeriods:" + JSON.stringify(data));
+        if(debug)console.log("getPeriods:" + JSON.stringify(data));
         if (!data || !(data instanceof Array) || data.length < 1) {
             availablePeriods = {};
             return;

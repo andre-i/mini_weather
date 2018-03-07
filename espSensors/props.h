@@ -1,10 +1,13 @@
 #ifndef props_h
 #define props_h
 
+//   -----------------------------------------------
 //   ------------  SERVER NOTES  -------------------
+//   -----------------------------------------------
 
-/*  file system
+/*  =========    file system    ==============
  *  /
+ *  --props.txt  // set current wi-fi parameters
  *	--index.htm
  *  --log.log
  *  --/data
@@ -34,20 +37,31 @@
  * ________________________________________
  * 		for	month_name.txt
  * 
- * 	day hour tIn tOut pressure humidites
+ * 	day  hour  tIn  tOut  pressure  humidites
  * 	day2 hour2 tIn2 tOut2 pressure2 humidites2
  * 				...
-
  * _________________________________________
- * 		for summary.txt
- *  month tIn tOut pressure humidites
  * 			...
  *	(whitespace in line for files replaced on value "#defined SEP ... " in this file )
  *
  * 
+ * _________________________________________
+ *      props.txt
+ * (contains start parameters of wi-fi for two cases STA and AP mode)
+ * # first phund - comment
+ * ## for STA
+ * ss ssid 
+ * sp password
+ * ## for AP 
+ * as ssid 
+ * ap password
+ * 
+ * where:     ssid - string with lan name,  
+ *          password - string with password      
+ * 
  */
 
-/* JSON  answer formats for   browser 
+/* ==================== JSON  answer formats for   browser =========================
  *        query           |       answer
  *        
  *  1) /current           | { "tIn": val, "tOut" : val, "baro" : val, "humid" : val }
@@ -57,7 +71,7 @@
  */
 
 
- /*  request with parameters looks
+ /* ====================== request with parameters looks =============================
   * 1) /lastValues?sensor=s_name  ( s_name may be: tIn, tOut, baro, humid )
   * 		return result as JSON
   * 2) /readFile?fName=file_name   ( file_name is full file name e.g /some/dir/file.ext )
@@ -68,6 +82,12 @@
   * 		return resource as file content
   */
 
+
+
+
+//   ------------------------------------------------------------
+//                parameters
+//   ------------------------------------------------------------
 
 //
 // ==================== SENSORS ===========================
@@ -84,51 +104,54 @@
 #define HUMID "humid"
 
 //  cycle requests 
-#define REQUEST_COUNT 60
+#define REQUEST_COUNT 12
 
 //
 // ================= storage ===================
 //
 //#define CS_PIN 16
 //  SPIFFS
-#define SENSOR_DATA_DIR   "data"
-#define TEST_YEAR_DIR "2019"
-#define SEP " "
+#define SENSOR_DATA_DIR   "/data"
+#define SEP " "   // divide sensors data by write to file in one string. see top 
 // report to SPIFFS
-#define LOG_FILE "log.log"
-
+#define LOG_FILE "/log.log"
+#define PROPS_FILE "/props.txt"
 
 //
 // =================   WI-FI ====================
 
 enum wifiMODE { DEVICE_AP_MODE, DEVICE_STA_MODE, DEVICE_NOT_WIFI};
+// starts symbols for wifi params
+#define STA_SSID "ss"
+#define STA_PASSWD "sp"
+#define AP_SSID "as"
+#define AP_PASSWD "ap"
 
 //  WIFI_mode WEB_SERVER
 //  STA
-#define STA_SSID  "mywifi"
-#define STA_PASSWD "bezwolos"
+#define STA_SSID_DEF  "mywifi"
+#define STA_PASSWD_DEF "bezwolos"
 //  AP
 #define AP_IP_ADDR  192,168,10,1
 #define AP_IP_SUBNET  255,255,255,0
-#define AP_SSID "espWeather"
-#define AP_PASSWD  "esp8266srv"
+#define AP_SSID_DEF "espWeather"
+#define AP_PASSWD_DEF  "espWeather"
 
 //
 //  ==================  SERVER  ==================
 //
 #define HOST "weather"
 #define PORT 80
-#define SERVER_ROOT  "/serv/"
-#define STA_PARAMS_FILE "/server/staParams.txt"
+#define SERVER_ROOT  "/"
 #define REQUEST_DATA_URL "www.yandex.ru"
-#define  NOT_FOUND "NotFound.htm"
+#define  NOT_FOUND "/NotFound.htm"
 
 //
 // ====================  semaphore ==================
 //
 
-#define CYCLE_DURATION 60
-#define SENSORS_REQUEST_PERIOD 5
+#define CYCLE_DURATION 5 // call ticker period
+#define SENSORS_REQUEST_PERIOD 300 //  in seconds
 
 
 
