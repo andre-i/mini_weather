@@ -61,7 +61,12 @@ function Measurer(deviceOwner, startParams) {
     var svgns = 'http://www.w3.org/2000/svg';
 
     // for firefox font size and labels sets individually
-    var isFirefox = !( navigator.userAgent.toLowerCase().search('firefox') < 0);
+    var nav = navigator.userAgent.toLowerCase();
+    var isShiftInFirefox = !( nav.search('firefox') < 0);
+    if(isShiftInFirefox){
+        if(nav.substring(nav.length - 4) > 58.9)isShiftInFirefox = false;
+
+    }
     
 //  global color scheme for devices
     var colors = {
@@ -508,8 +513,8 @@ function Measurer(deviceOwner, startParams) {
             // добавлен параметр startOffset к тегу textPath для сдвига текста иначе
             // в firefox надпись больше и уезжает 
             // в firefox сдвиг - 50% в остальных 1% 
-            var  startOffset = isFirefox ? '50%' : '0%';
-            var labelFont = isFirefox ? fontSize / 1.42 : fontSize /1.3;
+            var  startOffset = isShiftInFirefox ? '50%' : '0%';
+            var labelFont = isShiftInFirefox ? fontSize / 1.42 : fontSize /1.3;
             var shift = par.width * radius / 220;
             var center = par.width / 2;
             var y = 4 * par.width / 7;
@@ -549,7 +554,7 @@ function Measurer(deviceOwner, startParams) {
             var angleShift = (par.stopAngle - par.startAngle) / par.scaleDivideCount;
             var r = radius * par.width / 150;
             // firefox font size smaler than other
-            var fSize = isFirefox ?  fontSize / 2.4 : fontSize / 2;
+            var fSize = isShiftInFirefox ?  fontSize / 2.4 : fontSize / 2;
             var x, y;
             var res = " ";
             var max = par.scaleDivideCount + 1;

@@ -104,7 +104,7 @@
 #define HUMID "humid"
 
 //  cycle requests 
-#define REQUEST_COUNT 12
+#define REQUEST_COUNT 13
 
 //
 // ================= storage ===================

@@ -61,9 +61,9 @@ function Plotter(canvasOwner, width, height, startProps) {
     var chartCol = "#776";
     var chartWidth = strokeWidth;
     var points = [];
-    var edge = { min: 0, max: 0}; // edge chart
+    var xAxisLabels = false; // arrays of labels for x axis
     var name, values;
-    var edges;// hold edges values if it set, otherwise edges compute here
+    var edges = {};// hold edges values if it set, otherwise edges compute here
 
     // text
     var fontSize = Math.round(height / 25);
@@ -86,7 +86,7 @@ function Plotter(canvasOwner, width, height, startProps) {
         height = height - 2 * offset;
         width = width - 2 * offset;
         svgGraph = owner.getElementsByTagName("svg")[0];
-        startX = 4 * offset + 1.3*fontSize;
+        startX = 4 * offset + 1.3 * fontSize;
         delta = 3 * offset;
         startY = height - 2 * offset;
         endX = width - 2 * offset;
@@ -103,14 +103,16 @@ function Plotter(canvasOwner, width, height, startProps) {
     /**
      * call utils methods for compute and draw Chart
      * @param chartName - text on top the part of chart board
-     * @param array - values for build the chart must be only numerical values
+     * @param toDraw - may be array of values, or object consist from array of values(numbers)
+     *                  and array of x Axis Labels(string)
+     *                  { values : [.., ..., ...], xAxisLabels: ['...', '...', ...] }
      * @returns {boolean} - true if success
      */
-    function buildGraph(chartName, array, newEdges) {
-        edges = newEdges;
-        if (!array || !(array instanceof  Array) || array.length < 1) {
+    function buildGraph(chartName, toDraw, newEdges) {
+
+        if (!toDraw || (!(toDraw instanceof  Array) && !toDraw.hasOwnProperty('values')) || toDraw.length < 1) {
             console.log(
-                "buildGraph [wrong parameter:second parameter must be array with numerical values]");
+                "plotter.js buildGraph [wrong parameter:second parameter must be array with numerical values or object with values and labels(see plotter.js function buildGraph]");
             return false;
         }
         if (!(typeof chartName == 'string')) {
@@ -120,14 +122,45 @@ function Plotter(canvasOwner, width, height, startProps) {
         //debug
         //  if(debug)console.log('getArray: ' + array.toString());
         name = chartName;
-        values = array;
-        // debug
-        // if (debug && edges)console.log('edges:' + edges + '  min:' + edges['min']);
-        if (edges && edges.hasOwnProperty('min') && edges.hasOwnProperty('max')) {
+        if (toDraw instanceof Array){
+            values = toDraw;
+            xAxisLabels = false;
+        }
+        else if (toDraw.values instanceof Array && toDraw.values.length > 0) {
+            values = toDraw.values;
+            if (toDraw.hasOwnProperty('xAxisLabels') &&
+                toDraw.xAxisLabels instanceof Array &&
+                toDraw.xAxisLabels.length == toDraw.values.length)xAxisLabels = toDraw.xAxisLabels;
+            else xAxisLabels = false;
+        }
+        else {
+            console.log('(plotter.js)Error First member object toDraw must have name "values" and contains array of numerical values');
+            return false;
+        }
+        // get or compute max and min values for chart
+        computeEdges(newEdges);
+        //debug
+        // if(debug)console.log("min=" + edge.min + "  max=" + edge.max);
+        var vAxisPar = computeValuesParam();
+        var xSpace = (endX - startX - 3 * offset) / (values.length + 1);
+        prepareCanvas(values.length, xSpace, vAxisPar);
+        addNameToCanvas(name);
+        drawChart(values, xSpace, vAxisPar);
+        drawToggle();
+        return true;
+    }
+
+    /**
+     *
+     * @param newEdges - edges for set, if not exists compute it from values
+     */
+    function computeEdges(newEdges) {
+        var edge = {}; //  { min: 0, max: 0}; // edge chart
+        if (newEdges && newEdges.hasOwnProperty('min') && newEdges.hasOwnProperty('max')) {
             //debug
             // console.log("get edges [ min=" + edges['min'] + '  max=' + edges.max + ' ]');
-            edge.min = edges['min'];
-            edge.max = edges['max'];
+            edge.min = newEdges['min'];
+            edge.max = newEdges['max'];
         } else {
             edge.min = values[0];
             edge.max = values[0];
@@ -148,18 +181,9 @@ function Plotter(canvasOwner, width, height, startProps) {
                     edge.min = (edge.min < 0) ? 2 * edge.min : edge.min;
                 }
             }
-            edges.min = edge.min;
-            edges.max = edge.max;
         }
-        //debug
-        // if(debug)console.log("min=" + edge.min + "  max=" + edge.max);
-        var vAxisPar = computeValuesParam();
-        var xSpace = (endX - startX - 3 * offset) / (values.length + 1);
-        prepareCanvas(values.length, xSpace, vAxisPar);
-        addNameToCanvas(name);
-        drawChart(values, xSpace, vAxisPar);
-        drawToggle();
-        return true;
+        edges.min = edge.min;
+        edges.max = edge.max;
     }
 
     /**
@@ -217,18 +241,18 @@ function Plotter(canvasOwner, width, height, startProps) {
      **/
     function computeStartPos(vAxisPar) {
         var i = 0;
-        if (edge.max < 0) {
-            while (edge.max + vAxisPar.vOd * i < 0)i++;
+        if (edges.max < 0) {
+            while (edges.max + vAxisPar.vOd * i < 0)i++;
             vAxisPar.startDash = vAxisPar.count + i - 1;
             vAxisPar.xAxisPos = startY - (vAxisPar.count + 1) * vAxisPar.ySpace;
         }
-        else if (edge.min > 0) {
-            while (edge.min + i * vAxisPar.vOd > 0)i--;
+        else if (edges.min > 0) {
+            while (edges.min + i * vAxisPar.vOd > 0)i--;
             vAxisPar.startDash = i + 1;
             vAxisPar.xAxisPos = startY;
         }
-        else if (edge.max >= 0 && edge.min <= 0) {
-            while (edge.min + vAxisPar.vOd * i < 0) i++;
+        else if (edges.max >= 0 && edges.min <= 0) {
+            while (edges.min + vAxisPar.vOd * i < 0) i++;
             vAxisPar.startDash = i;
             vAxisPar.xAxisPos = startY - i * vAxisPar.ySpace;
         }
@@ -246,7 +270,7 @@ function Plotter(canvasOwner, width, height, startProps) {
         // compute division value
         // dash count on vertical axis
         var vAxisPar = {};
-        var scale = Math.abs(edge.min - edge.max);
+        var scale = Math.abs(edges.min - edges.max);
         scale = (scale > 4 && scale < 10.1) ? 11 : scale;
         var pow = 0;
         var res, count = 0;
@@ -430,14 +454,42 @@ function Plotter(canvasOwner, width, height, startProps) {
         var res = "";
         var y1 = xAxisPos;
         var y2 = (xAxisPos <= endY) ? xAxisPos + fontSize / 3 : xAxisPos - fontSize / 3;
+        var yForThin1 = startY -2*offset;
+        var yForThin2 = endY + 2*offset;
         var x;
         for (var i = 1; i < count; i++) {
             x = startX + i * xSpace;
             res += "<line x1='" + x + "' y1='" + y1 + "' " +
                 " x2='" + x + "' y2='" + y2 + "' " +
-                " stroke='" + colors.axisCol + "' stroke-width='" + strokeWidth / 2 + "' />";
+                " stroke='" + colors.axisCol + "' stroke-width='" + strokeWidth / 2 + "' /> ";
+            res += "<line x1='" + x + "' y1='" + yForThin1 + "' " +
+                " x2='" + x + "' y2='" + yForThin2 + "' " +
+                " stroke='" + "#ccc" + "' stroke-width='" + strokeWidth / 5 + "' /> ";
+        }
+        if (xAxisLabels)addXAxisLabels(xSpace, xAxisPos);
+        svgGraph.innerHTML += res;
+    }
+
+    function addXAxisLabels(xSpace, xAxisPos) {
+        var max = xAxisLabels.length;
+        var fSize = fontSize - offset;
+        if(fSize < 10) fSize = fontSize;
+        var yPos = ((xAxisPos + fSize) > startY) ? xAxisPos - fontSize / 3 : xAxisPos + 1.2 * fSize;
+        var divider = 1;
+        if (max > 20)divider = 3;
+        else if (max > 10)divider = 2;
+        var res = '<text x="' + startX + '" y="' + yPos + '" ' +
+            ' font-size="' + fSize + '"  fill="' + colors.labelCol + '" >' +
+            xAxisLabels[0] + '</text>';
+        var x;
+        for (var i = 1; i < max; i++) {
+            x = startX + i * xSpace;
+            if (i % divider == 0)res += '<text x="' + x + '" y="' + yPos + '" ' +
+                ' font-size="' + fSize + '" text-anchor="middle" fill="' + colors.labelCol + '" >' +
+                xAxisLabels[i] + '</text>';
         }
         svgGraph.innerHTML += res;
+
     }
 
     function addNameToCanvas(name) {
@@ -462,7 +514,7 @@ function Plotter(canvasOwner, width, height, startProps) {
                 elem.hasAttribute('name') &&
                 elem.getAttribute('name') == 'toggle')elem.onclick = function () {
                 hasSetValues = !hasSetValues;
-                buildGraph(name, values, edges);
+                buildGraph(name, { values: values, xAxisLabels: xAxisLabels}, edges);
                 return 0;
             };
         }
@@ -487,6 +539,10 @@ function Plotter(canvasOwner, width, height, startProps) {
         var y1, y2;
         var chart = "<g name='chart'>";
         var i = 1;
+        var showDivider = 1;
+        if (values.length > 20)showDivider = 4;
+        else if (values.length > 15)showDivider = 3;
+        else if (values.length > 10)showDivider = 2;
         for (var i = 1; i < values.length; i++) {
             if (!isInsideEdges(values[i - 1], values[i])) {
                 x += xSpace;
@@ -496,7 +552,7 @@ function Plotter(canvasOwner, width, height, startProps) {
             y2 = start - mult * values[i];
             chart += "<line x1='" + x + "' y1='" + y1 +
                 "' x2='" + (x + xSpace) + "' y2='" + y2 + "' " + remainder;
-            if (hasSetValues) {
+            if (hasSetValues && ( i % showDivider == 0 )) {
                 chart += "<circle cx='" + x + "' cy='" + y1 + "' r='" + r + "' " + remainder;
                 chart += "<text x='" + x + "' y='" + (y1 - 4 * strokeWidth) + "' text-anchor='middle' " +
                     " fill='black' font-size='" + fontSize + "' >" + (values[i - 1] + "") + "</text>";

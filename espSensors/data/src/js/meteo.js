@@ -4,10 +4,9 @@
 
 
 function MeteoViewer() {
-	// last year in years list for check year
-	var maxYear = 2023;
+    // last year in years list for check year
+    var maxYear = 2023;
 
-	
 
     /** object link en and ru  names (weekday,month) */
     var namesRu = {
@@ -32,7 +31,7 @@ function MeteoViewer() {
     var toRu = function (name, isShort) {
         if (name.length < 3)return '';
         name = name.trim().substring(0, 3).toLowerCase();
-        return isShort ? shortRu[name]: namesRu[name];
+        return isShort ? shortRu[name] : namesRu[name];
     }
 
     var forecastDays = [];
@@ -51,7 +50,7 @@ function MeteoViewer() {
             devBordStartCol: 'rgba(75,95,130,0.3)'
         };
         var rect = {
-           // hasRoundRect: false,
+            // hasRoundRect: false,
             label: "&nbsp;t℃"
         }
 //  inDoor thermometer
@@ -139,43 +138,43 @@ function MeteoViewer() {
         var monthsRu = [ "весь год", "Январь" , "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь",
             "Ноябрь", "Декабрь" ];
         var selected = {
-            year:0,
-                month:0,
-                day:0
+            year: 0,
+            month: 0,
+            day: 0
         }
         var i;
         var form = document.forms['checkDuration'];
         var labels = form.getElementsByTagName('label');
 
-        var setPeriodDisabled = function(){
-            year.setAttribute('disabled','disabled');
-            month.setAttribute('disabled','disabled');
-            day.setAttribute('disabled','disabled');
-            for(i=0; i< labels.length; i++){
-                labels[i].setAttribute('class','label');
+        var setPeriodDisabled = function () {
+            year.setAttribute('disabled', 'disabled');
+            month.setAttribute('disabled', 'disabled');
+            day.setAttribute('disabled', 'disabled');
+            for (i = 0; i < labels.length; i++) {
+                labels[i].setAttribute('class', 'label');
             }
         }
 
- 
+
         //  listener
-        var checkListener = function(e){
+        var checkListener = function (e) {
 //console.log('click');
 // console.log('day: ' + day.selectedIndex + ' month: ' + month.selectedIndex + ' year: ' + year.selectedIndex)
-			if(sType.selectedIndex == 0){
-					interval.setAttribute('disabled','disabled');
-					setPeriodDisabled();
-			}
-            if(sType.selectedIndex > 0 ){
-				if(interval.hasAttribute('disabled'))interval.removeAttribute('disabled');
+            if (sType.selectedIndex == 0) {
+                interval.setAttribute('disabled', 'disabled');
+                setPeriodDisabled();
             }
-            if(sType.selectedIndex > 0 && interval.selectedIndex == 1) {
-                    setPeriodDisabled();
+            if (sType.selectedIndex > 0) {
+                if (interval.hasAttribute('disabled'))interval.removeAttribute('disabled');
+            }
+            if (sType.selectedIndex > 0 && interval.selectedIndex == 1) {
+                setPeriodDisabled();
             }
         }
 // sensors type check
         var sType = form.elements['sensorSelect'];
         var sensorsNames = {
-            empty:'',
+            empty: '',
             tOut: 'Термометр улица',
             tIn: 'Термометр комната',
             baro: 'Барометр',
@@ -183,34 +182,36 @@ function MeteoViewer() {
         }
         for (i in sensorsNames)sType.appendChild(new Option(sensorsNames[i], i));
         var interval = form.elements['intervalSelect'];
-        interval.appendChild(new Option('  ','empty'));
-        interval.appendChild(new Option('  За последний час ','lastHour'));
+        interval.appendChild(new Option('  ', 'empty'));
+        interval.appendChild(new Option('  За последний час ', 'lastHour'));
         interval.appendChild(new Option(' Выбрать интервал ', 'checkInterval'));
-        interval.setAttribute('disabled','disabled');
+        interval.setAttribute('disabled', 'disabled');
 //year check
         var year = form.elements['yearSelect'];
         year.appendChild(new Option('', 'empty'));
-        for (i = 2018; i < (maxYear + 1); i++)year.appendChild(new Option( (i), (i) + ''));
-        for( i =0; i < year.getElementsByTagName('option').length;i++)
-            year.getElementsByTagName('option')[i].setAttribute('style','color:');
-        year.setAttribute('disabled','disabled');
+        for (i = 2018; i < (maxYear + 1); i++)year.appendChild(new Option((i), (i) + ''));
+        for (i = 0; i < year.getElementsByTagName('option').length; i++)
+            year.getElementsByTagName('option')[i].setAttribute('style', 'color:');
+        year.setAttribute('disabled', 'disabled');
 //month check
         var month = form.elements['monthSelect'];
         for (i = 0; i < monthsEn.length; i++)month.appendChild(new Option(monthsRu[i], monthsEn[i]));
-        month.setAttribute('disabled','disabled');
+        month.setAttribute('disabled', 'disabled');
 //day check
         var day = form.elements['daySelect'];
         day.appendChild(new Option("все", " "));
         for (i = 1; i < 32; i++)day.appendChild(new Option(i + "", i));
-        day.setAttribute('disabled','disabled');
+        day.setAttribute('disabled', 'disabled');
 //  submit button
         var submitButton = form.elements['submitButton']  //document.createElement('button');;
-        submitButton.setAttribute('value','getChart');
-        submitButton.setAttribute('disabled','disabled');
-        submitButton.setAttribute('class','submitButton');
-       // submitButton.innerHTML='<div style="width: 40;height: 40"></div>';
+        submitButton.setAttribute('value', 'getChart');
+        submitButton.setAttribute('disabled', 'disabled');
+        submitButton.setAttribute('class', 'submitButton');
+        // submitButton.innerHTML='<div style="width: 40;height: 40"></div>';
         setPeriodDisabled();
-        form.addEventListener('click',function(e){checkListener(e)},false);
+        form.addEventListener('click', function (e) {
+            checkListener(e)
+        }, false);
         return form;
     }
 
@@ -242,7 +243,7 @@ function MeteoViewer() {
 //if (debug)console.log(JSON.stringify(data));
         addForecastButton();
         var informer = document.createElement('div');
-        informer.setAttribute('class','informerBoard inlineTop wavesBackGround'); //
+        informer.setAttribute('class', 'informerBoard inlineTop wavesBackGround'); //
         var resp = data['query']['results']['channel'];
         var image = resp['image'];
         addLogo(image);
@@ -255,11 +256,11 @@ function MeteoViewer() {
         fillForecasts(forecast);
         informerOwner.appendChild(informer);
 
-        function addForecastButton(){
+        function addForecastButton() {
             var fore = document.createElement('div');
-            fore.setAttribute('class','inlineTop informerFore'); // informerImgBord
-            fore.onclick=showForecast;
-            fore.innerHTML='П&nbsp;&nbsp; &nbsp;&nbsp;р &nbsp;&nbsp;о &nbsp;&nbsp;г &nbsp;&nbsp;н &nbsp;&nbsp;о &nbsp;&nbsp;з';
+            fore.setAttribute('class', 'inlineTop informerFore'); // informerImgBord
+            fore.onclick = showForecast;
+            fore.innerHTML = 'П&nbsp;&nbsp; &nbsp;&nbsp;р &nbsp;&nbsp;о &nbsp;&nbsp;г &nbsp;&nbsp;н &nbsp;&nbsp;о &nbsp;&nbsp;з';
             informerOwner.appendChild(fore);
         }
 
@@ -280,7 +281,7 @@ function MeteoViewer() {
         }
 
         /** set weather icon */
-        function addPict(descr,owner) {
+        function addPict(descr, owner) {
             var now = new Date().getHours();
             var min = new Date().getMinutes() / 100;
             now += min;
@@ -307,7 +308,7 @@ function MeteoViewer() {
                 '<span  class="informer labelColor">влажность: ' + atm['humidity'] + '&nbsp;%</span><br />' +
                 '<span  class="informer labelColor">давление:&nbsp;' +
                 (atm['pressure'] / 1000 * 750.0637 + '').substring(0, 3) + '&nbsp;мм.рт.ст</span>' +
-              //  '<hr class="informerDivider">' +
+                //  '<hr class="informerDivider">' +
                 '<div style="margin-top: 0.3em;margin-bottom: 3px">&nbsp;<span  class="informerDay"> день: ' + ((today['high'] - 32) * 5 / 9 + "").substring(0, 4) + ' ℃ </span>&nbsp;' +
                 '<span class="informerNight"> ночь: ' + ((today['low'] - 32) * 5 / 9 + "").substring(0, 4) + ' ℃ &nbsp;</span></div>';
             infoText.innerHTML += res;
@@ -321,7 +322,7 @@ function MeteoViewer() {
                 day.picture = 'http://l.yimg.com/a/i/us/we/52/' + forecast[i]['code'] + '.gif';
                 day.max = Math.round((forecast[i]['high'] - 32) * 500 / 9) / 100;
                 day.min = Math.round((forecast[i]['low'] - 32) * 500 / 9) / 100;
-                day.date = toRu(forecast[i]['day'],true) + ' ' + getRuMonth(forecast[i]['date'], true);
+                day.date = toRu(forecast[i]['day'], true) + ' ' + getRuMonth(forecast[i]['date'], true);
                 forecastDays[i] = day;
             }
         }
@@ -329,13 +330,13 @@ function MeteoViewer() {
 
         function getRuMonth(date, isShort) {
             var sp = isShort ? '\n' : '&nbsp;';
-            var mName = toRu(date.split(' ')[1],isShort);
-            if( !isShort)mName = (mName.indexOf('ь') > 0 || mName.indexOf('й') > 0) ?
+            var mName = toRu(date.split(' ')[1], isShort);
+            if (!isShort)mName = (mName.indexOf('ь') > 0 || mName.indexOf('й') > 0) ?
                 mName.substring(0, mName.length - 1) + 'я' : mName + 'а';
             return date.split(' ')[0] + sp + mName;
         }
 
-        return {end:'yes'};
+        return {end: 'yes'};
     }
 
     var owner;
@@ -345,12 +346,12 @@ function MeteoViewer() {
         if (document.body.clientWidth < document.body.clientHeight)return;
         var forecastData = prepareDataForChart(forecastDays);
 //console.log('\nFORECAST OBJECT:\n' + JSON.stringify(forecastData));
-        if(owner == undefined) owner = document.createElement('div');
+        if (owner == undefined) owner = document.createElement('div');
         owner.setAttribute('class', 'bigSize');
         var svgDiv = document.createElement('div');
         svgDiv.width = document.body.scrollWidth * 4 / 5;
-        svgDiv.height = document.body.scrollHeight * 5 / 6 ;
-        svgDiv.setAttribute('style','margin-top:' + document.body.scrollHeight/12 + 'px');
+        svgDiv.height = document.body.scrollHeight * 5 / 6;
+        svgDiv.setAttribute('style', 'margin-top:' + document.body.scrollHeight / 12 + 'px');
         owner.appendChild(svgDiv);
         document.body.appendChild(owner);
         chart.simpleChart(svgDiv, forecastData);

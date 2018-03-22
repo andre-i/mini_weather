@@ -4,7 +4,7 @@ var serverRoot = "http://" + window.location.host + "/";
 
 console.log('debug=' + debug);
 if (debug)console.log(" start test execution ON host:" + serverRoot);
-
+if (debug)console.log('Browser: \'' + navigator.userAgent + '\'  ');
 
 // show forecasts 
 //var yahooCallbackFunction;
@@ -60,21 +60,21 @@ function get(url, callback) {
             document.body.parentNode.removeChild(yahooWeather);
         }
         yahooWeather = document.createElement('script');
-        if (!yahooCallbackFunction) {
-            yahooCallbackFunction = function (data) {
-                isInformer = meteo.createInformer(document.getElementsByName('informer')[0], data);
-            }
+        yahooCallbackFunction = function (data) {
+            if (data)isInformer = meteo.createInformer(document.getElementsByName('informer')[0], data);
+            else console.log('Can`t get data from Yahoo Weather');
         }
         yahooWeather.setAttribute('src', 'https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20%3D%202003841%20&format=json&callback=yahooCallbackFunction&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys');
         try {
             document.body.appendChild(yahooWeather);
+            setTimeout(';', 2000);
         } catch (e) {
+            console.log('Warning - can`t get Yahoo Weather data');
             isInformer = {end: 'no'};
         }
     }
 
-//getYahooWeather();
-    if (!debug) getYahooWeather();
+    getYahooWeather();
     var timer = setInterval(createChart, 500);
     var n = 0;
 
@@ -142,27 +142,31 @@ function get(url, callback) {
     var sensors = {
         'tIn': {
             edges: { min: 0, max: 40},
-            yLabel: 'здание t ℃',
+            yLabel: ' t ℃',
             color: '#a85',
-            text: 'Термометр комната'
+            text: 'Термометр комната',
+            numInData: 2
         },
         'tOut': {
             edges: { min: -50, max: 50},
-            yLabel: 'улица ℃',
+            yLabel: 't ℃',
             color: '#959',
-            text: 'Термометр улица'
+            text: 'Термометр улица',
+            numInData: 3
         },
         'baro': {
             edges: { min: 600, max: 800},
             yLabel: 'мм.рт.ст',
             color: 'gray',
-            text: 'Барометр'
+            text: 'Барометр',
+            numInData: 4
         },
         'humid': {
             edges: { min: 0, max: 100},
             yLabel: 'влажность %',
             color: '#46b',
-            text: 'Гигрометр'
+            text: 'Гигрометр',
+            numInData: 5
         }
     }
 
@@ -222,9 +226,9 @@ function get(url, callback) {
                 var period = yearNum + '/' + monthName + '.txt';
                 var res = getFromCache(period);
                 if (res) {
-                    if(debug)console.log('get data from cache');
+                    if (debug)console.log('get data from cache');
                     day.selectedIndex < 1 ? drawMonthChart(sensor, res) : drawDayChart(sensor, res, day.selectedIndex);
-                }else{
+                } else {
                     get(url + period, function (data) {
                         if (data) {
                             addToCache(period, data);
@@ -258,10 +262,10 @@ function get(url, callback) {
             for (var i = 0; i < all.length; i++) {
                 var period = yNum + '/' + all[i] + '.txt';
                 var res = getFromCache(period);
-                if (res){
-                    if(debug)console.log('month ' + all[i] + ' get from cache');
+                if (res) {
+                    if (debug)console.log('month ' + all[i] + ' get from cache');
                     result[all[i]] = res;
-                    if(i == all.length - 1)callback(result);
+                    if (i == all.length -1)callback(result);
                 }
                 else {
                     get(headURL + period, function (data) {
@@ -271,7 +275,7 @@ function get(url, callback) {
                             addToCache(yNum + '/' + all[j] + '.txt', data);
                             result[all[j]] = data;
                             if (data.length < 1)return 'ERROR - empty month data for: \"' + all[j] + '\"';
-                            if (j == all.length - 1)callback(result);
+                            if (j == all.length -1)callback(result);
                         }
                     });
                 }
@@ -284,15 +288,45 @@ function get(url, callback) {
     }
 
     function drawYearChart(sensor, yearNum) {
+        var months = [];
+        var meansInMonths = [];
+        var n = 0;
+        var cur, max;
+        var curValue;
+        var xLabel = 'Месяц';
+        var chartName = ' ' + sensor.text + ' за ' + yearNum + 'г.';
         getDataForYear(yearNum, function (res) {
+            if(debug)console.log("GET data for year chart len=" + res.length );
             if (JSON.stringify(res) == '{}') {
                 console.log("test.js(drawYearChart) - Get empty year data for " + yearNum);
                 alert("Не могу получить данные за " + yearNum + " год\nПроверьте работу погодной станции.");
+                drawChart('','','red','',[0,0,0,0,0],{min: -1,max:1});
                 return 1;
+            } else {
+                console.log("get Data For year ");
+                var i;
+                for (var p in res) {
+                    months[n] = p;
+                    cur = res[p].split('\n');
+                    max = cur.length - 1;
+                    curValue = 0;
+                    for(i=0 ; i < max; i++){
+                        curValue += Number(cur[i].trim().split(/\s/)[sensor.numInData]);
+                    }
+                    meansInMonths[n] = (curValue > 0) ? parseInt(curValue/(i+1) + 0.5001) : parseInt(curValue/(i+1) - 0.5001);
+                    n++;
+                    if(debug)console.log('month=' + p + '__ curValue=' + curValue + '  mean=' + meansInMonths);
+                }
+               // if(debug)console.log('year chart: ' + months + '      ' + meansInMonths);
+                drawChart(xLabel, sensor.yLabel, sensor.color, chartName, {values:meansInMonths, xAxisLabels:months});
+
             }
 
         });
-
+        setTimeout(checkOnGet(), 3000);
+        function checkOnGet(){
+            if( n < 1){drawChart('','','red',"Нет данных для " + sensor.text + ' за ' + yearNum + 'г',[0,0,0,0],{min:-1,max:1})}
+        }
     }
 
     function drawMonthChart(sensor, data) {
@@ -300,6 +334,52 @@ function get(url, callback) {
             console.log('drawMonthChart for sensor=' + sensor.name + '  month=' + getVal(month) +
                 "data: \n " + data + "\n____EOF___");
         }
+        var all = data.split('\n');
+        var monthN = (month.selectedIndex < 10) ? '0' + '' + month.selectedIndex : '' + month.selectedIndex;
+        var monthYear = monthN + '/' + getVal(year);
+        var xLabel = 'число';
+        // if empty
+        if (maxLen < 0) {
+            drawChart('', '', '#f99', 'НЕТ ДАННЫХ для ' + sensor.text+ '  ' + monthYear, [0, 0, 0, 0, 0, 0, 0], {min: -1, max: 1});
+            return;
+        }
+        var meanInDay = [];
+        var dayInMonth = [];
+        var cur = all[0].trim().split(/\s/);
+        var day = cur[0];
+        var n = 1;
+        var dayVal = +cur[sensor.numInData];
+        var numInData = 0;
+        var maxLen = all.length - 1; // want for correct handle mean value in last day
+        for (var i = 1; i < all.length; i++) {
+            cur = all[i].trim().split(/\s/);
+            if (day == cur[0]) {
+                dayVal += +cur[sensor.numInData];
+                n++;
+            } else if (i < maxLen) {
+                dayInMonth[numInData] = day;
+                meanInDay[numInData] = (dayVal < 0) ? parseInt(dayVal/n -0.5001): parseInt(dayVal / n + 0.5001);//
+                day = cur[0];
+                dayVal = Number(cur[sensor.numInData]);
+                n = 1;
+                numInData++;
+            } else {  //  right handle last value in month days
+                dayInMonth[numInData] = day;
+                meanInDay[numInData] =  (dayVal < 0) ? parseInt(dayVal/n - 0.5001): parseInt(dayVal / n + 0.5001); //
+            }
+        }
+        if(numInData == 0){
+            drawChart(xLabel, '     ', sensor.color,
+                'за ' + day + '/' +monthYear + ' среднее для ' + sensor.text + ' = ' + meanInDay[0],
+            [0,0,0,0], {min:-1,max:1});
+            return;
+        }
+        var chartName = ' ' + sensor.text + ' за ' + monthYear;
+        if (debug)console.log('To draw Month chart: \nvalues - ' + meanInDay + '\nlabels - ' + dayInMonth);
+        var res = { values: meanInDay, xAxisLabels: dayInMonth};
+        drawChart(xLabel, sensor.yLabel, sensor.color, chartName, res, sensor.edges);
+
+
     }
 
     function drawDayChart(sensor, data, dayNum) {
@@ -307,22 +387,67 @@ function get(url, callback) {
             console.log('drawDayChart for sensor=' + sensor.name + ' day=' + dayNum +
                 " data:\n " + data + "\n____EOF___");
         }
+        var all = data.split('\n');
+        var startHour, endHour;
+        var dayData = []; // sensor values
+        var hourInDay = [];  // hours for sensor data
+        var n = 0;
+        var minVal = all.length - 1;
+        for (var i = 0; i < minVal; i++) {
+            all[i] = all[i].trim();
+            //  if (debug)console.log('for parse: ' + all[i]);
+            if(all[i].length < 3)continue;
+            var dayD = all[i].split(/\s/);
+            if (dayD[0].length > 1) {
+                var cur = (dayD[0].charAt(0) === '0') ? dayD[0].charAt(1) : dayD[0];
+                cur = cur / 1;
+                if (cur === dayNum) {
+                    if (n == 0)startHour = dayD[1];
+                    else endHour = dayD[1];
+                    dayData[n] = dayD[sensor.numInData];
+                    hourInDay[n] = dayD[1];
+                    // if (debug)console.log('dayData[' + n + '] = ' + dayData[n]);
+                    n++;
+                }
+            } else {
+                console.log('Error dayData is not String-\'' + dayD[0] + '\'  dayD[1]=' + dayD[1]);
+            }
+        }
+        var xLabel = 'часы';
+        var monthN = (month.selectedIndex < 10) ? '/0' + month.selectedIndex : '/' + month.selectedIndex;
+        var chartName = ' ' + sensor.text + ' за ' + dayNum + monthN + '/' + getVal(year);
+        var sEdges = sensor.edges;
+        if (dayData.length < 1) {
+            drawChart('', '', 'red', 'НЕТ ДАННЫХ для: ' + chartName, [0, 0, 0, 0, 0, 0], {min: -1, max: 1});
+        } else if (dayData.length === hourInDay.length) {
+            dayData = { values: dayData, xAxisLabels: hourInDay};
+        }
+        drawChart(xLabel, sensor.yLabel, sensor.color, chartName, dayData, sEdges);
     }
 
+    /**
+     * draw chart on surface
+     * @param xLabel x axis label text
+     * @param yLabel y axis label text
+     * @param color chart color(in HTML form)
+     * @param chartName string
+     * @param data arrays values
+     * @param edges min and max values in array( implied )
+     */
+    function drawChart(xLabel, yLabel, color, chartName, periodData, edges) {
+        chartBoard.setAxisLabels(xLabel, yLabel);
+        chartBoard.chartColor(color);
+        chartBoard.create(chartName, periodData, edges);
+    }
 
     /* draw chart for last hour given sensor */
     function drawLast(sensor, data) {
         if (debug)console.log("drawLast [ name:" + sensor.name + ' text:' + sensor.text + ' ]');
-        // edges for sensors data
-        var edges = sensor.edges;
-        var color = sensor.color;
-        var yLabel = sensor.yLabel;
         var arr, x, size;
-        var xlabel = 'деление 5 минут';
-        chartBoard.setAxisLabels(xlabel, yLabel);
+        var xLabel = '    время';
         var chartName = sensor.text;
-        chartBoard.chartColor(color);
-        chartBoard.create(chartName, PrepareArr(sensor.name), edges);
+        var toDraw = { values: PrepareArr(sensor.name), xAxisLabels: getFiveMinutePeriods()};
+        drawChart(xLabel, sensor.yLabel, sensor.color, chartName, toDraw, sensor.edges);
         // preapare array to show chart
         function PrepareArr(arrName) {
             x = data['last'];
@@ -339,17 +464,31 @@ function get(url, callback) {
             // if (debug)console.log('after shift lastValues: ' + arr.toString())
             return arr;
         }
+
+        // get last time as 5 minutes intervals
+        function getFiveMinutePeriods() {
+            var d = new Date();
+            //  if(debug)console.log('now = ' + new Date().getHours() + ':' + new Date().getMinutes());
+            var arr = [];
+            var h, m;
+            d.setSeconds(d.getSeconds() - 3900);
+            for (var i = 0; i < 13; i++) {
+                d.setSeconds(d.getSeconds() + 300);
+                h = d.getHours();
+                h = (h > 9) ? h : '' + '0' + h;
+                m = d.getMinutes();
+                m = (m > 9) ? m : '' + '0' + m;
+                arr[i] = '' + h + ':' + m;
+            }
+            //  if(debug)console.log("Times: " + arr.toString());
+            return arr;
+        }
     }
 
 
     // for store available period from SPIFFS
     // format: { 'year_num':[ 'month1', 'month2', ...],'other_year_num':[ 'month1', 'month2', ...], ... };
     var availablePeriods = {};
-
-    //   -----  intervals -------
-
-    var year = form.elements['yearSelect'];
-    var month = form.elements['monthSelect'];
 
     function checkInterval() {
 
