@@ -180,6 +180,10 @@ function get(url, callback) {
         return select.getElementsByTagName('option')[select.selectedIndex].getAttribute('value');
     };
 
+    var getSelectName = function (select) {
+        return select.getElementsByTagName('option')[select.selectedIndex].innerHTML;
+    }
+
     // sensor name , text
     function getSensor() {
         var name = getVal(form.elements['sensorSelect']);
@@ -265,7 +269,7 @@ function get(url, callback) {
                 if (res) {
                     if (debug)console.log('month ' + all[i] + ' get from cache');
                     result[all[i]] = res;
-                    if (i == all.length -1)callback(result);
+                    if (i == all.length - 1)callback(result);
                 }
                 else {
                     get(headURL + period, function (data) {
@@ -275,7 +279,7 @@ function get(url, callback) {
                             addToCache(yNum + '/' + all[j] + '.txt', data);
                             result[all[j]] = data;
                             if (data.length < 1)return 'ERROR - empty month data for: \"' + all[j] + '\"';
-                            if (j == all.length -1)callback(result);
+                            if (j == all.length - 1)callback(result);
                         }
                     });
                 }
@@ -288,6 +292,36 @@ function get(url, callback) {
     }
 
     function drawYearChart(sensor, yearNum) {
+        var toRu = function (enName) {
+            if(debug)console.log('get en: ' + enName);
+            enName = enName.toLowerCase();
+            switch (enName) {
+                case 'jan' :
+                    return 'Янв';
+                case 'feb':
+                    return 'Фев';
+                case 'mar':
+                    return 'Мар';
+                case 'apr':
+                    return 'Апр';
+                case 'may':
+                    return 'Май';
+                case 'jun':
+                    return 'Июнь';
+                case 'jul':
+                    return 'Июль';
+                case 'aug':
+                    return 'Авг';
+                case 'sep':
+                    return 'Сен';
+                case 'oct':
+                    return 'Окт';
+                case 'nov':
+                    return 'Нояб';
+                case 'dec':
+                    return 'Окт';
+            }
+        }
         var months = [];
         var meansInMonths = [];
         var n = 0;
@@ -296,36 +330,38 @@ function get(url, callback) {
         var xLabel = 'Месяц';
         var chartName = ' ' + sensor.text + ' за ' + yearNum + 'г.';
         getDataForYear(yearNum, function (res) {
-            if(debug)console.log("GET data for year chart len=" + res.length );
+            if (debug)console.log("GET data for year chart len=" + res.length);
             if (JSON.stringify(res) == '{}') {
                 console.log("test.js(drawYearChart) - Get empty year data for " + yearNum);
                 alert("Не могу получить данные за " + yearNum + " год\nПроверьте работу погодной станции.");
-                drawChart('','','red','',[0,0,0,0,0],{min: -1,max:1});
+                drawChart('', '', 'red', '', [0, 0, 0, 0, 0], {min: -1, max: 1});
                 return 1;
             } else {
                 console.log("get Data For year ");
                 var i;
                 for (var p in res) {
-                    months[n] = p;
+                    months[n] = toRu(p);
                     cur = res[p].split('\n');
                     max = cur.length - 1;
                     curValue = 0;
-                    for(i=0 ; i < max; i++){
+                    for (i = 0; i < max; i++) {
                         curValue += Number(cur[i].trim().split(/\s/)[sensor.numInData]);
                     }
-                    meansInMonths[n] = (curValue > 0) ? parseInt(curValue/(i+1) + 0.5001) : parseInt(curValue/(i+1) - 0.5001);
+                    meansInMonths[n] = (curValue > 0) ? parseInt(curValue / (i + 1) + 0.5001) : parseInt(curValue / (i + 1) - 0.5001);
                     n++;
-                    if(debug)console.log('month=' + p + '__ curValue=' + curValue + '  mean=' + meansInMonths);
+                    if (debug)console.log('month=' + p + '__ curValue=' + curValue + '  mean=' + meansInMonths);
                 }
-               // if(debug)console.log('year chart: ' + months + '      ' + meansInMonths);
-                drawChart(xLabel, sensor.yLabel, sensor.color, chartName, {values:meansInMonths, xAxisLabels:months});
+                // if(debug)console.log('year chart: ' + months + '      ' + meansInMonths);
+                drawChart(xLabel, sensor.yLabel, sensor.color, chartName, {values: meansInMonths, xAxisLabels: months});
 
             }
 
         });
-        setTimeout(checkOnGet(), 3000);
-        function checkOnGet(){
-            if( n < 1){drawChart('','','red',"Нет данных для " + sensor.text + ' за ' + yearNum + 'г',[0,0,0,0],{min:-1,max:1})}
+        setTimeout(checkOnGet(), 5000);
+        function checkOnGet() {
+            if (n < 1) {
+                drawChart('', '', 'red', "Нет данных для " + sensor.text + ' за ' + yearNum + 'г', [0, 0, 0, 0], {min: -1, max: 1})
+            }
         }
     }
 
@@ -335,12 +371,11 @@ function get(url, callback) {
                 "data: \n " + data + "\n____EOF___");
         }
         var all = data.split('\n');
-        var monthN = (month.selectedIndex < 10) ? '0' + '' + month.selectedIndex : '' + month.selectedIndex;
-        var monthYear = monthN + '/' + getVal(year);
+        var monthYear = getSelectName(month) + ' ' + getVal(year) + 'г';
         var xLabel = 'число';
         // if empty
         if (maxLen < 0) {
-            drawChart('', '', '#f99', 'НЕТ ДАННЫХ для ' + sensor.text+ '  ' + monthYear, [0, 0, 0, 0, 0, 0, 0], {min: -1, max: 1});
+            drawChart('', '', '#f99', 'НЕТ ДАННЫХ для ' + sensor.text + '  ' + monthYear, [0, 0, 0, 0, 0, 0, 0], {min: -1, max: 1});
             return;
         }
         var meanInDay = [];
@@ -358,20 +393,20 @@ function get(url, callback) {
                 n++;
             } else if (i < maxLen) {
                 dayInMonth[numInData] = day;
-                meanInDay[numInData] = (dayVal < 0) ? parseInt(dayVal/n -0.5001): parseInt(dayVal / n + 0.5001);//
+                meanInDay[numInData] = (dayVal < 0) ? parseInt(dayVal / n - 0.5001) : parseInt(dayVal / n + 0.5001);//
                 day = cur[0];
                 dayVal = Number(cur[sensor.numInData]);
                 n = 1;
                 numInData++;
             } else {  //  right handle last value in month days
                 dayInMonth[numInData] = day;
-                meanInDay[numInData] =  (dayVal < 0) ? parseInt(dayVal/n - 0.5001): parseInt(dayVal / n + 0.5001); //
+                meanInDay[numInData] = (dayVal < 0) ? parseInt(dayVal / n - 0.5001) : parseInt(dayVal / n + 0.5001); //
             }
         }
-        if(numInData == 0){
+        if (numInData == 0) {
             drawChart(xLabel, '     ', sensor.color,
-                'за ' + day + '/' +monthYear + ' среднее для ' + sensor.text + ' = ' + meanInDay[0],
-            [0,0,0,0], {min:-1,max:1});
+                'за ' + day + '/' + monthYear + ' среднее для ' + sensor.text + ' = ' + meanInDay[0],
+                [0, 0, 0, 0], {min: -1, max: 1});
             return;
         }
         var chartName = ' ' + sensor.text + ' за ' + monthYear;
@@ -396,7 +431,7 @@ function get(url, callback) {
         for (var i = 0; i < minVal; i++) {
             all[i] = all[i].trim();
             //  if (debug)console.log('for parse: ' + all[i]);
-            if(all[i].length < 3)continue;
+            if (all[i].length < 3)continue;
             var dayD = all[i].split(/\s/);
             if (dayD[0].length > 1) {
                 var cur = (dayD[0].charAt(0) === '0') ? dayD[0].charAt(1) : dayD[0];
