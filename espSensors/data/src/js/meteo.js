@@ -240,7 +240,7 @@ function MeteoViewer() {
 
 
     function createWeatherInformer(informerOwner, data) {
-//if (debug)console.log(JSON.stringify(data));
+//if(debug)console.log(JSON.stringify(data));
         addForecastButton();
         var informer = document.createElement('div');
         informer.setAttribute('class', 'informerBoard inlineTop wavesBackGround'); //

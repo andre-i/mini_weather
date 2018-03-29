@@ -2,20 +2,21 @@
 <html>
 <head>
     <meta charset="utf-8">
-      
+
     <script type="text/javascript">
         var svgns = 'http://www.w3.org/2000/svg';
         var debug = true;
+        var yahooWeatherData = false;
         //  simple catcher for any errors
-   /*     window.addEventListener('error', function (e) {
-            if (!(e instanceof Error))return;
-            try {
-                if (debug)alert("Catch Error\n" + e.error.name + ':\n' + e.error.message);
-            } catch (e) {
-                console.log("Occurred on print error");
-            }
-        });
-   */
+        /*     window.addEventListener('error', function (e) {
+         if (!(e instanceof Error))return;
+         try {
+         if (debug)alert("Catch Error\n" + e.error.name + ':\n' + e.error.message);
+         } catch (e) {
+         console.log("Occurred on print error");
+         }
+         });
+         */
     </script>
     <!-- для сервера   -->
     <link rel="stylesheet" href="src?css=simple.css" type="text/css">
@@ -67,38 +68,38 @@
                 <tr>
                     <td class="leftT"><span class="form labelColor">Датчик: </span></td>
                     <td class="rightT"><select name="sensorSelect"></select></td>
-                    <td class="leftT"><label for="fYear" name="fYear" class="'label">Год: </label></td>
+                    <td class="leftT"><label htmlfor="fYear" name="fYearLabel" class="'label">Год: </label></td>
                     <td class="rightT"><select id="fYear" name="yearSelect"></select></td>
                 </tr>
                 <tr>
                     <td class="leftT"><span class="form labelColor">Интервал: </span></td>
                     <td class="rightT"><select name="intervalSelect"></select></td>
-                    <td class="leftT"><label for="fMonth" name="fMonth" >Месяц: </label></td>
+                    <td class="leftT"><label htmlfor="fMonth" name="fMonthLabel">Месяц: </label></td>
                     <td class="rightT"><select id="fMonth" name="monthSelect"></select></td>
                 </tr>
                 <tr>
                     <!--td></td-->
                     <td colspan="2" style="text-align: right">
-                        <hr class="divider labelColor" />
-                            <button name="submitButton" type="button" >
-                                "Построить&nbsp;"
-                                <!--   <img width="36px" height="34px" src="./src/pic/submit.svg" style="vertical-align: middle"/>  -->
-								<img width="36px" height="34px" src="/src?pic=submit.svg" style="vertical-align: middle"/>
-                               </button>
-                           &nbsp;&nbsp;&nbsp;&nbsp;
-                       </td>
-                       <td class="leftT" style="vertical-align: top">
-                           <label class="form">День: </label></td>
-                       <td class="rightT" style="vertical-align: top">
-                           <select id="fDay" name="daySelect"></select></td>
-                   </tr>
-               </table>
-           </form>
-       </div>
-       <div name="informer" class="inlineTop right"></div>
-       <div id="graphCanvas"></div>
-   </div>
-   <!--   bottom side -->
+                        <hr class="divider labelColor"/>
+                        <button name="submitButton" type="button">
+                            "Построить&nbsp;"
+                            <!--   <img width="36px" height="34px" src="./src/pic/submit.svg" style="vertical-align: middle"/>  -->
+                            <img width="36px" height="34px" src="/src?pic=submit.svg" style="vertical-align: middle"/>
+                        </button>
+                        &nbsp;&nbsp;&nbsp;&nbsp;
+                    </td>
+                    <td class="leftT" style="vertical-align: top">
+                        <label class="form">День: </label></td>
+                    <td class="rightT" style="vertical-align: top">
+                        <select id="fDay" name="daySelect"></select></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+    <div name="informer" class="inlineTop right"></div>
+    <div id="graphCanvas"></div>
+</div>
+<!--   bottom side -->
 <footer style="clear: left">
     <hr>
     <div class="simply" align="center">
@@ -110,10 +111,19 @@
 //                 =================== SCRIPTS ===============
 //                    ==================================
 -->
-<script  src="src?js=test.js" > </script>    <!--   src="src/js/test.js"   -->
 
+<script type="text/javascript">
+    function yahooCallbackFunction(data) {
+        if (data)yahooWeatherData = data;
+        else yahooWeatherData = false;
+    }
+</script>
 
-<!--  script src='https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20%3D%202003841%20&format=json&callback=yahooCallbackFunction&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys' ></script  -->
+<script src='https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20%3D%202003841%20&format=json&callback=yahooCallbackFunction&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys'></script>
+
+<script src="src?js=test.js"></script>
+<!--   src="src/js/test.js"   -->
+
 
 </body>
 </html>

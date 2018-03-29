@@ -12,6 +12,15 @@ Util::Util(bool isDebug) {
 void Util::setDebug(bool isDebug) {
   DEBUG = isDebug;
 }
+
+bool Util::getDebugMode(){
+  char debugMode[6];
+  debugMode[0] = '\0';
+  fillParam(DEBUG_MODE, debugMode);
+  if(debugMode[0] == '\0')return false;
+  if( debugMode[0] == 't' && debugMode[1] == 'r' && debugMode[2] == 'u' && debugMode[3] == 'e')return true;
+  else return false;
+}
 //  =================== work with init params  ====================
 
 /**
@@ -21,8 +30,8 @@ void Util::setDebug(bool isDebug) {
    parName - name parameter in props file( see for help props.h file)
    dest - string for write parameter value
 */
-void Util::fillParam(char *parName, char *dest) {
-  if (DEBUG)Serial.println(String("Try get value for: ") + String(parName));
+void Util::fillParam(const char *parName, char *dest) {
+ // if(DEBUG)Serial.println(String("Try get value for: ") + String(parName));
   File file;
   if (SPIFFS.exists(PROPS_FILE)) {
     file =  SPIFFS.open(PROPS_FILE, "r");
@@ -66,7 +75,7 @@ void Util::fillParam(char *parName, char *dest) {
    read param value from *val(delete all white space) and copy it to *buf
 */
 void Util::setStartValue(char *val, char *buf) {
- // if (DEBUG)Serial.println(String("GET FOR parse: ") + String(val));
+  // if (DEBUG)Serial.println(String("GET FOR parse: ") + String(val));
   int i = 0, n = 0;
   while (val[i] != '\0' && n < 10) {
     if (val[i] != ' ') {
@@ -87,16 +96,14 @@ bool Util::initFS() {
   if (DEBUG)Serial.print("init SPIFFS : ");
   if (isFS) {
     Serial.println(" already DONE");
-    return isFS;
-  }
-  if (SPIFFS.begin()) {
+  } else if (SPIFFS.begin()) {
     Serial.println("success");
     isFS = true;
-    return isFS;
   } else {
     Serial.println("fail!  WARNING \"esp_server can`t write data to storage\"");
-    return false;
+    isFS = false;
   }
+  return isFS;
 }
 
 void Util::writeLog(String mess) {
@@ -110,10 +117,10 @@ void Util::writeLog(String mess) {
     if (!logFile) {
       String fail = "Can`t write to \"" + String(LOG_FILE) + "\" \nmessage: [ " + mess + " ]";
       Serial.println(fail);
-      return;
+    } else {
+      logFile.println(mess);
+      logFile.close();
     }
-    logFile.println(mess);
-    logFile.close();
   }
 }
 
@@ -163,7 +170,7 @@ void Util::writeSensorsValues(int tIn, int tOut, int baro, int humid) {
   File monthF = SPIFFS.open(fullMonthFileName, "a");
   if (!monthF) {
     writeLog("Failed to open : " + fullMonthFileName);
-    if(DEBUG)Serial.println("WARNING - fail open file for write sensors data to file system");
+    if (DEBUG)Serial.println("WARNING - fail open file for write sensors data to file system");
     monthF.close();
     return;
   }
@@ -181,25 +188,9 @@ void Util::writeSensorsValues(int tIn, int tOut, int baro, int humid) {
   if (DEBUG) Serial.println( "- Success write!");
 }
 
-File Util::openFileToRead(const char *fName) {
-  if (!opened && SPIFFS.exists(fName)) {
-    opened = SPIFFS.open(fName, "r");
-    if (opened) {
-      return opened;
-    } else opened.close();
-  }
-  return SPIFFS.open("file/not/found/not.found.txt", "r");
-}
-
-void Util::closeFile() {
-  if (opened)opened.close();
-}
-
 bool Util::hasFS() {
   return isFS;
 }
-//    private:
-
 
 //
 //  ===============  Wi-Fi  =======================
@@ -208,7 +199,6 @@ bool Util::hasFS() {
 //  public
 
 int Util::initWIFI() {
-  // read StartParams from file sysytem
   wifiMode = DEVICE_NOT_WIFI;
   if ( isStaConnect()) {
     Serial.println("work as STA ");
@@ -230,9 +220,9 @@ bool Util::isStaConnect() {
   s[0] = '\0';
   p[0] = '\0';
   char *ssid = s, *passwd = p;
-  fillParam(STA_SSID, ssid);
-  if (!ssid || ssid[0] == '\0') ssid = STA_SSID_DEF;
-  fillParam(STA_PASSWD, passwd);
+  fillParam(STA_SSID, ssid); // read Start Param from file sysytem
+  if (!ssid || ssid[0] == '\0') ssid  = STA_SSID_DEF;
+  fillParam(STA_PASSWD, passwd); // read Start Param from file sysytem
   if (!passwd || passwd[0] == '\0')passwd = STA_PASSWD_DEF;
   WiFi.begin(ssid, passwd);
   // Wait for connection
@@ -244,11 +234,11 @@ bool Util::isStaConnect() {
     if ( counter > 15 ) {
       WiFi.disconnect();
       delay(100);
-      if (DEBUG)Serial.println(String("Can`t connect to ") + String(ssid) + String("  ") + String(passwd));
+      if (DEBUG)Serial.println(String("\nCan`t connect to ") + String(ssid) + String("  ") + String(passwd));
       return false;
     }
   }
-  Serial.println("start as STA ");
+  Serial.println("");
   if (DEBUG) {
     Serial.print("Connected to ");
     Serial.print(ssid);
@@ -261,15 +251,27 @@ bool Util::isStaConnect() {
 // return true if success up AP mode on chip
 bool Util::isSetApMode() {
   // If AP mode
-  char s[15], p[15];
+  char s[15], p[15], addr[18];
   s[0] = '\0';
   p[0] = '\0';
+  addr[0] = '\0';
   char *ssid = s, *passwd = p;
-  fillParam(AP_SSID, ssid);
+  fillParam(AP_SSID, ssid); // read Start Param from file sysytem
   if (!ssid || ssid[0] == '\0') ssid = AP_SSID_DEF;
-  fillParam(AP_PASSWD, passwd);
+  fillParam(AP_PASSWD, passwd); // read Start Param from file sysytem
   if (!passwd || passwd[0] == '\0')passwd = AP_PASSWD_DEF;
   if (WiFi.softAP(ssid, passwd)) {
+    char *ip = addr;
+    fillParam(AP_IP, ip); // read Start Param from file sysytem
+    if (!ip || ip[0] == '\0') ip = AP_IP_ADDR;
+    int addr[4];
+    parseAddr( ip, addr);
+    // check IP addres on valid
+    if( !addr[0] || addr[0] < 0){
+      writeLog("Wrong IP address for AP mode wi-fi see props.txt file");
+      return false;
+    }
+    const IPAddress ap_ip(addr[0], addr[1], addr[2], addr[3]);
     WiFi.softAPConfig(ap_ip, ap_ip, subnet);
     if (DEBUG) {
       Serial.print("start WI-FI AP MODE: ssid=");
@@ -279,10 +281,38 @@ bool Util::isSetApMode() {
     } else Serial.println("Start Wi-Fi as AP");
     return true;
   } else {
-    Serial.println("ERROR esp_server can`t UP wifi AP");
+    writeLog("ERROR esp_server can`t UP wifi AP");
     if (DEBUG)Serial.println(String("\t param : ") + String(ssid) + String(" ") + String(passwd));
     return false;
   }
+}
+
+void Util::parseAddr(char *ip, int addr[4]) {
+  char c;
+  char curr[4];
+  int end = 1;
+  int j=0, k=0;
+  c=*ip;
+  for(int i=0; c != '\0'; i++){
+    c = *(ip + i);
+    if(c == ' ')continue;
+    if( c != '.'){
+      if( c < 48 || c > 57 ){
+        addr[0] = -1;
+        return;
+      }
+      curr[k] = c;
+      k++;
+    } else if( c == '.'){
+      curr[k] = '\0';
+      k = 0;
+      addr[j] = atoi(curr);
+      j++;
+    } 
+  }
+  curr[k] = '\0';
+  addr[j] = atoi(curr);
+  if(j < 3) addr[0] = -1;
 }
 
 

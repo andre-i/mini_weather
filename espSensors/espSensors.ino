@@ -22,7 +22,7 @@ SerialHandler sHandler(&util);
 Ticker timer;
 
 bool isSetDate = false; // if current date appointed must be set to true
-bool isFS = true; // access to SPIFFS 
+bool isFS = true; // access to SPIFFS
 
 //  semaphore
 const byte DHT_SENSOR = 1;
@@ -44,32 +44,32 @@ static int currentInHour = 0;
 static int currentForCheck = 0;
 
 /**
- *  set state for 
- *  1.check sensors 
- *  2.set current time  
- *  3.write values to storage
- *  in debud mode: any tick - check sensors, any minute - write sensors values to storage
- */
+    set state for
+    1.check sensors
+    2.set current time
+    3.write values to storage
+    in debud mode: any tick - check sensors, any minute - write sensors values to storage
+*/
 void tick() {
   // if (DEBUG)Serial.println("Tick");
   currentInMinute++;
   currentInHour++;
   currentForCheck++;
-  if (currentInMinute == tickInMinute){
+  if (currentInMinute == tickInMinute) {
     isAddMinute = true;
     currentInMinute = 0;
   }
-  if (currentInHour == tickInHour){
+  if (currentInHour == tickInHour) {
     isWriteValues = true;
     currentInHour = 0;
   }
-  if(currentForCheck == checkSensorsTick){
+  if (currentForCheck == checkSensorsTick) {
     isCheckSensors = true;
     currentForCheck = 0;
   }
-  if (DEBUG){
+  if (DEBUG) {
     isCheckSensors = true;
-    if(currentInMinute == 0)isWriteValues = true;
+    if (currentInMinute == 0)isWriteValues = true;
   }
 }
 
@@ -168,6 +168,7 @@ bool readSPIFFS(String path, String dataType) {
 }
 
 bool loadFile(String path) {
+  if(path.equals(PROPS_FILE)) return false;
   String dataType = "text/plain";
   if (path.endsWith("/")) path = serverRoot + path + "index.htm";
   if (path.endsWith(".htm")) dataType = "text/html";
@@ -185,9 +186,17 @@ bool loadFile(String path) {
 //   ends of read filesystem
 
 
-void sendFileContent() {
+void readFile() {
+  if (DEBUG)Serial.println("Call \"readFile\"");
   if (server.hasArg("fName")) {
-    loadFile(server.arg("fName"));
+    String fName = String(server.arg("fName"));
+    fName.trim();
+    if ( !fName.startsWith("/")) fName = String("/") + fName;
+    if (DEBUG) {
+      Serial.print("request on file: ");
+      Serial.println(server.arg(fName));
+    }
+    if(!loadFile(fName))handleNotFound();
   }
 }
 
@@ -266,7 +275,7 @@ void prepareServer() {
   // send values
   server.on("/current", HTTP_GET, sendCurrent);
   server.on("/lastValues", HTTP_GET, sendLast);
-  server.on("/readFile", HTTP_GET, sendFileContent);
+  server.on("/readFile", HTTP_GET, readFile);
   server.on("/sensorData", HTTP_GET, sendSensorData);
   server.on("/availablePeriod", HTTP_GET, sendPeriods);
   server.begin();
@@ -293,7 +302,7 @@ void setup() {
   showStartMessage();
   //
   int sensInit = s.init();
-  util.setDebug(DEBUG);
+  DEBUG = util.getDebugMode();
   // try init sd card
   if (!util.initFS()) {
     isFS = false;
@@ -306,7 +315,7 @@ void setup() {
         if (isFS) {
           String res = (sensInit == 0) ? " success init" : " fail init";
           res = "[ SPIFFS: init,  sensors: " + res + ",  wi-fi: STA_MODE ]";
-          res = getFullDate() + res;
+          res =  util.getDay() + "/" + util.getMonth() + "/" + util.getYear() + res;
           util.writeLog(res);
         }
       }
@@ -315,7 +324,7 @@ void setup() {
       if (isFS)Serial.println("Perhaps need set date for write sensors data to storage.\nPrint \"h\" for detail");
       break;
     case DEVICE_NOT_WIFI:
-      if(isFS)Serial.println("WARNING: device can`t start of WiFi!!!\nPerhaps need set date for write sensors data to SPIFFS.\nPrint \"h\" by serial for detail");
+      if (isFS)Serial.println("WARNING: device can`t start of WiFi!!!\nPerhaps need set date for write sensors data to SPIFFS.\nPrint \"h\" by serial for detail");
       break;
   }
   //  set FS state to serial handler

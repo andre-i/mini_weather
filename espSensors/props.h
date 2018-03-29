@@ -5,9 +5,9 @@
 //   ------------  SERVER NOTES  -------------------
 //   -----------------------------------------------
 
-/*  =========    file system    ==============
+/*  =========  the structure of file system    ==============
  *  /
- *  --props.txt  // set current wi-fi parameters
+ *  --props.txt  // set current wi-fi parameters, debug mode
  *	--index.htm
  *  --log.log
  *  --/data
@@ -42,19 +42,22 @@
  * 				...
  * _________________________________________
  * 			...
- *	(whitespace in line for files replaced on value "#defined SEP ... " in this file )
+ *  the separator for values in month files defined here in SEP property from 'STORAGE' section
+ *	(default - whitespace)
  *
  * 
  * _________________________________________
  *      props.txt
  * (contains start parameters of wi-fi for two cases STA and AP mode)
  * # first phund - comment
- * ## for STA
+ * ## STA
  * ss ssid 
  * sp password
- * ## for AP 
+ * ## AP 
  * as ssid 
  * ap password
+ * ## AP IP may be walid IP 4bit address
+ * ip 192.168.0.1
  * 
  * where:     ssid - string with lan name,  
  *          password - string with password      
@@ -107,7 +110,7 @@
 #define REQUEST_COUNT 13
 
 //
-// ================= storage ===================
+// ================= STORAGE ===================
 //
 //#define CS_PIN 16
 //  SPIFFS
@@ -115,24 +118,27 @@
 #define SEP " "   // divide sensors data by write to file in one string. see top 
 // report to SPIFFS
 #define LOG_FILE "/log.log"
+// ================  properties file ==============
 #define PROPS_FILE "/props.txt"
-
-//
-// =================   WI-FI ====================
-
-enum wifiMODE { DEVICE_AP_MODE, DEVICE_STA_MODE, DEVICE_NOT_WIFI};
 // starts symbols for wifi params
 #define STA_SSID "ss"
 #define STA_PASSWD "sp"
 #define AP_SSID "as"
 #define AP_PASSWD "ap"
+#define AP_IP "ip"
+//mode of debug output to serial
+#define DEBUG_MODE "dm"
 
+//
+// =================   WI-FI ====================
+
+enum wifiMODE { DEVICE_AP_MODE, DEVICE_STA_MODE, DEVICE_NOT_WIFI};
 //  WIFI_mode WEB_SERVER
 //  STA
 #define STA_SSID_DEF  "mywifi"
 #define STA_PASSWD_DEF "bezwolos"
 //  AP
-#define AP_IP_ADDR  192,168,10,1
+#define AP_IP_ADDR  "192.168.10.1"
 #define AP_IP_SUBNET  255,255,255,0
 #define AP_SSID_DEF "espWeather"
 #define AP_PASSWD_DEF  "espWeather"
@@ -143,11 +149,15 @@ enum wifiMODE { DEVICE_AP_MODE, DEVICE_STA_MODE, DEVICE_NOT_WIFI};
 #define HOST "weather"
 #define PORT 80
 #define SERVER_ROOT  "/"
-#define REQUEST_DATA_URL "www.yandex.ru"
+#define REQUEST_DATE_URL "www.yandex.ru"
 #define  NOT_FOUND "/NotFound.htm"
+//  help language for serial output may be "en" or "ru"
+// язык справки для последовательного порта(serial) может быть "en" или "ru"( английский и русский соответственно)
+#define HELP_LANG "ru"
+
 
 //
-// ====================  semaphore ==================
+// ====================  SEMAPHORE  ==================
 //
 
 #define CYCLE_DURATION 5 // call ticker period

@@ -12,7 +12,7 @@
 #define IPAddress_h
 #endif
 
-const IPAddress ap_ip(AP_IP_ADDR);
+//const IPAddress ap_ip(AP_IP_ADDR);
 const IPAddress subnet(AP_IP_SUBNET);
 
 /*      SD card pins
@@ -36,12 +36,10 @@ class Util {
 
     // =======  Wi-Fi =======
     // variables
- //   String staSSID = STA_SSID;
- //   String staPASSWD = STA_PASSWD;
     bool isStaConnect();
     bool isSetApMode();
     //methods
-    void fillParam(char *short_name, char *destination);
+    void fillParam(const char *short_name, char *destination);
     void setStartValue(char *val, char *destination);
 
     // ======= date time =========
@@ -73,7 +71,7 @@ class Util {
     const unsigned long HTTP_TIMEOUT = 10000;   // max respone time from server
     const int serverPort = 80;                  // a port number
     const char* resource = "/";                // http resource
-    const char* server_addr = REQUEST_DATA_URL; // server for check time
+    const char* server_addr = REQUEST_DATE_URL; // server for check time
     String dateAndTime;
 
     // methods
@@ -87,18 +85,20 @@ class Util {
 
   public:
     Util(bool isDebug);
-    void setDebug(bool isDebug);
+    void setDebug(bool isDebug); // set debug mode to util class
+    bool getDebugMode(); // return debug mode from PROPS_FILE(if it not found - return false)
     //  SPIFFS
     String fsINFO();
     String getPeriodsAsJSON();
     bool initFS();
     void writeLog(String mess);
     void writeSensorsValues(int tIn, int tOut, int baro, int humid); 
-    File openFileToRead(const char *fName);
-    void closeFile();
+    //File openFileToRead(const char *fName);
+    //void closeFile();
     bool hasFS();
     //  WI-FI
-    int initWIFI();
+    int initWIFI(); // try up wifi inSTA or AP mode
+    void parseAddr(char *ip, int addr[4]); // fill addr numbers from IP4V address
     // date time
     bool assignTime(char* userTime);
     bool hasSyncTime();
