@@ -46,8 +46,8 @@ function get(url, callback) {
  *  set function for fill values to device panel
  */
 (function () {
-    var yahooWeather;
-    var yahooCallbackFunction;
+    //var yahooWeather;
+  //  var yahooCallbackFunction;
     var isInformer;
     var meteo = new MeteoViewer();
     //  device to show values
@@ -55,9 +55,9 @@ function get(url, callback) {
     // form request data from server
     meteo.createActivityPanel(document.getElementsByName('activityPanel')[0]);
     /** get data from yahoo weather and create informer */
-    function createInformer(){
-        if(debug)console.log('call "CreateInformer()" ');
-        if(yahooWeatherData)isInformer = meteo.createInformer(document.getElementsByName('informer')[0], yahooWeatherData);
+    function createInformer() {
+        if (debug)console.log('call "CreateInformer()" ');
+        if (yahooWeatherData)isInformer = meteo.createInformer(document.getElementsByName('informer')[0], yahooWeatherData);
         else console.log('Can`t get data from Yahoo Weather');
     }
 
@@ -70,7 +70,7 @@ function get(url, callback) {
             chartBoard = meteo.createChart(document.getElementById('graphCanvas'));
             // for test  chartBoard.create('Test many values',[ 6,2,1,-1,-4,-4,-3,-1,0,3,4,2 ]);
             if (n > 4 && !debug)alert("Не могу связаться с сервером погоды!\nВозможно нет интернет-соединения.");
-        }else{
+        } else {
             createInformer();
         }
         n++;
@@ -156,11 +156,14 @@ function get(url, callback) {
             text: 'Гигрометр',
             numInData: 5
         }
-    }
+    };
 
 
     month.addEventListener('click', function () {
-        if (month.selectedIndex > 0 && day.hasAttribute('disabled'))day.removeAttribute('disabled');
+        if (month.selectedIndex > 0 && day.hasAttribute('disabled')){
+            day.removeAttribute('disabled');
+
+        }
         if (month.selectedIndex < 1 && !day.hasAttribute('disabled'))day.setAttribute('disabled', 'disabled');
     });
     // return value option elements
@@ -170,7 +173,7 @@ function get(url, callback) {
 
     var getSelectName = function (select) {
         return select.getElementsByTagName('option')[select.selectedIndex].innerHTML;
-    }
+    };
 
     // sensor name , text
     function getSensor() {
@@ -178,7 +181,7 @@ function get(url, callback) {
         var sensor = sensors[name];
         sensor.name = name;
         return sensor;
-    };
+    }
 
     /*
      chart API:
@@ -236,7 +239,7 @@ function get(url, callback) {
         }
     }
 
-    var flag = true;
+   // var flag = true;
 
     function getDataForYear(yNum, callback) {
         var next = (function () {
@@ -262,16 +265,18 @@ function get(url, callback) {
                 else {
                     get(headURL + period, function (data) {
                         var j = next();
-                        if (debug)console.log("add " + all[j] + " month data from server");
+                       // if (debug)console.log("add " + all[j] + " month data from server");
                         if (data) {
                             addToCache(yNum + '/' + all[j] + '.txt', data);
                             result[all[j]] = data;
                             if (data.length < 1)return 'ERROR - empty month data for: \"' + all[j] + '\"';
                             if (j == all.length - 1)callback(result);
                         }
+                        return true;
                     });
                 }
             }
+            return true;
         } else {
             console.log('test.js: can`t find year \"' + yNum + '\" for draw year chart');
             alert('Error for: ' + yNum);
@@ -279,9 +284,10 @@ function get(url, callback) {
         }
     }
 
+
     function drawYearChart(sensor, yearNum) {
         var toRu = function (enName) {
-            if(debug)console.log('get en: ' + enName);
+            if (debug)console.log('get en: ' + enName);
             enName = enName.toLowerCase();
             switch (enName) {
                 case 'jan' :
@@ -308,8 +314,9 @@ function get(url, callback) {
                     return 'Нояб';
                 case 'dec':
                     return 'Окт';
+                default : return false;
             }
-        }
+        };
         var months = [];
         var meansInMonths = [];
         var n = 0;
@@ -318,30 +325,34 @@ function get(url, callback) {
         var xLabel = 'Месяц';
         var chartName = ' ' + sensor.text + ' за ' + yearNum + 'г.';
         getDataForYear(yearNum, function (res) {
-            if (debug)console.log("GET data for year chart len=" + res.length);
+            //if (debug)console.log("GET data for year chart len=" + res.length + '  DATA:[ ' + JSON.stringify(res) + ' ]');
             if (JSON.stringify(res) == '{}') {
                 console.log("test.js(drawYearChart) - Get empty year data for " + yearNum);
                 alert("Не могу получить данные за " + yearNum + " год\nПроверьте работу погодной станции.");
                 drawChart('', '', 'red', '', [0, 0, 0, 0, 0], {min: -1, max: 1});
                 return 1;
             } else {
-                console.log("get Data For year ");
                 var i;
+                var val;
                 for (var p in res) {
+                   if(debug)console.log("get Data For year month:" + toRu(p) +  "  sensor:[" + sensor.text + " numInData:" + sensor.numInData + ' ]');
                     months[n] = toRu(p);
                     cur = res[p].split('\n');
                     max = cur.length - 1;
                     curValue = 0;
                     for (i = 0; i < max; i++) {
-                        curValue += Number(cur[i].trim().split(/\s/)[sensor.numInData]);
+                        val = Number(cur[i].trim().split(/\s/)[sensor.numInData]);
+                        if(debug)console.log("value = " + val);
+                        if(isNaN(val) || val < sensor.edges.min || val > sensor.edges.max)continue;
+                        curValue += val;
                     }
                     meansInMonths[n] = (curValue > 0) ? parseInt(curValue / (i + 1) + 0.5001) : parseInt(curValue / (i + 1) - 0.5001);
                     n++;
                     if (debug)console.log('month=' + p + '__ curValue=' + curValue + '  mean=' + meansInMonths);
                 }
-                // if(debug)console.log('year chart: ' + months + '      ' + meansInMonths);
-                drawChart(xLabel, sensor.yLabel, sensor.color, chartName, {values: meansInMonths, xAxisLabels: months});
-
+                if(debug)console.log('year chart: [ ' + months + ' ]     [ ' + meansInMonths + ' ]');
+                drawChart(xLabel, sensor.yLabel, sensor.color, chartName, {values: meansInMonths, xAxisLabels: months}, sensor.edges);
+                return false;
             }
 
         });
@@ -351,6 +362,7 @@ function get(url, callback) {
                 drawChart('', '', 'red', "Нет данных для " + sensor.text + ' за ' + yearNum + 'г', [0, 0, 0, 0], {min: -1, max: 1})
             }
         }
+        return true;
     }
 
     function drawMonthChart(sensor, data) {
@@ -359,6 +371,7 @@ function get(url, callback) {
                 "data: \n " + data + "\n____EOF___");
         }
         var all = data.split('\n');
+        var maxLen = all.length - 1; // want for correct handle mean value in last day
         var monthYear = getSelectName(month) + ' ' + getVal(year) + 'г';
         var xLabel = 'число';
         // if empty
@@ -371,24 +384,27 @@ function get(url, callback) {
         var cur = all[0].trim().split(/\s/);
         var day = cur[0];
         var n = 1;
-        var dayVal = +cur[sensor.numInData];
+        var dayVals = Number(cur[sensor.numInData]);
+        if(isNaN(dayVals) || dayVals < sensor.edges.min || dayVals > sensor.edges.max)dayVals = 0;
         var numInData = 0;
-        var maxLen = all.length - 1; // want for correct handle mean value in last day
+        var hourVal=0;
         for (var i = 1; i < all.length; i++) {
             cur = all[i].trim().split(/\s/);
             if (day == cur[0]) {
-                dayVal += +cur[sensor.numInData];
+                hourVal = Number(cur[sensor.numInData]);
+                if(isNaN(hourVal) || hourVal > sensor.edges.max || hourVal < sensor.edges.min)continue;
+                dayVals += hourVal;
                 n++;
             } else if (i < maxLen) {
                 dayInMonth[numInData] = day;
-                meanInDay[numInData] = (dayVal < 0) ? parseInt(dayVal / n - 0.5001) : parseInt(dayVal / n + 0.5001);//
+                meanInDay[numInData] = (dayVals < 0) ? parseInt(dayVals / n - 0.5001) : parseInt(dayVals / n + 0.5001);//
                 day = cur[0];
-                dayVal = Number(cur[sensor.numInData]);
+                dayVals = Number(cur[sensor.numInData]);
                 n = 1;
                 numInData++;
             } else {  //  right handle last value in month days
                 dayInMonth[numInData] = day;
-                meanInDay[numInData] = (dayVal < 0) ? parseInt(dayVal / n - 0.5001) : parseInt(dayVal / n + 0.5001); //
+                meanInDay[numInData] = (dayVals < 0) ? parseInt(dayVals / n - 0.5001) : parseInt(dayVals / n + 0.5001); //
             }
         }
         if (numInData == 0) {
@@ -421,16 +437,19 @@ function get(url, callback) {
             //  if (debug)console.log('for parse: ' + all[i]);
             if (all[i].length < 3)continue;
             var dayD = all[i].split(/\s/);
+            var hourVal = NaN;
             if (dayD[0].length > 1) {
-                var cur = (dayD[0].charAt(0) === '0') ? dayD[0].charAt(1) : dayD[0];
-                cur = cur / 1;
+                var cur = (dayD[0].charAt(0) === '0') ? Number(dayD[0].charAt(1)) : Number(dayD[0]);
                 if (cur === dayNum) {
                     if (n == 0)startHour = dayD[1];
                     else endHour = dayD[1];
-                    dayData[n] = dayD[sensor.numInData];
-                    hourInDay[n] = dayD[1];
+                    hourVal = Number(dayD[sensor.numInData]);
+                    if( !isNaN(hourVal) && ( hourVal > sensor.edges.min && hourVal < sensor.edges.max)){
+                        dayData[n] = hourVal;
+                        hourInDay[n] = dayD[1];
+                        n++;
+                    }
                     // if (debug)console.log('dayData[' + n + '] = ' + dayData[n]);
-                    n++;
                 }
             } else {
                 console.log('Error dayData is not String-\'' + dayD[0] + '\'  dayD[1]=' + dayD[1]);
@@ -454,7 +473,7 @@ function get(url, callback) {
      * @param yLabel y axis label text
      * @param color chart color(in HTML form)
      * @param chartName string
-     * @param data arrays values
+     * @param periodData arrays values
      * @param edges min and max values in array( implied )
      */
     function drawChart(xLabel, yLabel, color, chartName, periodData, edges) {
@@ -480,7 +499,7 @@ function get(url, callback) {
             // if(debug)console.log('last=' + x + ' array-size=' + size);
             for (var i = 0; i < size; i++)arr[i] = data[arrName][i];
             x = size + x + 1;
-            for (var i = 0; i < size; i++) {
+            for ( i = 0; i < size; i++) {
                 arr[i] = data[arrName][(x + i) % size ];
             }
             //debug
@@ -513,10 +532,6 @@ function get(url, callback) {
     // format: { 'year_num':[ 'month1', 'month2', ...],'other_year_num':[ 'month1', 'month2', ...], ... };
     var availablePeriods = {};
 
-    function checkInterval() {
-
-    }
-
     /**    interval Option Listener
      *  get from server intervals and set it enabled on options
      *
@@ -527,8 +542,8 @@ function get(url, callback) {
         if (interval.selectedIndex == 2) {
             var url = serverRoot + 'availablePeriod';
             get(url, computePeriods);
-            if(availablePeriods){
-               document.getElementsByName('fYearLabel')[0].style.color ='#403030';
+            if (availablePeriods) {
+                document.getElementsByName('fYearLabel')[0].style.color = '#403030';
                 document.getElementsByName('fMonthLabel')[0].style.color = '#404030';
             }
         }
@@ -543,7 +558,6 @@ function get(url, callback) {
             return;
         }
         var oldYear = "";
-        var oldMonth = "";
         var months;
         var j = 0;
         for (var i in data) {

@@ -11,7 +11,7 @@
 #include <FS.h>
 
 // mark for version software
-static String version = "0.02";
+static String version = "0.1";
 
 bool DEBUG = true;
 int wifiMode = DEVICE_NOT_WIFI;

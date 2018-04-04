@@ -32,14 +32,14 @@ function Plotter(canvasOwner, width, height, startProps) {
 
 
     //  variables
-    var svgns = 'http://www.w3.org/2000/svg';
+   // var svgns = 'http://www.w3.org/2000/svg';
 
     var colors = {
         borderCol: "#623",
         bgCol: "#faf9e5",
         axisCol: "#541",
         labelCol: "#255"
-    }
+    };
 
 
     var owner = canvasOwner;
@@ -54,7 +54,7 @@ function Plotter(canvasOwner, width, height, startProps) {
 
     // axis lines
     var startX, startY, endX, endY, delta;
-    var xAxisPos; // y coordinate of x axis
+ //   var xAxisPos; // y coordinate of x axis
 
     // chart
     var hasSetValues = false; // has set numbers value on diagram points
@@ -106,6 +106,7 @@ function Plotter(canvasOwner, width, height, startProps) {
      * @param toDraw - may be array of values, or object consist from array of values(numbers)
      *                  and array of x Axis Labels(string)
      *                  { values : [.., ..., ...], xAxisLabels: ['...', '...', ...] }
+     * @param newEdges object with edges for chart - { min: ... , max: ... }
      * @returns {boolean} - true if success
      */
     function buildGraph(chartName, toDraw, newEdges) {
@@ -171,6 +172,7 @@ function Plotter(canvasOwner, width, height, startProps) {
                 }
                 if (edge.min > val) edge.min = val;
                 if (edge.max < val) edge.max = val;
+                return true;
             });
             if (edge.min == edge.max) {
                 if (edge.min == 0) {
@@ -256,13 +258,14 @@ function Plotter(canvasOwner, width, height, startProps) {
             vAxisPar.startDash = i;
             vAxisPar.xAxisPos = startY - i * vAxisPar.ySpace;
         }
+        return -300;
     }
 
     /**
      * compute numbers parameter for draw horizontal axis
      * @returns {{count, dash count
      *       vOd, values of divide gotten data
-     *       startDash, start position (from bottom part)
+     *       startDash, start position( from bottom part)
      *       xAxisPos, y coordinates of horizontal axis
      *       ySpace  division value of vertical axis}}
      */
@@ -316,12 +319,11 @@ function Plotter(canvasOwner, width, height, startProps) {
 
 
     function drawBorder() {
-        var rect = "<rect name='border' x='" + (offset - 2) + "' y='" + (offset - 2) + "' " + "" +
+        svgGraph.innerHTML = "<rect name='border' x='" + (offset - 2) + "' y='" + (offset - 2) + "' " + "" +
             "  rx='" + (4 * strokeWidth ) + "' ry='" + (4 * strokeWidth) + "' " +
             " height='" + (height + 4) + "' width='" + (width + 4) + "'" +
             " stroke='" + colors.borderCol + "' stroke-width='" + strokeWidth +
             "' fill='" + colors.bgCol + "' />";
-        svgGraph.innerHTML = rect;
     }
 
     function drawAxisY() {
@@ -332,9 +334,8 @@ function Plotter(canvasOwner, width, height, startProps) {
             " " + startX + "," + endY + " " +
             (startX + offset) + "," + (endY + delta ) + " " +
             startX + "," + (endY + delta );
-        var vArrow = "<polyline  points='" + p + "' stroke='" + colors.axisCol + "' " +
+        svgGraph.innerHTML += "<polyline  points='" + p + "' stroke='" + colors.axisCol + "' " +
             " stroke-width='" + strokeWidth + "'  />";
-        svgGraph.innerHTML += vArrow;
     }
 
     function drawLabels(xAxisPos) {
@@ -366,8 +367,7 @@ function Plotter(canvasOwner, width, height, startProps) {
         } else if (startDash < 0) {
             startDash = 0;
             drawHorizontalDottedLine(Math.round(vAxisPar.xAxisPos - vAxisPar.ySpace / 2));
-            drawValueLabels(vAxisPar, (-vAxisPar.startDash + 1) * vAxisPar.vOd, 1,
-                vAxisPar.count * values.vOd, vAxisPar.count);
+            drawValueLabels(vAxisPar, (-vAxisPar.startDash + 1) * vAxisPar.vOd, 1); //,vAxisPar.count * values.vOd, vAxisPar.count);
         } else {
             drawValueLabels(vAxisPar, 0, vAxisPar.startDash);
         }
@@ -445,21 +445,19 @@ function Plotter(canvasOwner, width, height, startProps) {
             endX + "," + xAxisPos + " " +
             (endX - delta) + "," + (xAxisPos + offset) + " " +
             (endX - delta) + "," + xAxisPos;
-        var hArrow = "<polyline points='" + p + "' stroke='" + colors.axisCol + "' " +
+        svgGraph.innerHTML += "<polyline points='" + p + "' stroke='" + colors.axisCol + "' " +
             "' stroke-width='" + strokeWidth + "' />";
-        svgGraph.innerHTML += hArrow;
     }
 
     function addXAxisDashes(count, xSpace, xAxisPos) {
         var res = "";
-        var y1 = xAxisPos;
         var y2 = (xAxisPos <= endY) ? xAxisPos + fontSize / 3 : xAxisPos - fontSize / 3;
         var yForThin1 = startY -2*offset;
         var yForThin2 = endY + 2*offset;
         var x;
         for (var i = 1; i < count; i++) {
             x = startX + i * xSpace;
-            res += "<line x1='" + x + "' y1='" + y1 + "' " +
+            res += "<line x1='" + x + "' y1='" + xAxisPos + "' " +
                 " x2='" + x + "' y2='" + y2 + "' " +
                 " stroke='" + colors.axisCol + "' stroke-width='" + strokeWidth / 2 + "' /> ";
             res += "<line x1='" + x + "' y1='" + yForThin1 + "' " +
@@ -493,23 +491,21 @@ function Plotter(canvasOwner, width, height, startProps) {
     }
 
     function addNameToCanvas(name) {
-        var name = "<text x='" + width / 2 + "' + y='" + (1.2 * fontSize) + "' " +
+        svgGraph.innerHTML += "<text x='" + width / 2 + "' + y='" + (1.2 * fontSize) + "' " +
             " font-size='" + fontSize + "' text-anchor='middle' fill='" + colors.labelCol + // "' >" +
             "' style='font-style:italic;text-decoration:underline;' ' >" + name + "</text>";
-        svgGraph.innerHTML += name;
     }
 
     function drawToggle() {
 //        console.log("Draw Togle");
         var sign = hasSetValues ? "-" : "+";
-        var fig = '<text x="' + (endX - fontSize / 2) + '" y="' + (0.9 * fontSize + offset) + '" ' +
+        svgGraph.innerHTML += '<text x="' + (endX - fontSize / 2) + '" y="' + (0.9 * fontSize + offset) + '" ' +
             ' font-size="' + (fontSize + 2 * strokeWidth) + '" font-weight="bold" text-anchor="middle" fill="#065" >' + sign + '</text>' +
             '<rect name="toggle" x="' + (endX - fontSize) + '" y="' + offset + '" width="' + fontSize + '"' +
             ' height="' + fontSize + '" fill="white" opacity="0.5" stroke="' + colors.borderCol + '" ' +
             ' stroke-width="' + strokeWidth / 3 + '" />';
-        svgGraph.innerHTML += fig;
         for (var i = 0; i < svgGraph.childNodes.length; i++) {
-            var elem = svgGraph.childNodes[i]
+            var elem = svgGraph.childNodes[i];
             if (!(elem instanceof Text) &&
                 elem.hasAttribute('name') &&
                 elem.getAttribute('name') == 'toggle')elem.onclick = function () {
@@ -538,12 +534,13 @@ function Plotter(canvasOwner, width, height, startProps) {
         var x = startX;
         var y1, y2;
         var chart = "<g name='chart'>";
-        var i = 1;
+        var i;
         var showDivider = 1;
         if (values.length > 20)showDivider = 4;
         else if (values.length > 15)showDivider = 3;
         else if (values.length > 10)showDivider = 2;
-        for (var i = 1; i < values.length; i++) {
+        for ( i = 1; i < values.length; i++) {
+            //if(debug)console.log('Set ' + i + ' point');
             if (!isInsideEdges(values[i - 1], values[i])) {
                 x += xSpace;
                 continue;
@@ -559,10 +556,11 @@ function Plotter(canvasOwner, width, height, startProps) {
             }
             x += xSpace;
         }
+        if(values.length < 2) y2 = start - mult * values[0];
         chart += "<circle cx='" + x + "' cy='" + y2 + "' r='" + r + "' " + remainder;
         if (hasSetValues) chart += "<text x='" + x + "' y='" + (y2 - 4 * strokeWidth) + "' text-anchor='middle' " +
             " fill='black' font-size='" + fontSize + "' >" + (values[i - 1] + "") + "</text>";
-        chart += "</g>"
+        chart += "</g>" ;
         svgGraph.innerHTML += chart;
     }
 
