@@ -176,7 +176,7 @@ void Util::writeSensorsValues(int tIn, int tOut, int baro, int humid) {
   }
   String output = getDay() + valSeparator + getHour() + valSeparator + tIn + valSeparator + tOut + valSeparator + baro + valSeparator + humid;
   if (DEBUG) {
-    Serial.print("Try Write sensors valuers to file: ");
+    Serial.print("Try Write sensors values to file: ");
     Serial.print(fullMonthFileName);
     Serial.print(" [ ");
     Serial.print(output);

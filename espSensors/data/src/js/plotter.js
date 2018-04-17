@@ -434,7 +434,7 @@ function Plotter(canvasOwner, width, height, startProps) {
         }
         number = number / Math.pow(10, vAxisPar.pow) + "";
         number = (number.length < 3) ? number += '.0' : number.substring(0, 2);
-        console.log("return=" + number);
+        //if(debug)console.log("plotter.js numberToString [ return=" + number + " ]");
         return number + "*E" + vAxisPar.pow;
     }
 
@@ -574,7 +574,7 @@ function Plotter(canvasOwner, width, height, startProps) {
         // console.log('check bounds first=' +first + 'second=' + second + '[ ' +edges.min + ' , ' + edges.max + ' ]');
         if (first < edges.min || first > edges.max)return false;
         if (second < edges.min || second > edges.max) return false;
-        console.log('return TRUE');
+        //if(debug)console.log('return TRUE');
         return true;
     }
 
@@ -746,18 +746,31 @@ function Plotter(canvasOwner, width, height, startProps) {
             }
         }
 
+        // for draw max and min values as text
+        // if true - shift text string slightly left
+        var isShift = false;
+        /**
+         *
+         * @param maxText max value as string
+         * @param minText min value as string
+         * @param maxVal
+         * @param minVal
+         * @param color chart color
+         */
         function drawHorisontalsLines(maxText, minText, maxVal, minVal, color) {
             var fig = '';
+            var xPos = (isShift)? maxX : maxX - fontSize;// for shift text
+            isShift = !isShift;
             var stroke = 'stroke="' + color + '" ' +
                 ' stroke-width="' + strokeWidth / 2 + '" ';
             var font = 'font-size="' + 2 * fontSize / 3 + '" text-anchor="end" ';
             fig += '<line x1="' + x0 + '" y1="' + minVal +
                 '" x2="' + maxX + '" y2="' + minVal + '" ' + stroke + ' />';
-            fig += '<text x="' + maxX + '" y="' + (minVal - 2) + '" ' + stroke + font + '>' +
+            fig += '<text x="' + xPos + '" y="' + (minVal - 2) + '" ' + stroke + font + '>' +
                 minText + '</text>';
             fig += '<line x1="' + x0 + '" y1="' + maxVal +
                 '" x2="' + maxX + '" y2="' + maxVal + '" ' + stroke + ' />';
-            fig += '<text x="' + maxX + '" y="' + (maxVal + fontSize) + '" ' + stroke + font + '>' +
+            fig += '<text x="' + xPos + '" y="' + (maxVal + 2*fontSize/3) + '" ' + stroke + font + '>' +
                 maxText + '</text>';
             simpleChart.innerHTML += fig;
         }
