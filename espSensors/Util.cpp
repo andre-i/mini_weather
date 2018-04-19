@@ -1,24 +1,26 @@
 #include "Util.h"
 
+extern bool LOG;
 extern bool DEBUG;
 
 
-Util::Util(bool isDebug) {
-  DEBUG = isDebug;
+Util::Util(bool isLog) {
+  LOG = getDebugMode();
   //  init file system
   isFS = (SPIFFS.begin()) ? true : false;
 }
 
 void Util::setDebug(bool isDebug) {
   DEBUG = isDebug;
+  LOG = isDebug;
 }
 
-bool Util::getDebugMode(){
+bool Util::getDebugMode() {
   char debugMode[6];
   debugMode[0] = '\0';
   fillParam(DEBUG_MODE, debugMode);
-  if(debugMode[0] == '\0')return false;
-  if( debugMode[0] == 't' && debugMode[1] == 'r' && debugMode[2] == 'u' && debugMode[3] == 'e')return true;
+  if (debugMode[0] == '\0')return false;
+  if ( debugMode[0] == 't' && debugMode[1] == 'r' && debugMode[2] == 'u' && debugMode[3] == 'e')return true;
   else return false;
 }
 //  =================== work with init params  ====================
@@ -31,18 +33,18 @@ bool Util::getDebugMode(){
    dest - string for write parameter value
 */
 void Util::fillParam(const char *parName, char *dest) {
- // if(DEBUG)Serial.println(String("Try get value for: ") + String(parName));
+  // if(LOG)Serial.println(String("Try get value for: ") + String(parName));
   File file;
   if (SPIFFS.exists(PROPS_FILE)) {
     file =  SPIFFS.open(PROPS_FILE, "r");
     if (!file) {
       dest[0] = '\0';;
-      if (DEBUG)Serial.println(" Can`t open PROPS_FILE - fill wi-fi params with default values");
+      if (LOG)Serial.println(" Can`t open PROPS_FILE - fill wi-fi params with default values");
       return;
     }
   } else {
     dest[0] = '\0';
-    if (DEBUG)Serial.println("PROPS_FILE not found - fill wi-fi param with default value");
+    if (LOG)Serial.println("PROPS_FILE not found - fill wi-fi param with default value");
     return;
   }
   char res[31];
@@ -57,7 +59,7 @@ void Util::fillParam(const char *parName, char *dest) {
       res[n] = '\0';
       if (res[0] != '#') { // comment not parse
         if (parName[0] == res[0] && parName[1] == res[1]) {
-          if (DEBUG) Serial.println(String("for parse : ") + String(res));
+          if (LOG) Serial.println(String("for parse : ") + String(res));
           setStartValue(res + 2, dest);
           file.close();
           return;
@@ -75,7 +77,7 @@ void Util::fillParam(const char *parName, char *dest) {
    read param value from *val(delete all white space) and copy it to *buf
 */
 void Util::setStartValue(char *val, char *buf) {
-  // if (DEBUG)Serial.println(String("GET FOR parse: ") + String(val));
+  // if (LOG)Serial.println(String("GET FOR parse: ") + String(val));
   int i = 0, n = 0;
   while (val[i] != '\0' && n < 10) {
     if (val[i] != ' ') {
@@ -86,14 +88,14 @@ void Util::setStartValue(char *val, char *buf) {
   }
   //n++;
   buf[n] = '\0';
-  if (DEBUG)Serial.println(String("read param :") + String(buf));
+  if (LOG)Serial.println(String("read param :") + String(buf));
 }
 
 // ==================== SPIFFS =====================
 
 //  public :
 bool Util::initFS() {
-  if (DEBUG)Serial.print("init SPIFFS : ");
+  if (LOG)Serial.print("init SPIFFS : ");
   if (isFS) {
     Serial.println(" already DONE");
   } else if (SPIFFS.begin()) {
@@ -107,7 +109,7 @@ bool Util::initFS() {
 }
 
 void Util::writeLog(String mess) {
-  if (DEBUG) {
+  if (LOG) {
     Serial.print("Send to log: ");
     Serial.println( mess );
     return;
@@ -154,7 +156,7 @@ String Util::getPeriodsAsJSON() {
   int last = files.lastIndexOf(",");
   if (last > 0) files = files.substring(0, last) + " ]";
   else files = "[ ]";
-  if (DEBUG)Serial.println((String("periodsAsJSON: ") + files));
+  if (LOG)Serial.println((String("periodsAsJSON: ") + files));
   return files;
 
 }
@@ -170,12 +172,12 @@ void Util::writeSensorsValues(int tIn, int tOut, int baro, int humid) {
   File monthF = SPIFFS.open(fullMonthFileName, "a");
   if (!monthF) {
     writeLog("Failed to open : " + fullMonthFileName);
-    if (DEBUG)Serial.println("WARNING - fail open file for write sensors data to file system");
+    if (LOG)Serial.println("WARNING - fail open file for write sensors data to file system");
     monthF.close();
     return;
   }
   String output = getDay() + valSeparator + getHour() + valSeparator + tIn + valSeparator + tOut + valSeparator + baro + valSeparator + humid;
-  if (DEBUG) {
+  if (LOG) {
     Serial.print("Try Write sensors values to file: ");
     Serial.print(fullMonthFileName);
     Serial.print(" [ ");
@@ -185,7 +187,7 @@ void Util::writeSensorsValues(int tIn, int tOut, int baro, int humid) {
   monthF.println();
   monthF.print(output);
   monthF.close();
-  if (DEBUG) Serial.println( "- Success write!");
+  if (LOG) Serial.println( "- Success write!");
 }
 
 bool Util::hasFS() {
@@ -234,12 +236,12 @@ bool Util::isStaConnect() {
     if ( counter > 15 ) {
       WiFi.disconnect();
       delay(100);
-      if (DEBUG)Serial.println(String("\nCan`t connect to ") + String(ssid) + String("  ") + String(passwd));
+      if (LOG)Serial.println(String("\nCan`t connect to ") + String(ssid) + String("  ") + String(passwd));
       return false;
     }
   }
   Serial.println("");
-  if (DEBUG) {
+  if (LOG) {
     Serial.print("Connected to ");
     Serial.print(ssid);
     Serial.print("  IP address: ");
@@ -267,13 +269,13 @@ bool Util::isSetApMode() {
     int addr[4];
     parseAddr( ip, addr);
     // check IP addres on valid
-    if( !addr[0] || addr[0] < 0){
+    if ( !addr[0] || addr[0] < 0) {
       writeLog("Wrong IP address for AP mode wi-fi see props.txt file");
       return false;
     }
     const IPAddress ap_ip(addr[0], addr[1], addr[2], addr[3]);
     WiFi.softAPConfig(ap_ip, ap_ip, subnet);
-    if (DEBUG) {
+    if (LOG) {
       Serial.print("start WI-FI AP MODE: ssid=");
       Serial.print(ssid);
       Serial.print("  passwd=");
@@ -282,7 +284,7 @@ bool Util::isSetApMode() {
     return true;
   } else {
     writeLog("ERROR esp_server can`t UP wifi AP");
-    if (DEBUG)Serial.println(String("\t param : ") + String(ssid) + String(" ") + String(passwd));
+    if (LOG)Serial.println(String("\t param : ") + String(ssid) + String(" ") + String(passwd));
     return false;
   }
 }
@@ -291,28 +293,28 @@ void Util::parseAddr(char *ip, int addr[4]) {
   char c;
   char curr[4];
   int end = 1;
-  int j=0, k=0;
-  c=*ip;
-  for(int i=0; c != '\0'; i++){
+  int j = 0, k = 0;
+  c = *ip;
+  for (int i = 0; c != '\0'; i++) {
     c = *(ip + i);
-    if(c == ' ')continue;
-    if( c != '.'){
-      if( c < 48 || c > 57 ){
+    if (c == ' ')continue;
+    if ( c != '.') {
+      if ( c < 48 || c > 57 ) {
         addr[0] = -1;
         return;
       }
       curr[k] = c;
       k++;
-    } else if( c == '.'){
+    } else if ( c == '.') {
       curr[k] = '\0';
       k = 0;
       addr[j] = atoi(curr);
       j++;
-    } 
+    }
   }
   curr[k] = '\0';
   addr[j] = atoi(curr);
-  if(j < 3) addr[0] = -1;
+  if (j < 3) addr[0] = -1;
 }
 
 
@@ -359,7 +361,7 @@ bool Util::sync() {
         index = dateAndTime.lastIndexOf(':');
         s_min = dateAndTime.substring(index, index - 2);
         setDateTime(true);
-        if (DEBUG)Serial.println("Success sync date-time by WEB");
+        if (LOG)Serial.println("Success sync date-time by WEB");
       }
     }
     disconnect();
@@ -394,7 +396,7 @@ String Util::getMonth() {
 
 
 String Util::getDay() {
-  if (DEBUG) {
+  if (LOG) {
     Serial.print("Day_count: ");
     Serial.println(d_count);
   }
@@ -405,7 +407,10 @@ String Util::getHour() {
   return num[h_count];
 }
 
-
+String Util::getFullDate() {
+  String full = "[ " + getDay() + "/" + getMonth() + "/" + getYear() + " " + getHour() + ":" + String(minute) + " ]";
+  return full;
+}
 
 //
 //   private
@@ -423,18 +428,18 @@ bool Util::hasSyncTime() {
 
 // Open connection to the HTTP server
 bool Util::connect(const char* hostName, const int port) {
-  if ( DEBUG ) {
+  if ( LOG ) {
     Serial.print("Connect to ");
     Serial.println(hostName);
   }
   bool ok = client.connect(hostName, port);
-  if ( DEBUG ) Serial.println(ok ? "Connected" : "Connection Failed!");
+  if ( LOG ) Serial.println(ok ? "Connected" : "Connection Failed!");
   return ok;
 }
 
 // Send the HTTP GET request to the server
 bool Util::sendRequest(const char* host, const char* resource) {
-  if ( DEBUG ) {
+  if ( LOG ) {
     Serial.print("GET ");
     Serial.println(resource);
   }
@@ -461,7 +466,7 @@ bool Util::findDateAndTimeInResponseHeaders() {
   dateAndTime = String(header).substring(
                   String(header).indexOf("Date: ") + 6, String(header).indexOf("GMT"));
   /*
-    if ( DEBUG ) {
+    if ( LOG ) {
       Serial.print("HTTP response header ");
       Serial.println(String(header).c_str());
       Serial.print("DATE index start = ");
@@ -477,7 +482,7 @@ bool Util::findDateAndTimeInResponseHeaders() {
 
 // Close the connection with the HTTP server
 void Util::disconnect() {
-  // if ( DEBUG ) Serial.println("Disconnect from HTTP server");
+  // if ( LOG ) Serial.println("Disconnect from HTTP server");
   client.stop();
 }
 
@@ -487,7 +492,7 @@ void Util::disconnect() {
 */
 void Util::setDateTime(bool isWeb) {
   /*
-    if (DEBUG) {
+    if (LOG) {
       Serial.print( "Get date-time for decode: [  year = "); Serial.print(year);
       Serial.print( "  month = "); Serial.print(month);
       Serial.print( "  day = "); Serial.print(day);
@@ -530,7 +535,7 @@ void Util::setDateTime(bool isWeb) {
   y_count = year.toInt();
   isSetTime = true;
   /*
-    if (DEBUG) {
+    if (LOG) {
       Serial.print( "after decode date: [ year ="); Serial.print(String(y_count));
       Serial.print(";   month = "); Serial.print(num[m_count]);
       Serial.print(";   day = "); Serial.print(num[d_count]);
@@ -590,7 +595,38 @@ void Util::syncDay() {
 }
 
 
-
+String Util::getCurrentProps() {
+  String res = "\ntime on chip(установленное на ESP время) : " + getFullDate() + "\n\nWiFi mode : ";
+  //  wi-fi mode
+  switch (wifiMode) {
+    case DEVICE_AP_MODE: res += "AP (точка доступа)"; break;
+    case DEVICE_STA_MODE: res += "STA (клиент)"; break;
+    case DEVICE_NOT_WIFI: res += "WARNING WiFi not work!!!(вай-фай не работает)"; break;
+  }
+  // ssid  AP and STA mode
+  char s[15], p[15];
+  s[0] = '\0';
+  p[0] = '\0';
+  char *ssidAP = s, *ssidSTA = p;
+  fillParam(AP_SSID, ssidAP); // read Start Param from file sysytem
+  if (!ssidAP || ssidAP[0] == '\0') ssidAP = AP_SSID_DEF;
+  fillParam(STA_SSID, ssidSTA);
+  if (!ssidSTA || ssidSTA[0] == '\0') ssidSTA = STA_SSID_DEF;
+  res += "\n\nssid (имя сети) \n     AP  : " + String(ssidAP) + "\n     STA : " + String(ssidSTA) + "\n\nfile system (файловая система) : ";//
+  // file sysytem access
+  if (hasFS()) res += " accessed (доступна) \n";
+  else res += " not access (недоступна) \n";
+  res += "\nwork mode(режим работы)    : ";
+  // debug mode
+  if (LOG) res += " debug (отладка)";
+  else res += " default (обычный)";
+  // DS18B20
+  res += "\n\nwhether work DS18B20 (включен ли DS18B20 датчик?) : ";
+  if (IS_DS18B20) res += " yes(да)";
+  else res += " no(нет)";
+  res += "\n\nlog file request(строка запроса лог файла) : weather.local/readFile?fName=/log.log\n";
+  return res;
+}
 
 
 

@@ -25,7 +25,7 @@ const IPAddress subnet(AP_IP_SUBNET);
 
 class Util {
   private:
-    // bool DEBUG;
+    // bool LOG;
     // ========= SPIFFS =========
     // variables
     const String sensorDataDir = SENSOR_DATA_DIR;
@@ -108,8 +108,11 @@ class Util {
     String getMonth();
     String getDay();
     String getHour();
-    // write sensors values to SD card
+    String getFullDate();
+    // whether write sensors values to SD card
     bool hasWrite();
+    //
+    String getCurrentProps();
 
 };
 

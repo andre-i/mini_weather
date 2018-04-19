@@ -1,8 +1,8 @@
 
 #include "SerialHandler.h"
 
+extern bool LOG;
 extern bool DEBUG;
-
 
 SerialHandler ::SerialHandler(Util *u) {
   util = u;
@@ -43,11 +43,16 @@ void SerialHandler::showFile(char answ[]) {
 
 void SerialHandler::showManual() {
   const char *help = (strncmp(HELP_LANG, "ru", 2) == 0) ? help_ru: help_en;
-  Serial.println(help);
+  char ch = *help;
+  int i = 0;
+  while(ch != '\0'){
+    if(ch == '\n')Serial.println("");
+    else Serial.print(ch);
+    ch = *(help++);
+  }
 }
 
 void SerialHandler::handle(void) {
-  char *r;
   char answ[100];
   int i = 0;
   delay(20);
@@ -57,20 +62,14 @@ void SerialHandler::handle(void) {
     delay(20);
   }
   answ[i] = '\0';
-  r = answ;
-  /*
-    if (DEBUG) {
-    Serial.print("I get:" );
-    Serial.println(r);
-    }
-  */
+  // toggle log out state 
   if (i < 3) {
     if (answ[0] == 'y' || answ[0]  == 'Y') {
-      DEBUG = true;
-      Serial.println(" ON DEBUG output!");
+      LOG = true;
+      Serial.println(" ON LOG output!");
     } else if (answ[0] == 'n' || answ[0] == 'N') {
-      DEBUG = false;
-      Serial.println(" OFF DEBUG output!");
+      LOG = false;
+      Serial.println(" OFF LOG output!");
     } else if (answ[0] == 's' && answ[1] == 'p') {
       isFS = util->initFS();
     } else if (answ[0] == 's' && answ[1] == 'i') {
@@ -79,7 +78,12 @@ void SerialHandler::handle(void) {
       showManual();
     }
   } else {
-    //  read from file system
+    executeCommand(answ);
+  }
+}
+
+void SerialHandler::executeCommand(char answ[100]){
+      //  read from file system
     if (answ[0] == 'r' && answ[1] == '_') {
       if (isFS)showFile(answ);
       else Serial.println("WARNING: Can`t access to file system");
@@ -95,6 +99,33 @@ void SerialHandler::handle(void) {
     if (answ[0] == 'n' && answ[1] == 'l' && answ[2] == '_') {
       if (isFS)appendNewLine(String(answ).substring(3));
     }
+    // set debug mode on worked app
+    if( strncmp(answ, "debug", 5) == 0){
+      Serial.println(setDebug(String(answ).substring(5)));
+    }
+    // get date-time on chip
+    if(strncmp(answ, "time", 4) == 0){
+      Serial.print("Now on chip  ");
+      Serial.println(util->getFullDate());
+    }
+    // get current work parameters
+    if(strncmp(answ, "curr", 4) == 0){
+      Serial.println("  ------- Current application parameters -------");
+      Serial.println(util->getCurrentProps());
+      Serial.println("  ___________  end current parameters  _________\n");
+    }
+    
+    //  set date-time
+    if (strncmp(answ, "date", 4) == 0 ) {
+      if(!isFS) Serial.println("Fail set date-time (No get access on file system)");
+      if (util->assignTime(answ+5)) {
+        String mess = "(Ok) Success set date-time: " + util->getYear() + "/" + util->getMonth() + "/" + util->getDay() + " " + util->getHour() + "h";
+        Serial.println(mess);
+      } else {
+        Serial.println("(No) Fail set Date-time WRONG FORMAT");
+      }
+    }
+    //     PROPERTIES FILE
     // write start wifi params to PROPS_FILE
     if (answ[0] == 'w' && answ[1] == 'i' && answ[2] == 'f' && answ[3] == 'i') {
       if (isFS)Serial.println(writeWifiProps(String(answ).substring(4)));
@@ -105,23 +136,11 @@ void SerialHandler::handle(void) {
       if (isFS)Serial.println(writeApModeIpAddr(answ));
       else Serial.println("WARNING: Can`t access to file system");
     }
-
-    if( strncmp(answ, "debug", 5) == 0){
-      if (isFS)Serial.println(writeDebugMode(String(answ).substring(5)));
+    // set debug mode to props file
+    if( strncmp(answ, "setDebug", 7) == 0){
+      if (isFS)Serial.println(writeDebugMode(String(answ).substring(9)));
       else Serial.println("WARNING: Can`t access to file system");
     }
-
-    //  set date-time
-    if (strncmp(answ, "date", 4) == 0 ) {
-      if (util->assignTime(r)) {
-        String answ = "(Ok) Success set date-time: " + util->getYear() + "/" + util->getMonth() + "/" + util->getDay() + " " + util->getHour() + "h";
-        Serial.println(answ);
-      } else {
-        Serial.println("(No) Fail set date-time (No get access on file system)");
-      }
-    }
-  }
-
 }
 
 bool SerialHandler::appendNewLine(String fName) {
@@ -187,7 +206,7 @@ String SerialHandler::writeWifiProps(String prop) {
   prop.trim();
   struct params wParam = getParamsFromFile();
   if (fillPropsFromString(prop, &wParam)) {
-    if (DEBUG)Serial.println("FAIL get WiFi params. ");
+    if (LOG)Serial.println("FAIL get WiFi params. ");
     util->writeLog(String("FAIL write Wifi parameters - Wrong format for string[") + prop + String("]"));
     return "WARNING - can`t write wifi params";
   }
@@ -202,7 +221,7 @@ String SerialHandler::writeWifiProps(String prop) {
      if properties(ap or sta) missing in prop string - appropriate property set to empty string
 */
 bool SerialHandler::fillPropsFromString(String prop, struct params *par) {
-  //if(DEBUG)Serial.println(String("wifi for set: ") + prop);
+  //if(LOG)Serial.println(String("wifi for set: ") + prop);
   bool isErr = false;
   String ap_ssid = "", ap_passwd = "", sta_ssid = "", sta_passwd = "";
   String buf = "";
@@ -214,7 +233,7 @@ bool SerialHandler::fillPropsFromString(String prop, struct params *par) {
     return isErr = true;
   }
   if (apInd >= 0) {
-    //if (DEBUG)Serial.print("Try get ap params. ");
+    //if (LOG)Serial.print("Try get ap params. ");
     buf = prop.substring(prop.indexOf('[') + 1, prop.indexOf(']'));
     buf.trim();
     if ( buf.length() > 10 ) {
@@ -234,7 +253,7 @@ bool SerialHandler::fillPropsFromString(String prop, struct params *par) {
     }
   }
   if ( staInd >= 0 ) {
-    //if (DEBUG)Serial.print("Try get sta params. ");
+    //if (LOG)Serial.print("Try get sta params. ");
     buf = prop.substring(prop.lastIndexOf('[') + 1, prop.lastIndexOf(']'));
     buf.trim();
     if (buf.length() > 10) {
@@ -253,7 +272,7 @@ bool SerialHandler::fillPropsFromString(String prop, struct params *par) {
       return isErr;
     }
   }
-  if (DEBUG) {
+  if (LOG) {
     Serial.println(" Success get wifi params!");
     Serial.println(String("\tAP [ssid:") + String(ap_ssid) + String(" passwd:") + String(ap_passwd) +
                    String("] \n\tSTA [ssid:") + String(sta_ssid) + String("  passwd:") + String(sta_passwd) + String("] "));
@@ -268,7 +287,7 @@ bool SerialHandler::fillPropsFromString(String prop, struct params *par) {
 struct SerialHandler::params SerialHandler::getParamsFromFile() {
   struct params par;
   if (SPIFFS.exists(PROPS_FILE)) {
-    // if (DEBUG)Serial.println(String("try get param: ") + String(parName));
+    // if (LOG)Serial.println(String("try get param: ") + String(parName));
     char cur;
     bool flag = false;
     bool isReadProp = false;
@@ -277,7 +296,7 @@ struct SerialHandler::params SerialHandler::getParamsFromFile() {
     String res = "";
     File params = SPIFFS.open(PROPS_FILE, "r");
     if (!params) par;
-    if (DEBUG)Serial.println("parse props.txt");
+    if (LOG)Serial.println("parse props.txt");
     while ( params.available() ) {
       cur = params.read();
       if (cur == ' ')continue;
@@ -296,7 +315,7 @@ struct SerialHandler::params SerialHandler::getParamsFromFile() {
         flag = true;
       } else if (flag) {
         if (i == 1) {
-          // if (DEBUG)Serial.println(String("check param") + String(*parName) + String(*(parName + 1)) + String(" with: ") + String(sec[0]) + String(cur));
+          // if (LOG)Serial.println(String("check param") + String(*parName) + String(*(parName + 1)) + String(" with: ") + String(sec[0]) + String(cur));
           sec[1] = cur;
           sec[2] = '\0';
           isReadProp = true;
@@ -311,7 +330,7 @@ struct SerialHandler::params SerialHandler::getParamsFromFile() {
       }
     }
     params.close();
-    //if (DEBUG)Serial.println(String("On end check have param = ") + res);
+    //if (LOG)Serial.println(String("On end check have param = ") + res);
   }
   return par;
 }
@@ -344,7 +363,7 @@ String SerialHandler::writeApModeIpAddr(char *addr) {
   n++;
   char *ip = (addr + n);
   int res[4];
-  if (DEBUG)Serial.println(String(" IP address = ") + String(ip));
+  if (LOG)Serial.println(String(" IP address = ") + String(ip));
   util->parseAddr(ip, res);
   if (res[0] == -1)return String("ERROR - wrong IP address - \"") + ip + String("\" !");
   struct params par = getParamsFromFile();
@@ -365,8 +384,20 @@ String SerialHandler::writeDebugMode(String isDebug){
 
 
 
-
-
+String SerialHandler::setDebug(String mode){
+  String res = " DEBUG ";
+  mode.trim();
+  if(mode.equals("y") || mode.equals("Y")){
+    res += "ON";
+    DEBUG = true;
+    LOG = true;
+  }else{
+    res += "OFF";
+    DEBUG = false;
+    LOG = false;
+  }
+  return res;
+}
 
 
 

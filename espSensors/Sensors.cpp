@@ -1,18 +1,18 @@
 #include "Sensors.h"
 
-extern bool DEBUG;
+extern bool LOG;
 
 //  =========== PUBLIC ==================
 
 /** set class variables for sensors */
 Sensors::Sensors(uint8_t wBus, int dhtType) {
-  for(int i = 0; i < maxCounterNumber ; i++){
-    allIn[i] = allOut[i] =allBaro[i] = allHumid[i] = "-100";
+  for (int i = 0; i < maxCounterNumber ; i++) {
+    allIn[i] = allOut[i] = allBaro[i] = allHumid[i] = "-100";
   }
   tIn = tOut = baro = humid = DEVICE_DISCONNECTED_C;
   mediaIn = mediaOut = mediaBaro = mediaHumid = 0;
   oneWire = new OneWire(wBus);
-  sensors = new DallasTemperature(oneWire);
+  if (IS_DS18B20)sensors = new DallasTemperature(oneWire);
   dht = new DHT(wBus, dhtType);
   bme = new Adafruit_BMP280();
 }
@@ -21,28 +21,30 @@ Sensors::Sensors(uint8_t wBus, int dhtType) {
 int Sensors::init() {
   maxCounterNumber = REQUEST_COUNT - 1;
   // ds18b20
-  if(DEBUG)sensors->begin();
-  if(DEBUG)Serial.println("Init ds18b20");
+  if (IS_DS18B20)sensors->begin();
+  if (IS_DS18B20)Serial.println("Init ds18b20");
   // dht 11
   dht->begin();
-  if(DEBUG)Serial.println("Init DHT");
+  if (LOG)Serial.println("Init DHT");
   //  BMP 280
   if (!bme->begin(0x76)) {
     Serial.println("Could not find a valid BMP280 sensor, check wiring!");
     return 1;
-  }else {
-    if(DEBUG)Serial.println("Init BMP280");
+  } else {
+    if (LOG)Serial.println("Init BMP280");
   }
   return 0;
 }
 
 //  request sensors, compute media , fill arrays of values
 
-// ds 18B20 purpose comparison with themperature other senseos
+// ds 18B20 purpose comparison with themperature other sensors
 void Sensors::readDS18B20() {
-  //if (++lastDS18B20 > maxCounterNumber)lastDS18B20 = 0;
-  sensors->requestTemperatures(); // Send the command to get temperatures
-  dsTemp = (int)(sensors->getTempCByIndex(0) * 10 + 0.5)/10;
+  if (IS_DS18B20) {
+    //if (++lastDS18B20 > maxCounterNumber)lastDS18B20 = 0;
+    sensors->requestTemperatures(); // Send the command to get temperatures
+    dsTemp = (int)(sensors->getTempCByIndex(0) * 10 + 0.5) / 10;
+  }
 }
 
 void Sensors::readDHT() {
@@ -50,7 +52,7 @@ void Sensors::readDHT() {
   tIn = (int)(dht->readTemperature() + 0.5);
   humid = (int)(dht->readHumidity() + 0.5);
   if ( isnan(tIn) || isnan(humid)) {
-    if (DEBUG)Serial.println("Can`t read DHT sensor data");
+    if (LOG)Serial.println("Can`t read DHT sensor data");
     tIn = humid = DEVICE_DISCONNECTED_C;
   }
   allIn[lastDHT] = String(tIn);
@@ -70,7 +72,7 @@ void Sensors::readBMP280() {
   allBaro[lastBMP280] = String(baro);
   if (lastBMP280 == 0)mediaBaro = baro;
   else mediaBaro = (int)((mediaBaro + baro) / 2 + 0.5);
-  tOut = bme->readTemperature() - 1; 
+  tOut = bme->readTemperature() - 1;
   allOut[lastBMP280] = String(tOut);
   if (lastBMP280 == 0)mediaOut = tOut;
   else mediaOut = (int)((mediaOut + tOut) / 2 + 0.5);
@@ -80,16 +82,17 @@ void Sensors::readBMP280() {
 
 
 //  get sensors values
-void Sensors::makeCurrentToJSON(){
+void Sensors::makeCurrentToJSON() {
   currentInJSON = String("{ \"tIn\":") + String(tIn) + String(", \"tOut\":") + String(tOut) +
-         String(", \"baro\":") + String(baro) + String(", \"humid\":") + String(humid) + String(" }");
+                  String(", \"baro\":") + String(baro) + String(", \"humid\":") + String(humid) + String(" }");
 }
 
 String Sensors::getCurrentAsJSON() {
-  if(DEBUG){
+  if (LOG) {
     Serial.print("\"getCurrentAsJSON\": ");
     Serial.print(currentInJSON);
-    String res = " [ BMP280 t= " + String(tOut) + " Dallas t= " + String(dsTemp) + " ]";
+    String res = " [ BMP280 t= " + String(tOut);
+    if(IS_DS18B20) res += " Dallas t= " + String(dsTemp) + " ]";
     Serial.println(res);
   }
   return currentInJSON;
@@ -110,7 +113,7 @@ String Sensors::getLastAsJSON(String dataType) {
   }
   else if (dataType == T_OUT) {
     type = allOut;
-    last = lastDS18B20;
+    last = lastBMP280;
   }
   else if (dataType == BARO) {
     type = allBaro;
@@ -126,7 +129,7 @@ String Sensors::getLastAsJSON(String dataType) {
     }
     res += *(type + len) + "], \"last\": " + String(last) + " }";
   }
-  if(DEBUG){
+  if (LOG) {
     Serial.print("\"getLastAsJSON return: ");
     Serial.println(res);
     Serial.println("------------\n");

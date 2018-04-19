@@ -11,13 +11,16 @@
 #include <FS.h>
 
 // mark for version software
-static String version = "0.1";
+static String version = "0.2";
 
-bool DEBUG = true;
+String getFullDate(void);
+
+bool LOG = false;
+bool DEBUG = false;
 int wifiMode = DEVICE_NOT_WIFI;
 
+Util util(LOG);
 Sensors s(ONE_WIRE_BUS, DHT_TYPE);
-Util util(DEBUG);
 SerialHandler sHandler(&util);
 Ticker timer;
 
@@ -41,7 +44,7 @@ static int tickInMinute = 60 / CYCLE_DURATION;
 static int tickInHour = 3600 / CYCLE_DURATION;
 static int currentInMinute = 0;
 static int currentInHour = 0;
-static int currentForCheck = 0;
+static int currentForCheck = checkSensorsTick - 1;
 
 /**
     set state for
@@ -51,7 +54,7 @@ static int currentForCheck = 0;
     in debud mode: any tick - check sensors, any minute - write sensors values to storage
 */
 void tick() {
-  // if (DEBUG)Serial.println("Tick");
+  // if (LOG)Serial.println("Tick");
   currentInMinute++;
   currentInHour++;
   currentForCheck++;
@@ -71,14 +74,6 @@ void tick() {
     isCheckSensors = true;
     if (currentInMinute == 0)isWriteValues = true;
   }
-}
-
-
-
-/** print current date */
-String getFullDate() {
-  String full = "date: " + util.getDay() + "/" + util.getMonth() + "/" + util.getYear() + "  h:" + util.getHour() + " ]";
-  return full;
 }
 
 void printFullDate() {
@@ -122,7 +117,7 @@ void handleNotFound() {
   }
   message += "<!-- \n --><br><hr width='60%'><!-- \n -->";
   server.send(404, "text/html", message);
-  if (DEBUG)Serial.println(message);
+  if (LOG)Serial.println(message);
 }
 
 void handleRoot() {
@@ -157,7 +152,7 @@ bool readSPIFFS(String path, String dataType) {
     if (server.streamFile(dataFile, dataType) != dataFile.size()) {
       Serial.println("WARNING : Sent less data than expected!");
     } else {
-      if (DEBUG) {
+      if (LOG) {
         String out = "SPIFFS send file [ " + path + "   dataType: " + dataType + " ]";
         Serial.println(out);
       }
@@ -187,12 +182,12 @@ bool loadFile(String path) {
 
 
 void readFile() {
-  if (DEBUG)Serial.println("Call \"readFile\"");
+  if (LOG)Serial.println("Call \"readFile\"");
   if (server.hasArg("fName")) {
     String fName = String(server.arg("fName"));
     fName.trim();
     if ( !fName.startsWith("/")) fName = String("/") + fName;
-    if (DEBUG) {
+    if (LOG) {
       Serial.print("request on file: ");
       Serial.println(server.arg(fName));
     }
@@ -236,8 +231,8 @@ void handleGetSrc() {
 //  sensors data
 // send current values all sensors
 void sendCurrent() {
-  if (DEBUG) {
-    Serial.print("Server get request \"lastValues\" ");
+  if (LOG) {
+    Serial.print("Server get request \"/current\" ");
   }
   server.send(200, "application/json", s.getCurrentAsJSON());
 }
@@ -247,11 +242,11 @@ void sendCurrent() {
     reques looks - /lastValues?sensor=sensor_name
 */
 void sendLast() {
-  if (DEBUG)Serial.print(" HTTP SERVER request of \"lastValues\" for: ");
+  if (LOG)Serial.print(" HTTP SERVER request of \"lastValues\" for: ");
   String sType = "";
   if (server.hasArg("sensor")) {
     sType = server.arg("sensor");
-    if (DEBUG) {
+    if (LOG) {
       Serial.println(sType);
     }
     if (sType == T_IN || sType == T_OUT || sType == BARO || sType == HUMID) {
@@ -264,8 +259,19 @@ void sendLast() {
 }
 
 void sendPeriods() {
-  if (DEBUG) Serial.println("browser req: /availablePeriod ");
+  if (LOG) Serial.println("browser req: /availablePeriod ");
   server.send(200, "application/json", util.getPeriodsAsJSON());
+}
+
+void sendCurrentProperties(){
+  if(LOG)Serial.print("browser request : /getCurrentProps  answer: ");
+  String res = util.getCurrentProps();
+  String header = "<html><head><meta charset=utf-8></head><br><br><br><h2 align='center'>Current application parameters<br>Настройки чипа</h2><h3>";
+  res.replace("\n","<br>");
+  res.replace(" ","&nbsp;");
+  res = header + res + String("</h3><hr width='80%'></html>");
+  if(LOG)Serial.println(res);
+  server.send(200,"text/html",res.c_str());
 }
 
 void prepareServer() {
@@ -278,6 +284,7 @@ void prepareServer() {
   server.on("/readFile", HTTP_GET, readFile);
   server.on("/sensorData", HTTP_GET, sendSensorData);
   server.on("/availablePeriod", HTTP_GET, sendPeriods);
+  server.on("/getCurrentProps",HTTP_GET, sendCurrentProperties);
   server.begin();
   delay(1000);
 }
@@ -302,41 +309,54 @@ void setup() {
   showStartMessage();
   //
   int sensInit = s.init();
-  DEBUG = util.getDebugMode();
+  LOG = util.getDebugMode();
   // try init sd card
   if (!util.initFS()) {
     isFS = false;
   } else isFS = true;
   wifiMode = util.initWIFI();
+  String res;
+  if(isFS){
+    res = (sensInit == 0) ? " success init" : " fail init";
+    res = "  [ SPIFFS: init,  sensors: " + res;
+  }
   switch (wifiMode) {
     case DEVICE_STA_MODE:
       if (util.sync()) {
         printFullDate();
         if (isFS) {
-          String res = (sensInit == 0) ? " success init" : " fail init";
-          res = "[ SPIFFS: init,  sensors: " + res + ",  wi-fi: STA_MODE ]";
-          res =  util.getDay() + "/" + util.getMonth() + "/" + util.getYear() + res;
-          util.writeLog(res);
+          res += ",  wi-fi: STA_MODE ]";
+          res =  util.getFullDate() + res;
         }
       }
       break;
     case  DEVICE_AP_MODE:
-      if (isFS)Serial.println("Perhaps need set date for write sensors data to storage.\nPrint \"h\" for detail");
+      if (isFS){
+        Serial.println("Perhaps need set date for write sensors data to storage.\nPrint \"h\" for detail");
+        res += ", wifi: AP_MODE ]";
+        res += "date_not_set " + res;
+      }
       break;
     case DEVICE_NOT_WIFI:
-      if (isFS)Serial.println("WARNING: device can`t start of WiFi!!!\nPerhaps need set date for write sensors data to SPIFFS.\nPrint \"h\" by serial for detail");
+      if (isFS){
+        Serial.println("WARNING: device can`t start of WiFi!!!\nPerhaps need set date for write sensors data to SPIFFS.\nPrint \"h\" by serial for detail");
+        res += ", WARNING: can`t start Wi-Fi !!!";
+        res += "date_not_set " + res;
+      }
       break;
   }
+  // write to log wifi and sensors state
+  if(isFS) util.writeLog(res);
   //  set FS state to serial handler
   sHandler.setFSstate(isFS);
   bool isMDNS = MDNS.begin(HOST) ;
   if (isMDNS) {
-    Serial.println("MDNS responder started");
+    Serial.println("\nMDNS responder started");
     Serial.print("You can now connect to http://");
     Serial.print(HOST);
     Serial.println(".local");
   } else Serial.println("Can`t start mDNS");
-  if (DEBUG) {
+  if (LOG) {
     Serial.print("tickDuration = "); Serial.println(tickDuration);
   }
   prepareServer();
@@ -364,21 +384,21 @@ void loop() {
         s.readDHT();
         sensorToCheck = DS_SENSOR;
         break;
-      case DS_SENSOR:
-        if (DEBUG)s.readDS18B20();
+      case DS_SENSOR: // read DS18B20 if IS_DS18B20 in props file set to true
+        if (LOG)s.readDS18B20();
         sensorToCheck = BMP_SENSOR ;
         break;
       case BMP_SENSOR:
         s.readBMP280();
         sensorToCheck = DHT_SENSOR;
-        s.makeCurrentToJSON();
+        s.makeCurrentToJSON(); // on end cucle sensors request - make sensors values as JSON string
         isCheckSensors = false;
         break;
     }
   }
   delay(70);
   if (isAddMinute) {
-    if (DEBUG) {
+    if (LOG) {
       Serial.println("call util.addMinute()");
       Serial.println(s.getCurrentAsJSON());
     }
