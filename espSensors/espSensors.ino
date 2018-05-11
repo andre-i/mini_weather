@@ -19,6 +19,13 @@ bool LOG = false;
 bool DEBUG = false;
 int wifiMode = DEVICE_NOT_WIFI;
 
+//  led controll
+// if wifi STA_mode - up the GPIO12
+// if wifi AP_mode - up the GPIO13
+int STA_PIN = 12;
+int AP_PIN = 13;
+
+
 Util util(LOG);
 Sensors s(ONE_WIRE_BUS, DHT_TYPE);
 SerialHandler sHandler(&util);
@@ -71,6 +78,7 @@ void tick() {
     currentForCheck = 0;
   }
   if (DEBUG) {
+    Serial.print("Debug MODE  ");
     isCheckSensors = true;
     if (currentInMinute == 0)isWriteValues = true;
   }
@@ -163,7 +171,7 @@ bool readSPIFFS(String path, String dataType) {
 }
 
 bool loadFile(String path) {
-  if(path.equals(PROPS_FILE)) return false;
+  if (path.equals(PROPS_FILE)) return false;
   String dataType = "text/plain";
   if (path.endsWith("/")) path = serverRoot + path + "index.htm";
   if (path.endsWith(".htm")) dataType = "text/html";
@@ -191,7 +199,7 @@ void readFile() {
       Serial.print("request on file: ");
       Serial.println(server.arg(fName));
     }
-    if(!loadFile(fName))handleNotFound();
+    if (!loadFile(fName))handleNotFound();
   }
 }
 
@@ -263,15 +271,19 @@ void sendPeriods() {
   server.send(200, "application/json", util.getPeriodsAsJSON());
 }
 
-void sendCurrentProperties(){
-  if(LOG)Serial.print("browser request : /getCurrentProps  answer: ");
+void sendCurrentProperties() {
+  if (LOG)Serial.print("browser request : /getCurrentProps  answer: ");
   String res = util.getCurrentProps();
   String header = "<html><head><meta charset=utf-8></head><br><br><br><h2 align='center'>Current application parameters<br>Настройки чипа</h2><h3>";
-  res.replace("\n","<br>");
-  res.replace(" ","&nbsp;");
+  res.replace("\n", "<br>");
+  res.replace(" ", "&nbsp;");
   res = header + res + String("</h3><hr width='80%'></html>");
-  if(LOG)Serial.println(res);
-  server.send(200,"text/html",res.c_str());
+  if (LOG)Serial.println(res);
+  server.send(200, "text/html", res.c_str());
+}
+
+void loadLogFile(){
+  loadFile(String(LOG_FILE));
 }
 
 void prepareServer() {
@@ -284,7 +296,8 @@ void prepareServer() {
   server.on("/readFile", HTTP_GET, readFile);
   server.on("/sensorData", HTTP_GET, sendSensorData);
   server.on("/availablePeriod", HTTP_GET, sendPeriods);
-  server.on("/getCurrentProps",HTTP_GET, sendCurrentProperties);
+  server.on("/getCurrentProps", HTTP_GET, sendCurrentProperties);
+  server.on("/log", HTTP_GET, loadLogFile);
   server.begin();
   delay(1000);
 }
@@ -305,18 +318,24 @@ void showStartMessage() {
 
 
 void setup() {
+  //prepare led state
+  pinMode(STA_PIN, OUTPUT);
+  pinMode(AP_PIN, OUTPUT);
+  digitalWrite(STA_PIN, HIGH);
+  digitalWrite(AP_PIN, HIGH);
+  // up serial output
   Serial.begin(115200);
   showStartMessage();
   //
   int sensInit = s.init();
-  LOG = util.getDebugMode();
+  DEBUG = util.getDebugMode();
   // try init sd card
   if (!util.initFS()) {
     isFS = false;
   } else isFS = true;
   wifiMode = util.initWIFI();
   String res;
-  if(isFS){
+  if (isFS) {
     res = (sensInit == 0) ? " success init" : " fail init";
     res = "  [ SPIFFS: init,  sensors: " + res;
   }
@@ -329,24 +348,30 @@ void setup() {
           res =  util.getFullDate() + res;
         }
       }
+      digitalWrite(STA_PIN, HIGH);
+      digitalWrite(AP_PIN, LOW);
       break;
     case  DEVICE_AP_MODE:
-      if (isFS){
+      if (isFS) {
         Serial.println("Perhaps need set date for write sensors data to storage.\nPrint \"h\" for detail");
         res += ", wifi: AP_MODE ]";
         res += "date_not_set " + res;
       }
+      digitalWrite(STA_PIN, LOW);
+      digitalWrite(AP_PIN, HIGH);
       break;
     case DEVICE_NOT_WIFI:
-      if (isFS){
+      if (isFS) {
         Serial.println("WARNING: device can`t start of WiFi!!!\nPerhaps need set date for write sensors data to SPIFFS.\nPrint \"h\" by serial for detail");
         res += ", WARNING: can`t start Wi-Fi !!!";
         res += "date_not_set " + res;
       }
+      digitalWrite(STA_PIN, LOW);
+      digitalWrite(AP_PIN, LOW);
       break;
   }
   // write to log wifi and sensors state
-  if(isFS) util.writeLog(res);
+  if (isFS) util.writeLog(res);
   //  set FS state to serial handler
   sHandler.setFSstate(isFS);
   bool isMDNS = MDNS.begin(HOST) ;

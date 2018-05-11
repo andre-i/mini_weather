@@ -1,0 +1,21 @@
+Замечания:
+	MIME типы
+zip 	application/x-zip-compressed
+zip 	application/zip
+
+
+---------------------------
+     SENSOR     ESP8266	   |
+---------------------------
+	    BMP 	   |
+	scl	GPIO5	   |
+	sda	GPIO4	   |
+			   |
+ 	    DHT		   |
+	data	GPIO2	   |
+			   |
+      FTDI(COM adaptor)	   |
+	FTDI	ESP8266	   |
+	зел	RX	   |
+	бел	TX	   |
+----------------------------

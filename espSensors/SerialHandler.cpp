@@ -353,7 +353,7 @@ void SerialHandler::writeToPropFile( struct params par) {
   file.print( res.c_str());
   file.close();
   Serial.println("Success : Wi-Fi parameters write to property file");
-  util->writeLog(String(util->getDay()) + "/" + String(util->getMonth()) + "/" + String(util->getYear()) + " - writen new Wi-Fi propertirs ");
+  util->writeLog(String(util->getDay()) + "/" + String(util->getMonth()) + "/" + String(util->getYear()) + " - writen new properties ");
 }
 
 

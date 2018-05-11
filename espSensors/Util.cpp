@@ -292,14 +292,15 @@ bool Util::isSetApMode() {
 void Util::parseAddr(char *ip, int addr[4]) {
   char c;
   char curr[4];
-  int end = 1;
   int j = 0, k = 0;
   c = *ip;
   for (int i = 0; c != '\0'; i++) {
     c = *(ip + i);
     if (c == ' ')continue;
-    if ( c != '.') {
+    if ( c != '.' && c != 0) {
+      int n = c+0;
       if ( c < 48 || c > 57 ) {
+        
         addr[0] = -1;
         return;
       }

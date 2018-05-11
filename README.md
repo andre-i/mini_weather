@@ -4,7 +4,6 @@ Consist from 2 part:
   1. c++ code base on arduino IDE
   2. HTML + JavaScript for reflect sensors data in browser
   
-first propertly worked commit e52ef9ef9c71523873d53782703e9b7889d9d912
 ![Common view ](https://github.com/andre-i/mini_weather/blob/master/pict/view.png)
 Used components:
   + esp12 module
