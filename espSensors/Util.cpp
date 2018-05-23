@@ -5,14 +5,14 @@ extern bool DEBUG;
 
 
 Util::Util(bool isLog) {
-  LOG = getDebugMode();
+  LOG = isLog;
+  DEBUG = getDebugMode();
   //  init file system
   isFS = (SPIFFS.begin()) ? true : false;
 }
 
 void Util::setDebug(bool isDebug) {
   DEBUG = isDebug;
-  LOG = isDebug;
 }
 
 bool Util::getDebugMode() {
@@ -26,14 +26,18 @@ bool Util::getDebugMode() {
 //  =================== work with init params  ====================
 
 /**
-   try read WiFi init param from file,
+   try read init param from file by it name,
    if not , then set to param '\0' - null string
 
-   parName - name parameter in props file( see for help props.h file)
+   key - name parameter in props file( see for help props.h file)
    dest - string for write parameter value
 */
-void Util::fillParam(const char *parName, char *dest) {
-  // if(LOG)Serial.println(String("Try get value for: ") + String(parName));
+void Util::fillParam(const char *key, char *dest) {
+  if (!isFS) {
+    dest[0] = '\0';
+    return;
+  }
+  if (LOG)Serial.println(String("Try get value for : ") + String(key));
   File file;
   if (SPIFFS.exists(PROPS_FILE)) {
     file =  SPIFFS.open(PROPS_FILE, "r");
@@ -47,48 +51,26 @@ void Util::fillParam(const char *parName, char *dest) {
     if (LOG)Serial.println("PROPS_FILE not found - fill wi-fi param with default value");
     return;
   }
-  char res[31];
-  int i = 0; // char number in file
-  int n = 0; // char number in string
-  char c;
-  for ( i = 0;  file.available(); i++) {
-    c = file.read();
-    if ( c != '\n' && n < 20 ) {
-      res[n] = c;
-    } else {
-      res[n] = '\0';
-      if (res[0] != '#') { // comment not parse
-        if (parName[0] == res[0] && parName[1] == res[1]) {
-          if (LOG) Serial.println(String("for parse : ") + String(res));
-          setStartValue(res + 2, dest);
-          file.close();
-          return;
-        }
-      }
-      n = -1;
+  String cur;
+  while ( file.available()) {
+    cur = file.readStringUntil('\n');
+    // if (LOG)Serial.println(cur);
+    if (cur.startsWith(key)) {
+      cur = cur.substring(2, cur.length());
+      cur.trim();
+      int i;
+      for (i = 0; i < cur.length(); i++)*(dest + i) = cur.charAt(i);
+      *(dest + i) = '\0';
+      if (LOG)Serial.println(String("On request - ") + String(key) + String("  return - '") + String(dest) + String("' "));
+      file.close();
+      return;
     }
-    n++;
   }
+  // wlue by key not found
+  if (LOG)Serial.println(String("Can`t read property ") + String(key));
+  dest[0] = '\0';
   file.close();
-
-}
-
-/**
-   read param value from *val(delete all white space) and copy it to *buf
-*/
-void Util::setStartValue(char *val, char *buf) {
-  // if (LOG)Serial.println(String("GET FOR parse: ") + String(val));
-  int i = 0, n = 0;
-  while (val[i] != '\0' && n < 10) {
-    if (val[i] != ' ') {
-      buf[n] = val[i];
-      n++;
-    }
-    i++;
-  }
-  //n++;
-  buf[n] = '\0';
-  if (LOG)Serial.println(String("read param :") + String(buf));
+  return;
 }
 
 // ==================== SPIFFS =====================
@@ -97,7 +79,7 @@ void Util::setStartValue(char *val, char *buf) {
 bool Util::initFS() {
   if (LOG)Serial.print("init SPIFFS : ");
   if (isFS) {
-    Serial.println(" already DONE");
+    Serial.println(" FS already started");
   } else if (SPIFFS.begin()) {
     Serial.println("success");
     isFS = true;
@@ -109,7 +91,7 @@ bool Util::initFS() {
 }
 
 void Util::writeLog(String mess) {
-  if (LOG) {
+  if (DEBUG) {
     Serial.print("Send to log: ");
     Serial.println( mess );
     return;
@@ -123,6 +105,10 @@ void Util::writeLog(String mess) {
       logFile.println(mess);
       logFile.close();
     }
+  } else {
+    Serial.print("FileSystem not work can`t write to log message \n  [");
+    Serial.print(mess);
+    Serial.println("]");
   }
 }
 
@@ -161,8 +147,10 @@ String Util::getPeriodsAsJSON() {
 
 }
 
-// =============== write sensors values
 //
+// =============== write sensors values  ========================================
+//
+
 bool Util::hasWrite() {
   return isFS && isSetTime;
 }
@@ -203,11 +191,9 @@ bool Util::hasFS() {
 int Util::initWIFI() {
   wifiMode = DEVICE_NOT_WIFI;
   if ( isStaConnect()) {
-    Serial.println("work as STA ");
     wifiMode = DEVICE_STA_MODE;
   } else {
     if ( isSetApMode() ) {
-      Serial.println("work as AP");
       wifiMode = DEVICE_AP_MODE;
     }
   }
@@ -236,13 +222,13 @@ bool Util::isStaConnect() {
     if ( counter > 15 ) {
       WiFi.disconnect();
       delay(100);
-      if (LOG)Serial.println(String("\nCan`t connect to ") + String(ssid) + String("  ") + String(passwd));
+      if (LOG)Serial.println(String("\nCan`t W-Fi connect to ") + String(ssid) + String("  ") + String(passwd));
       return false;
     }
   }
   Serial.println("");
   if (LOG) {
-    Serial.print("Connected to ");
+    Serial.print("\nWiFi work as STA connected to ");
     Serial.print(ssid);
     Serial.print("  IP address: ");
     Serial.println(WiFi.localIP());
@@ -252,39 +238,51 @@ bool Util::isStaConnect() {
 
 // return true if success up AP mode on chip
 bool Util::isSetApMode() {
+  String err = "";
   // If AP mode
-  char s[15], p[15], addr[18];
+  char s[15], p[15], addr_str[18];
   s[0] = '\0';
   p[0] = '\0';
-  addr[0] = '\0';
+  addr_str[0] = '\0';
   char *ssid = s, *passwd = p;
   fillParam(AP_SSID, ssid); // read Start Param from file sysytem
   if (!ssid || ssid[0] == '\0') ssid = AP_SSID_DEF;
   fillParam(AP_PASSWD, passwd); // read Start Param from file sysytem
   if (!passwd || passwd[0] == '\0')passwd = AP_PASSWD_DEF;
+  //  ip address
+  char *ip = addr_str;
+  fillParam(AP_IP, ip); // read Start Param from file sysytem
+  if (!ip || ip[0] == '\0') ip = AP_IP_ADDR;
+  int addr[4];
+  parseAddr( ip, addr);
+  // check on valid
+  if ( !addr[0] || addr[0] < 0) {
+    err += "ERROR [ I get wrong IP address for AP mode wi-fi = '";
+    err += ip;
+    err += "'] check props.txt file";
+    writeLog(err);
+    if (LOG)Serial.println(err);
+    return false;
+  }
   if (WiFi.softAP(ssid, passwd)) {
-    char *ip = addr;
-    fillParam(AP_IP, ip); // read Start Param from file sysytem
-    if (!ip || ip[0] == '\0') ip = AP_IP_ADDR;
-    int addr[4];
-    parseAddr( ip, addr);
-    // check IP addres on valid
-    if ( !addr[0] || addr[0] < 0) {
-      writeLog("Wrong IP address for AP mode wi-fi see props.txt file");
-      return false;
-    }
     const IPAddress ap_ip(addr[0], addr[1], addr[2], addr[3]);
     WiFi.softAPConfig(ap_ip, ap_ip, subnet);
     if (LOG) {
-      Serial.print("start WI-FI AP MODE: ssid=");
+      Serial.print("WI-FI work as AP ssid=");
       Serial.print(ssid);
       Serial.print("  passwd=");
       Serial.println(passwd);
     } else Serial.println("Start Wi-Fi as AP");
     return true;
   } else {
-    writeLog("ERROR esp_server can`t UP wifi AP");
-    if (LOG)Serial.println(String("\t param : ") + String(ssid) + String(" ") + String(passwd));
+    err = "ERROR esp_server can`t UP wifi AP ssid='";
+    err += ssid ;
+    err += "' password='";
+    err += passwd;
+    err += "' IP address='";
+    err += addr_str;
+    writeLog(err);
+    if (LOG)Serial.println(err);
     return false;
   }
 }
@@ -298,9 +296,9 @@ void Util::parseAddr(char *ip, int addr[4]) {
     c = *(ip + i);
     if (c == ' ')continue;
     if ( c != '.' && c != 0) {
-      int n = c+0;
+      int n = c + 0;
       if ( c < 48 || c > 57 ) {
-        
+
         addr[0] = -1;
         return;
       }
@@ -348,7 +346,7 @@ bool Util::assignTime(char * current) {
 
 bool Util::sync() {
   isCheck = true;
-  if (wifiMode != DEVICE_NOT_WIFI && connect(server_addr, serverPort) ) {
+  if (wifiMode != DEVICE_NOT_WIFI && connect(server_addr, defaultPort) ) {
     if ( sendRequest(server_addr, resource) ) {
       if ( findDateAndTimeInResponseHeaders() ) {
         uint8_t index = dateAndTime.indexOf(' ');      // get by space
@@ -427,15 +425,45 @@ bool Util::hasSyncTime() {
 
 // private
 
+//
+//  ========================  WEB ================================
+//
+
 // Open connection to the HTTP server
 bool Util::connect(const char* hostName, const int port) {
   if ( LOG ) {
-    Serial.print("Connect to ");
-    Serial.println(hostName);
+    Serial.print(" Connect to ");
+    Serial.print(hostName);
   }
   bool ok = client.connect(hostName, port);
-  if ( LOG ) Serial.println(ok ? "Connected" : "Connection Failed!");
+  // in fail connection - try yet one
+  if (!ok) {
+    if(LOG)Serial.print("reconnect ");
+    unsigned long start = millis();
+    int n = 0;
+    while ((millis() - start) < 3000) {
+      delay(20);
+      // display reconnect process
+      if(LOG){
+        if(n>100){
+          n = 0;
+          serial.println("");
+        }
+        Serial.print('.');
+        n++;
+      }
+      if(LOG)Serial.println("");
+    }
+    ok = client.connect(hostName, port);
+  }
+  if ( LOG ) Serial.println(ok ? " : Connected" : "  : Connection Failed!");
   return ok;
+}
+
+// Close the connection with the HTTP server
+void Util::disconnect() {
+  // if ( LOG ) Serial.println("Disconnect from HTTP server");
+  client.stop();
 }
 
 // Send the HTTP GET request to the server
@@ -446,14 +474,19 @@ bool Util::sendRequest(const char* host, const char* resource) {
   }
   client.print("GET ");
   client.print(resource);
-  client.println(" HTTP/1.1");
+  client.print(" HTTP/1.1\r\n");
   client.print("Host: ");
-  client.println(host);
-  client.println("Accept: */*");
-  client.println("Connection: close");
-  client.println();
+  client.print(host);
+  client.print("\r\nAccept: */*");
+  client.print("\r\nConnection: close");
+  client.print("\r\n\r\n");
   return true;
 }
+
+
+//
+//  ========================= date time =====================
+//
 
 // push header parts with time
 bool Util::findDateAndTimeInResponseHeaders() {
@@ -481,11 +514,6 @@ bool Util::findDateAndTimeInResponseHeaders() {
   return dateAndTime.length() > 15;
 }
 
-// Close the connection with the HTTP server
-void Util::disconnect() {
-  // if ( LOG ) Serial.println("Disconnect from HTTP server");
-  client.stop();
-}
 
 /* set date and time after get time
      if from web: isWeb true
@@ -547,9 +575,6 @@ void Util::setDateTime(bool isWeb) {
   */
 }
 
-
-// ================== check and set date-time  methods ===========
-
 void Util::syncMonth() {
   d_count = 1;
   if (m_count < 11) {
@@ -595,25 +620,40 @@ void Util::syncDay() {
   syncMonth();
 }
 
+//
+// --------  public  all -------------
+//
 
 String Util::getCurrentProps() {
   String res = "\ntime on chip(установленное на ESP время) : " + getFullDate() + "\n\nWiFi mode : ";
   //  wi-fi mode
-  switch (wifiMode) {
-    case DEVICE_AP_MODE: res += "AP (точка доступа)"; break;
-    case DEVICE_STA_MODE: res += "STA (клиент)"; break;
-    case DEVICE_NOT_WIFI: res += "WARNING WiFi not work!!!(вай-фай не работает)"; break;
-  }
   // ssid  AP and STA mode
-  char s[15], p[15];
+  char s[15], p[15], ts[20], addr_str[20];
+  char *ssidAP = s, *ssidSTA = p, *tsKey = ts, *ip = addr_str;
   s[0] = '\0';
   p[0] = '\0';
-  char *ssidAP = s, *ssidSTA = p;
-  fillParam(AP_SSID, ssidAP); // read Start Param from file sysytem
-  if (!ssidAP || ssidAP[0] == '\0') ssidAP = AP_SSID_DEF;
-  fillParam(STA_SSID, ssidSTA);
-  if (!ssidSTA || ssidSTA[0] == '\0') ssidSTA = STA_SSID_DEF;
-  res += "\n\nssid (имя сети) \n     AP  : " + String(ssidAP) + "\n     STA : " + String(ssidSTA) + "\n\nfile system (файловая система) : ";//
+  ts[0] = '\0';
+  addr_str[0] = '\0';
+  switch (wifiMode) {
+    case DEVICE_AP_MODE:
+      res += "AP (точка доступа)";
+      fillParam(AP_SSID, ssidAP); // read Start Param from file sysytem
+      if (!ssidAP || ssidAP[0] == '\0') ssidAP = AP_SSID_DEF;
+      fillParam(AP_IP, ip); // read Start Param from file sysytem
+      if (!ip || ip[0] == '\0') ip = AP_IP_ADDR;
+      res += "  ssid=" + String(ssidAP) + "  ip=" + String(ip);
+      break;
+    case DEVICE_STA_MODE:
+      res += "STA (клиент)";
+      fillParam(STA_SSID, ssidSTA);
+      if (!ssidSTA || ssidSTA[0] == '\0') ssidSTA = STA_SSID_DEF;
+      res += "  ssid=" + String(ssidSTA);
+      break;
+    case DEVICE_NOT_WIFI:
+      res += "WARNING WiFi not work!!!(вай-фай не работает)";
+      break;
+  }
+  res += "\n\nfile system (файловая система) : ";//
   // file sysytem access
   if (hasFS()) res += " accessed (доступна) \n";
   else res += " not access (недоступна) \n";
@@ -625,9 +665,81 @@ String Util::getCurrentProps() {
   res += "\n\nwhether work DS18B20 (включен ли DS18B20 датчик?) : ";
   if (IS_DS18B20) res += " yes(да)";
   else res += " no(нет)";
-  res += "\n\nlog file request(строка запроса лог файла) : weather.local/readFile?fName=/log.log\n";
+  res += "\nThingspeak write (передача данных на Thingspeak.com) :";
+  fillParam(THINGSPEAK_KEY, tsKey);
+  if (!tsKey || tsKey[0] == '\0')res += " no(нет)";
+  else res += " yes(да)";
+
+  res += "\n\nlog file request(строка запроса лог файла) : weather.local/log\n";
   return res;
 }
+
+
+void Util::getThingSpeakKey(char* key) {
+  fillParam(THINGSPEAK_KEY, key);
+  if (LOG) {
+    Serial.print("Util.getThingSpeakKey =");
+    Serial.println(key);
+  }
+}
+
+
+/**
+   send data to thingspeak and check answer
+   if content lenght =1 and last symbols in answer is 0 - data not reseived
+   @ return 0 - success
+            1 - indefinite(not response)
+            2 - fail connect
+            3 - server error
+*/
+int Util::writeDataToThingspeak(const char* host, String contentGetRequest) {
+  if (connect(host, defaultPort)) {
+    if ( sendRequest( host, contentGetRequest.c_str())) {
+      unsigned long timeout = millis();
+      while (client.available() == 0) {
+        if (millis() - timeout > 6000) {
+          if (LOG)Serial.println(" <<< Client Timeout >>> !");
+          disconnect();
+          return 1;
+        }
+      }
+      bool isCheck = false; // if some string of header is 'Content-Length: 1' then need check last symbols on '0'
+      String line = "";
+      while (client.available()) {
+        line = client.readStringUntil('\n');
+       // if (LOG)Serial.print(line);
+        if (line.startsWith("Content-Length: 1")) {
+          isCheck = true;
+         // if (LOG)Serial.print(" isCheck = TRUE");
+        }
+       // if (LOG)Serial.write('\n');
+      }
+      /*
+      if (LOG) {
+        Serial.print("Last string in answer is '");
+        Serial.print(line);
+        Serial.print("' \nlast line ");
+        if (line.equals("0"))Serial.println("equals noll");
+        else Serial.println(" not equals noll");
+      }
+      */
+      // succes check - return 0
+      if ( !isCheck || !line.equals("0")) {
+        disconnect();
+        return 0;
+      }
+    }
+    disconnect();
+    return 3;
+  }
+  return 2;
+}
+
+
+
+
+
+
 
 
 

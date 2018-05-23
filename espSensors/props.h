@@ -83,6 +83,7 @@
   * 			res_type may be: js, pic, css ( link on directory /src/js , /src/css, /src/pic )
   * 			fName - name of resource file with extensions e.g myScript.js
   * 		return resource as file content
+  * 4) /   
   */
 
 
@@ -134,6 +135,8 @@
 #define AP_IP "ip"
 //mode of debug output to serial
 #define DEBUG_MODE "dm"
+// thingspeak write key
+#define THINGSPEAK_KEY "ts"
 
 //
 // =================   WI-FI ====================
@@ -142,9 +145,9 @@ enum wifiMODE { DEVICE_AP_MODE, DEVICE_STA_MODE, DEVICE_NOT_WIFI};
 //  WIFI_mode WEB_SERVER
 //  STA
 #define STA_SSID_DEF  "mywifi"
-#define STA_PASSWD_DEF "bezwolos"
+#define STA_PASSWD_DEF "mypasswd"
 //  AP
-#define AP_IP_ADDR  "192.168.10.1"
+#define AP_IP_ADDR  "192.168.0.1"
 #define AP_IP_SUBNET  255,255,255,0
 #define AP_SSID_DEF "espWeather"
 #define AP_PASSWD_DEF  "espWeather"
@@ -152,14 +155,19 @@ enum wifiMODE { DEVICE_AP_MODE, DEVICE_STA_MODE, DEVICE_NOT_WIFI};
 //
 //  ==================  SERVER  ==================
 //
+
+// time request
 #define HOST "weather"
 #define PORT 80
 #define SERVER_ROOT  "/"
 #define REQUEST_DATE_URL "www.yandex.ru"
+// "www.google.com"
 #define  NOT_FOUND "/NotFound.htm"
-//  help language for serial output may be "en" or "ru"
-// язык справки для последовательного порта(serial) может быть "en" или "ru"( английский и русский соответственно)
-#define HELP_LANG "ru"
+
+// thingspeak update request
+#define THING_SPEAK_HOST "api.thingspeak.com"
+
+
 
 
 //

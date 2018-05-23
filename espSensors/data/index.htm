@@ -7,16 +7,16 @@
         var svgns = 'http://www.w3.org/2000/svg';
         var debug = true;
         var yahooWeatherData = false;
-        //  simple catcher for any errors
-        /*     window.addEventListener('error', function (e) {
-         if (!(e instanceof Error))return;
-         try {
-         if (debug)alert("Catch Error\n" + e.error.name + ':\n' + e.error.message);
-         } catch (e) {
-         console.log("Occurred on print error");
-         }
-         });
-         */
+        function showManual(){
+          if(debug)console.log("Try open help");
+          var w = document.documentElement.clientWidth;
+          var h = document.documentElement.clientHeight;
+          var t = h/10, l = w/10;
+          w=w/2;
+          h = h-h/8;
+          console.log("window sizes [w=" + w + " h=" +h + " t=" + t + " l="+ l + "]");
+          window.open("/help", "Справка", "width=w,height=h");
+        }
     </script>
     <!-- для сервера   -->
     <link rel="stylesheet" href="src?css=simple.css" type="text/css">
@@ -25,7 +25,7 @@
     <script src="src?js=meteo.js"></script>
 
 
-    <!-- для локального тестирования  
+    <!-- для локального тестирования
     <link rel="stylesheet" href="src/css/simple.css" type="text/css">
     <script src="src/js/plotter.js"></script>
     <script src="src/js/measurer.js"></script>
@@ -96,6 +96,9 @@
             </table>
         </form>
     </div>
+    <div name="help" class="inlineTop">
+		<button text="Help" onclick="showManual()"><img name="help" src="/src?pic=help.png" style="vertical-align: top"  /></button>
+	</div>
     <div name="informer" class="inlineTop right"></div>
     <div id="graphCanvas"></div>
 </div>
@@ -127,7 +130,3 @@
 
 </body>
 </html>
-
-
-
-

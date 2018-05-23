@@ -44,6 +44,10 @@ http.createServer(function (req, res) {
         case '/index.htm':
             sendFile('text/html', '/index.htm', res);
             break;
+        case '/Help.htm':
+            sendFile('text/html', '/Help.htm', res);
+            break;
+
         case '/availablePeriod':
             sendPeriods(res);
             break;
@@ -69,7 +73,10 @@ function parseSrc(query, res) {
         fName += '/css/' + query['css'];
     }
     else if (query['pic']) {
-        contentType = 'image/svg+xml';
+	var ends = query['pic'].substring(query['pic'].indexOf('\.'),query['pic'].length);
+console.log('ends = ' + ends);
+        contentType = (ends == '.png')? 'image/png':'image/svg+xml';
+console.log('contentType = ' + contentType);
         fName += '/pic/' + query['pic'];
     } else {
         console.log('not found for query: ' + JSON.stringify(query));
@@ -102,17 +109,22 @@ function sendLast(query, resp) {
 function sendFile(contentType, fName, res) {
     fName = root + fName;
     console.log('try send file: ' + fName);
-    fs.readFile(fName, 'utf8', function (err, data) {
-        if (err) {
-            console.log('ERROR on load file: ' + fName + " error=" + err);
-            res.writeHead(500, {'Content-Type': 'text/plain'});
-            res.end('can`t read file: ' + fName);
-        }
-        else {
-            res.writeHead(200, {'Content-Type': contentType});
-            res.end(data);
-        }
-    });
+    if(contentType.search('gif') > 0 || contentType.search('png') > 0){
+		var img = fs.readFileSync(fName);
+		res.writeHead(200, {'Content-Type': contentType});
+		res.end(img, 'binary');
+	}else{
+		fs.readFile(fName, 'utf8', function (err, data) {
+			if (err) {
+				console.log('ERROR on load file: ' + fName + " error=" + err);
+				res.writeHead(500, {'Content-Type': 'text/plain'});
+				res.end('can`t read file: ' + fName);
+			} else {
+				res.writeHead(200, {'Content-Type': contentType});
+				res.end(data);
+			}
+		});
+	}
 }
 
 function sendPeriods(res) {

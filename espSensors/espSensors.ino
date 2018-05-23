@@ -11,11 +11,11 @@
 #include <FS.h>
 
 // mark for version software
-static String version = "0.2";
+static String version = "0.04";
 
 String getFullDate(void);
 
-bool LOG = false;
+bool LOG = true;
 bool DEBUG = false;
 int wifiMode = DEVICE_NOT_WIFI;
 
@@ -24,6 +24,13 @@ int wifiMode = DEVICE_NOT_WIFI;
 // if wifi AP_mode - up the GPIO13
 int STA_PIN = 12;
 int AP_PIN = 13;
+
+// thingSpeak
+char* writeApiKey;
+char key[30];
+bool isThingSpeak = false;
+bool isResendThingspeak = false;
+long startDelayThingspeak = 0;
 
 
 Util util(LOG);
@@ -34,11 +41,12 @@ Ticker timer;
 bool isSetDate = false; // if current date appointed must be set to true
 bool isFS = true; // access to SPIFFS
 
-//  semaphore
-const byte DHT_SENSOR = 1;
-const byte DS_SENSOR = 2;
-const byte BMP_SENSOR = 3;
-byte sensorToCheck = DHT_SENSOR;
+// action semaphore
+const byte DHT_SENSOR_READ = 1;
+const byte DS_SENSOR_READ = 2;
+const byte BMP_SENSOR_READ = 3;
+const byte THING_SPEAK_WRITE = 4;
+byte executeAction = DHT_SENSOR_READ;
 
 static bool isCheckSensors = false;
 static bool isAddMinute = false;
@@ -78,7 +86,6 @@ void tick() {
     currentForCheck = 0;
   }
   if (DEBUG) {
-    Serial.print("Debug MODE  ");
     isCheckSensors = true;
     if (currentInMinute == 0)isWriteValues = true;
   }
@@ -86,7 +93,42 @@ void tick() {
 
 void printFullDate() {
   String full = " NOW[ y:" + util.getYear() + "  m:" + util.getMonth() + "  d:" + util.getDay() + "   h:" + util.getHour() + " ]";
-  Serial.println(full);
+  Serial.print(full);
+}
+
+/**
+ * listen serial port for execute some action on  
+ * serial request if error case
+ */
+void listenSerialIfError( int millisecond){
+  unsigned long now = millis();
+  while((millis() - now) < millisecond){
+    if (Serial.available() > 0)sHandler.handle();
+  }
+}
+
+/*
+    On error mode with led blink
+    blink codes:
+    1 times - wrong DHT
+    2 times - wrong BMP280
+    3 times - wrong both sensors
+    4 times - wrong wifi
+*/
+void upErrorMode(int blinkCount) {
+  digitalWrite(STA_PIN, LOW);
+  digitalWrite(AP_PIN, LOW);
+  listenSerialIfError(2000);
+  while (true) {
+    if (Serial.available() > 0)sHandler.handle();
+    for (int i = 0; i < blinkCount; i++) {
+      digitalWrite(AP_PIN, HIGH);
+      listenSerialIfError(400);
+      digitalWrite(AP_PIN, LOW);
+      listenSerialIfError(300);
+    }
+    listenSerialIfError(8000);
+  }
 }
 
 
@@ -282,9 +324,23 @@ void sendCurrentProperties() {
   server.send(200, "text/html", res.c_str());
 }
 
-void loadLogFile(){
+void loadLogFile() {
   loadFile(String(LOG_FILE));
 }
+
+void showHelp() {
+  loadFile(String("/Help.htm"));
+}
+
+//  ==========================================
+//            end sever
+//  ==========================================
+
+
+//
+// =============================  SETUP EXECUTION  ==============================
+//
+
 
 void prepareServer() {
   server.on("/", HTTP_GET, handleRoot);
@@ -296,28 +352,31 @@ void prepareServer() {
   server.on("/readFile", HTTP_GET, readFile);
   server.on("/sensorData", HTTP_GET, sendSensorData);
   server.on("/availablePeriod", HTTP_GET, sendPeriods);
-  server.on("/getCurrentProps", HTTP_GET, sendCurrentProperties);
+  server.on("/getProps", HTTP_GET, sendCurrentProperties);
   server.on("/log", HTTP_GET, loadLogFile);
+  server.on("/Help.htm", HTTP_GET, showHelp);
+  server.on("/gg", HTTP_GET, Sensors::getState); //  ========================================= cannot any thingh only test`s  ==============================================
   server.begin();
   delay(1000);
 }
 
-//  ==========================================
-//            end sever
-//  ==========================================
-
 void showStartMessage() {
   // print chip properties
   Serial.println(String("\n\t version:" + version));
-  Serial.println("\n\n\tDHTxx DS18b20 BMP280 test!");
-  Serial.print(" Flash size:\treal = ");
-  Serial.print(ESP.getFlashChipRealSize());
-  Serial.print("\t programm = ");
-  Serial.println(ESP.getFlashChipSize());
+  Serial.println("\n\n\tDHTxx DS18b20 BMP280 sensors\n");
+  Serial.println("\n\t___On some error will make led blink___\n 4 times blink - wifi not work\n 3 times blink - two sensor not work,\n 1 blink - error DHT\n 2 blink - error BMP280");
+  Serial.println("\n\t___При проблемах мигает свеодиод___\n  1 раз - DHT неисправен \n  2 раза BMP280 неисправен\n  3 раза - проблема со всеми датчиками\n  4 раза - нет вайфай\n");
 }
 
-
-void setup() {
+/**
+    prepare start system
+   1) set wifi state led to Up
+   2) open serial connection
+   3) check file system
+   4) try Up wifi
+ **/
+void prepareStartState() {
+  // on start int LOG = true - all message out un UART
   //prepare led state
   pinMode(STA_PIN, OUTPUT);
   pinMode(AP_PIN, OUTPUT);
@@ -326,19 +385,53 @@ void setup() {
   // up serial output
   Serial.begin(115200);
   showStartMessage();
-  //
-  int sensInit = s.init();
-  DEBUG = util.getDebugMode();
   // try init sd card
   if (!util.initFS()) {
     isFS = false;
   } else isFS = true;
-  wifiMode = util.initWIFI();
-  String res;
-  if (isFS) {
-    res = (sensInit == 0) ? " success init" : " fail init";
-    res = "  [ SPIFFS: init,  sensors: " + res;
+  // up sensors
+  int sensorCode = s.init();
+  if ( sensorCode != 0) {
+    digitalWrite(STA_PIN, LOW);
+    digitalWrite(AP_PIN, LOW);
+    if (isFS)util.writeLog(String(" EXIT ON ERROR ___ exit code:") + String(sensorCode));
+    delay(2000);
+    // blink on fail sensors init, and nothing
+    upErrorMode(sensorCode);
   }
+  // up wifi
+  wifiMode = util.initWIFI();
+  //  set FS state to serial handler
+  sHandler.setFSstate(isFS);
+  //  on exit from init set debug mode
+  //  if debug is false, LOG  also be false -> supress log messages
+  DEBUG = util.getDebugMode();
+  LOG = DEBUG;
+}
+
+/**
+  try start MDNS and prepare wifi server
+**/
+void startMDNS() {
+  if (MDNS.begin(HOST)) {
+    Serial.println("\nMDNS responder started");
+    Serial.print("You can now connect to http://");
+    Serial.print(HOST);
+    Serial.println(".local");
+    prepareServer();
+    MDNS.addService("http", "tcp", PORT);
+    return;
+  }
+  Serial.println("Can`t start mDNS");
+}
+
+/**
+
+   set led state appropriate wifi mode and write to log
+   information message
+*/
+void afterInitAction() {
+  String res = " Start weather : [ sensors - success , " ;
   switch (wifiMode) {
     case DEVICE_STA_MODE:
       if (util.sync()) {
@@ -347,13 +440,15 @@ void setup() {
           res += ",  wi-fi: STA_MODE ]";
           res =  util.getFullDate() + res;
         }
+      } else {
+        Serial.println("Can`t connect to WEB, require set date-time. See help by 'en'\n Установите время для записи значений датчиков, для справки жми 'ru'");
       }
       digitalWrite(STA_PIN, HIGH);
       digitalWrite(AP_PIN, LOW);
       break;
     case  DEVICE_AP_MODE:
       if (isFS) {
-        Serial.println("Perhaps need set date for write sensors data to storage.\nPrint \"h\" for detail");
+        Serial.println("Need set date for write sensors data to storage. Print 'en' for detail\nУстановите время для записи значений датчиков, для справки жми 'ru'");
         res += ", wifi: AP_MODE ]";
         res += "date_not_set " + res;
       }
@@ -368,27 +463,54 @@ void setup() {
       }
       digitalWrite(STA_PIN, LOW);
       digitalWrite(AP_PIN, LOW);
+      res = "FATAL EXIT - " + res;
+      if (isFS)util.writeLog(res);
+      // enter blink on error
+      upErrorMode(4);
       break;
   }
+
+  if (wifiMode == DEVICE_STA_MODE) {
+    writeApiKey = key;
+    util.getThingSpeakKey(writeApiKey);
+    Serial.println(String("thingspeak key = ") + String(writeApiKey));
+    if (writeApiKey[0] != '\0' && String(writeApiKey).length() > 14)isThingSpeak = true;
+    if (LOG)Serial.println(String("isThingspeak =") + isThingSpeak);
+  } else isThingSpeak = false;
+  res += "  Thingspeak:";
+  if (isThingSpeak) {
+    res += "true";
+  } else res += "false  ";
   // write to log wifi and sensors state
   if (isFS) util.writeLog(res);
-  //  set FS state to serial handler
-  sHandler.setFSstate(isFS);
-  bool isMDNS = MDNS.begin(HOST) ;
-  if (isMDNS) {
-    Serial.println("\nMDNS responder started");
-    Serial.print("You can now connect to http://");
-    Serial.print(HOST);
-    Serial.println(".local");
-  } else Serial.println("Can`t start mDNS");
+}
+
+/*
+   On start execute
+*/
+void setup() {
+  prepareStartState();
+  // tune server
+  if (wifiMode != DEVICE_NOT_WIFI) {
+    startMDNS();
+  }
+  // try sync date-time from the web
+  // and out the message by state system
+  afterInitAction();
   if (LOG) {
     Serial.print("tickDuration = "); Serial.println(tickDuration);
   }
-  prepareServer();
-  if (isMDNS)MDNS.addService("http", "tcp", PORT);
+  Serial.println("\n For show log press on 'y' \n нажать на 'y' - показ отладочных сообщений\n press 'n' - hide log(скрыть вывод)\n press 'en' for help\n 'ru' показать справку");
+
   // start timer
   timer.attach(tickDuration, tick);
 }
+
+
+//
+//  =============   LOOP  EXECUTION  ===================
+//
+
 
 void writeSensorsValues() {
   if (util.hasWrite()) {
@@ -398,38 +520,119 @@ void writeSensorsValues() {
   }
 }
 
+/**
+   Call util methods for write data to thingspeak site
+*/
+void sendDataToThingSpeak() {
+  const char* host = THING_SPEAK_HOST;
+  String result = "/update?api_key=";
+  result += writeApiKey;
+  result += "&field1=";
+  result += s.getT_In();
+  result += "&field2=";
+  result += s.getT_Out();
+  result += "&field3=";
+  result += s.getHumid();
+  result += "&field4=";
+  result += s.getBaro();
+  int res = util.writeDataToThingspeak(host, result);
+  if (LOG) {
+    switch (res) {
+      case 0: Serial.println("Succes"); break;
+      case 1: Serial.println("Empty server response"); break;
+      case 2: Serial.println("Can`t connect to thingspeak"); break;
+      case 3: Serial.println("Server Error"); break;
+    }
+  }
+  // delay 15sec and yet one connection if fail
+  if (res > 1) {
+    if (isResendThingspeak) {
+      printFullDate();
+      Serial.println(" twice fail send data to thingspeak");
+      isResendThingspeak = false;
+    } else {
+      isResendThingspeak = true;
+      startDelayThingspeak = millis();
+    }
+  } else {
+    isResendThingspeak = false;
+  }
+}
+
+/**
+   read sensors values and send data to thingspeak on schedule time
+*/
+void executeOnSchedule() {
+  if (isCheckSensors) {
+    switch (executeAction) {
+      case DHT_SENSOR_READ:
+        s.readDHT();
+        executeAction = DS_SENSOR_READ;
+        break;
+      case DS_SENSOR_READ: // read DS18B20 if IS_DS18B20 in props file set to true
+        if (LOG)s.readDS18B20();
+        executeAction = BMP_SENSOR_READ ;
+        break;
+      case BMP_SENSOR_READ:
+        s.readBMP280();
+        if (DEBUG) {
+          executeAction = DHT_SENSOR_READ ;
+          isCheckSensors = false;
+        } else {
+          executeAction = THING_SPEAK_WRITE;
+        }
+        s.makeCurrentToJSON(); // on end cucle sensors request - make sensors values as JSON string
+        break;
+      case THING_SPEAK_WRITE:
+        isCheckSensors = false;
+        executeAction = DHT_SENSOR_READ;
+        if (isThingSpeak) {
+          if (LOG)Serial.print("Try send data to Thingspeak");
+          sendDataToThingSpeak() ;
+        }
+        break;
+    }
+  }
+}
+
+/**
+    call some action on add minute
+*/
+void executeOnAddMinute() {
+  if (DEBUG) {
+    Serial.println("\nDEBUG ON");
+    if (isThingSpeak) {
+      Serial.print( " Try send to Thingspeak ");
+      sendDataToThingSpeak();
+    }
+  }
+  if (LOG) {
+    Serial.println("call util.addMinute()");
+   if(DEBUG) Serial.println(s.getCurrentAsJSON());
+  }
+  util.addMinute();   // shift time on 1 minute
+  isAddMinute = false;
+
+}
 
 void loop() {
   if (Serial.available() > 0)sHandler.handle();
-  // for WiFi
+  // on wrong send data to thingspeak - resend it
+  if (isResendThingspeak) {
+    if ( (millis() - startDelayThingspeak ) > 15100) {
+      sendDataToThingSpeak();
+      startDelayThingspeak = 0l;
+    }
+  }
+  // server
   server.handleClient();
-  if (isCheckSensors) {
-    switch (sensorToCheck) {
-      case DHT_SENSOR:
-        s.readDHT();
-        sensorToCheck = DS_SENSOR;
-        break;
-      case DS_SENSOR: // read DS18B20 if IS_DS18B20 in props file set to true
-        if (LOG)s.readDS18B20();
-        sensorToCheck = BMP_SENSOR ;
-        break;
-      case BMP_SENSOR:
-        s.readBMP280();
-        sensorToCheck = DHT_SENSOR;
-        s.makeCurrentToJSON(); // on end cucle sensors request - make sensors values as JSON string
-        isCheckSensors = false;
-        break;
-    }
-  }
-  delay(70);
-  if (isAddMinute) {
-    if (LOG) {
-      Serial.println("call util.addMinute()");
-      Serial.println(s.getCurrentAsJSON());
-    }
-    util.addMinute();   // shift time on 1 minute
-    isAddMinute = false;
-  }
+  // action by schedule(check sensors, send to Thingspeak
+  executeOnSchedule();
+  delay(70); // is want for good wi-fi work
+  // call action on next tick in clock
+  if (isAddMinute) executeOnAddMinute();
+  // write sensors values in file system if set time and
+  // file system is accessed
   if ( isWriteValues ) {
     writeSensorsValues();
     isWriteValues = false;

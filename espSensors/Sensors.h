@@ -30,6 +30,7 @@ class Sensors {
     int dsTemp = -200;
     String currentInJSON = "";
     String allIn[REQUEST_COUNT] , allOut[REQUEST_COUNT] , allHumid[REQUEST_COUNT], allBaro[REQUEST_COUNT];
+    bool checkDHT();
   public:
     //methods
     Sensors(uint8_t wBus, int dhtType);
@@ -41,7 +42,11 @@ class Sensors {
     String getCurrentAsJSON();
     String getLastAsJSON(String sensorDataType);
     int getMedia(String sensorDataType);
-    
+    int getT_In();
+    int getT_Out();
+    int getHumid();
+    int getBaro();
+    static void getState();
 };
 
 

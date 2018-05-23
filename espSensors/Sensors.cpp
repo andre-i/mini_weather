@@ -19,21 +19,26 @@ Sensors::Sensors(uint8_t wBus, int dhtType) {
 
 /** Try prepare sensors */
 int Sensors::init() {
+  int exitCode = 0;
   maxCounterNumber = REQUEST_COUNT - 1;
   // ds18b20
   if (IS_DS18B20)sensors->begin();
   if (IS_DS18B20)Serial.println("Init ds18b20");
-  // dht 11
+  // DHT
   dht->begin();
+  delay(2000);
   if (LOG)Serial.println("Init DHT");
+  if(!checkDHT()){
+    exitCode += 1;
+  }
   //  BMP 280
   if (!bme->begin(0x76)) {
-    Serial.println("Could not find a valid BMP280 sensor, check wiring!");
-    return 1;
+    Serial.println("\n\tERROR BMP280  !");
+    exitCode +=2;
   } else {
     if (LOG)Serial.println("Init BMP280");
   }
-  return 0;
+  return exitCode;
 }
 
 //  request sensors, compute media , fill arrays of values
@@ -45,6 +50,15 @@ void Sensors::readDS18B20() {
     sensors->requestTemperatures(); // Send the command to get temperatures
     dsTemp = (int)(sensors->getTempCByIndex(0) * 10 + 0.5) / 10;
   }
+}
+
+bool Sensors::checkDHT(){
+  int t =  (int)(dht->readTemperature() + 0.5);
+  int h = (int)(dht->readHumidity() + 0.5);
+  if(isnan(t) || isnan(h))return false;
+  if(h < 0 || h > 100) return false;
+  if(t < -4 || t > 100) return false;
+  return true;
 }
 
 void Sensors::readDHT() {
@@ -137,6 +151,21 @@ String Sensors::getLastAsJSON(String dataType) {
   return res;
 }
 
+//
+// get sensors values as Integer
+//
+int  Sensors::getT_In(){
+  return tIn;
+}
+int  Sensors::getT_Out(){
+  return tOut;
+}
+int  Sensors::getHumid(){
+  return humid;
+}
+int  Sensors::getBaro(){
+  return baro;
+}
 
 int Sensors::getMedia(String dataType) {
   if (dataType == T_IN)return mediaIn;
@@ -144,6 +173,10 @@ int Sensors::getMedia(String dataType) {
   if (dataType == BARO) return mediaBaro;
   if (dataType == HUMID)return mediaHumid;
   return  DEVICE_DISCONNECTED_C;
+}
+
+void Sensors::getState(){
+  Serial.println("Call Sensors::getState()");
 }
 
 // ============= PRIVATE ===================

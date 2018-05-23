@@ -32,15 +32,20 @@ class Util {
     const char *pathSeparator = "/";
     const char *valSeparator = SEP;
     File opened;
-    bool isFS = false;
+    bool isFS = false;      
+    //methods
+    void fillParam(const char *key_for_parameter, char *destination);
+
+    // ===== ThingSpeak =====
+    char* writeApiKey;
+    bool isThingSpeak = false;
+    long oldLen = 0;
 
     // =======  Wi-Fi =======
     // variables
     bool isStaConnect();
     bool isSetApMode();
-    //methods
-    void fillParam(const char *short_name, char *destination);
-    void setStartValue(char *val, char *destination);
+    WiFiClient client;
 
     // ======= date time =========
     int wifiMode = DEVICE_NOT_WIFI;
@@ -58,7 +63,6 @@ class Util {
             h_count = 0;
     int timezone = 3;
     int minute = -1;
-    WiFiClient client;
     // 0"Jan 31", 1"Feb28-29", 2"Mar31", 3"Apr30", 4"May31", 5"Jun30", 6"Jul31", 7"Aug31", 8"Sep30", 9"Oct31",10"Nov30", 11"Dec31"
     const String month_names[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
     const char* num[32] = {
@@ -69,16 +73,16 @@ class Util {
     };
     // ============== Get Data-Time From internet ====
     const unsigned long HTTP_TIMEOUT = 10000;   // max respone time from server
-    const int serverPort = 80;                  // a port number
+    const int defaultPort = 80;                  // a port number
     const char* resource = "/";                // http resource
     const char* server_addr = REQUEST_DATE_URL; // server for check time
     String dateAndTime;
 
     // methods
-    bool connect(const char* hostName, const int port);
+    bool connect(const char* host, const int port);
     bool sendRequest(const char* host, const char* resource);
-    bool findDateAndTimeInResponseHeaders();
     void disconnect();
+    bool findDateAndTimeInResponseHeaders();
     void setDateTime(bool isWeb);
     void syncMonth();
     void syncDay();
@@ -93,8 +97,6 @@ class Util {
     bool initFS();
     void writeLog(String mess);
     void writeSensorsValues(int tIn, int tOut, int baro, int humid); 
-    //File openFileToRead(const char *fName);
-    //void closeFile();
     bool hasFS();
     //  WI-FI
     int initWIFI(); // try up wifi inSTA or AP mode
@@ -111,9 +113,11 @@ class Util {
     String getFullDate();
     // whether write sensors values to SD card
     bool hasWrite();
+    // thingspeak service
+    void getThingSpeakKey(char* key);
+    int writeDataToThingspeak(const char* host, String getRequest);
     //
     String getCurrentProps();
-
 };
 
 
