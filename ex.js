@@ -44,7 +44,7 @@ http.createServer(function (req, res) {
         case '/index.htm':
             sendFile('text/html', '/index.htm', res);
             break;
-        case '/Help.htm':
+        case '/help':
             sendFile('text/html', '/Help.htm', res);
             break;
 
@@ -65,7 +65,7 @@ function parseSrc(query, res) {
     var contentType = 'text/plain';
     var fName = '/src';
     if (query['js']) {
-        contentType = 'application/javascript'
+        contentType = (query['js'].indexOf(".json") > 0) ? 'application/json' : 'application/javascript';
         fName += '/js/' + query['js'];
     }
     else if (query['css']) {
@@ -73,7 +73,7 @@ function parseSrc(query, res) {
         fName += '/css/' + query['css'];
     }
     else if (query['pic']) {
-	var ends = query['pic'].substring(query['pic'].indexOf('\.'),query['pic'].length);
+	var ends = query['pic'].substring(query['pic'].indexOf('.'),query['pic'].length);
 console.log('ends = ' + ends);
         contentType = (ends == '.png')? 'image/png':'image/svg+xml';
 console.log('contentType = ' + contentType);

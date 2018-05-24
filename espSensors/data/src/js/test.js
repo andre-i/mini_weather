@@ -69,7 +69,8 @@ function get(url, callback) {
             clearInterval(timer);
             chartBoard = meteo.createChart(document.getElementById('graphCanvas'));
             // for test  chartBoard.create('Test many values',[ 6,2,1,-1,-4,-4,-3,-1,0,3,4,2 ]);
-            if (n > 4 && !debug)alert("Не могу связаться с сервером погоды!\nВозможно нет интернет-соединения.");
+            // messages.informerAlert
+            if (n > 4 && !debug)alert(word.informerAlert);
         } else {
             createInformer();
         }
@@ -134,30 +135,30 @@ function get(url, callback) {
     var sensors = {
         'tIn': {
             edges: { min: 0, max: 40},
-            yLabel: ' t ℃',
+            yLabel: word['tIn.label'],
             color: '#a85',
-            text: 'Термометр комната',
+            text: word['tOut.text'],//labels.tIn.text
             numInData: 2
         },
         'tOut': {
             edges: { min: -50, max: 50},
-            yLabel: 't ℃',
+            yLabel: word['tOut.label'],
             color: '#959',
-            text: 'Термометр улица',
+            text: word['tOut.text'],//labels.tOut.text
             numInData: 3
         },
         'baro': {
             edges: { min: 600, max: 800},
-            yLabel: 'мм.рт.ст',
+            yLabel: word['baro.label]'],//labels.baro.label
             color: 'gray',
-            text: 'Барометр',
+            text: word['baro.text'],//labels.baro.text
             numInData: 4
         },
         'humid': {
             edges: { min: 0, max: 100},
-            yLabel: 'влажность %',
+            yLabel: word['humid.label'],// labels.humid.label
             color: '#46b',
-            text: 'Гигрометр',
+            text: word['hunid.text'],// labels.humid.text
             numInData: 5
         }
     };
@@ -271,61 +272,30 @@ function get(url, callback) {
      * @returns {boolean} - if success draw chart return true
      */
     function drawYearChart(sensor, yearNum) {
-        var toRu = function (enName) {
-           // if (debug)console.log('get en: ' + enName);
-            enName = enName.toLowerCase();
-            switch (enName) {
-                case 'jan' :
-                    return 'Янв';
-                case 'feb':
-                    return 'Фев';
-                case 'mar':
-                    return 'Мар';
-                case 'apr':
-                    return 'Апр';
-                case 'may':
-                    return 'Май';
-                case 'jun':
-                    return 'Июнь';
-                case 'jul':
-                    return 'Июль';
-                case 'aug':
-                    return 'Авг';
-                case 'sep':
-                    return 'Сен';
-                case 'oct':
-                    return 'Окт';
-                case 'nov':
-                    return 'Нояб';
-                case 'dec':
-                    return 'Окт';
-                default :
-                    return false;
-            }
-        };
         var months = [];
         var meansInMonths = [];
         var n = 0;
         var cur, max;
         var curValue;
-        var xLabel = 'Месяц';
-        var chartName = ' ' + sensor.text + ' за ' + yearNum + 'г.';
+        var xLabel =  word.month
+        var chartName = word.baro + word.by + yearNum + word.year;
         var firstMonthName = false;
         // get data for drav chart and compute mean value all months
         getDataForYear(yearNum, function (res) {
            // if (debug)console.log("GET data for year chart len=" + res.length + '  DATA:[ ' + JSON.stringify(res) + ' ]');
             if (JSON.stringify(res) == '{}') {
                 console.log("test.js(drawYearChart) - Get empty year data for " + yearNum);
-                alert("Не могу получить данные за " + yearNum + " год\nПроверьте работу погодной станции.");
+                alert(word.noDataFor + yearNum);
                 drawChart('', '', 'red', '', [0, 0, 0, 0, 0], {min: -1, max: 1});
                 return 1;
             } else {
                 var i;
                 var val;
                 for (var p in res) {
-                   // if (debug)console.log("get Data For year month:" + toRu(p) + "  sensor:[" + sensor.text + " numInData:" + sensor.numInData + ' ]');
+                    console.log("parse montchs p=" + p);
+                   // if (debug)console.log("get Data For year month:" + shortWord[p] + "  sensor:[" + sensor.text + " numInData:" + sensor.numInData + ' ]');
                     if(!firstMonthName)firstMonthName = p;
-                    months[n] = toRu(p);
+                    months[n] = shortWord[(p + '').toLowerCase()];
                     cur = res[p].split('\n');
                     max = cur.length - 1;
                     curValue = 0;
@@ -359,9 +329,10 @@ function get(url, callback) {
         //  if server response not found for 6 seconds - set nul chart
         setTimeout(checkOnGet(), 6000);
         function checkOnGet() {
+            var noData = word.noDataFor + ' ' + sensor.text + word.by +  yearNum + word.year;
             if (n < 1) {
                 drawChart('', '', 'red',
-                    "Нет данных для " + sensor.text + ' за ' + yearNum + 'г', [0, 0, 0, 0], {min: -1, max: 1})
+                    noData, [0, 0, 0, 0], {min: -1, max: 1})
             }
         }
         return true;
@@ -376,11 +347,11 @@ function get(url, callback) {
         if (debug) console.log('drawMonthChart for sensor=' + sensor.name + '  month=' + getVal(month) + " data: \n " + data + "\n____EOF___");
         var all = data.split('\n');
         var maxLen = all.length - 1; // want for correct handle mean value in last day
-        var monthYear = getSelectName(month) + ' ' + getVal(year) + 'г';
-        var xLabel = 'число';
+        var monthYear = getSelectName(month) + ' ' + getVal(year) + word.year;
+        var xLabel = word.number;
         // if empty
         if (maxLen < 0) {
-            drawChart('', '', '#f99', 'НЕТ ДАННЫХ для ' + sensor.text + '  ' + monthYear, [0, 0, 0, 0, 0, 0, 0], {min: -1, max: 1});
+            drawChart('', '', '#f99', word.noDataFor + ' ' + sensor.text + word.by +  monthYear, [0, 0, 0, 0, 0, 0, 0], {min: -1, max: 1});
             return;
         }
         var meanInDay = [];
@@ -413,11 +384,11 @@ function get(url, callback) {
         }
         if (numInData == 0) {
             drawChart(xLabel, '     ', sensor.color,
-                'за ' + day + '/' + monthYear + ' среднее для ' + sensor.text + ' = ' + meanInDay[0],
+                word.by + day + '/' + monthYear + ' ' + word.meanFor + '' + sensor.text + ' = ' + meanInDay[0],
                 [0, 0, 0, 0], {min: -1, max: 1});
             return;
         }
-        var chartName = ' ' + sensor.text + ' за ' + monthYear;
+        var chartName = ' ' + sensor.text + word.by + monthYear;
        // if (debug)console.log('To draw Month chart: \nvalues - ' + meanInDay + '\nlabels - ' + dayInMonth);
         var res = { values: meanInDay, xAxisLabels: dayInMonth};
         drawChart(xLabel, sensor.yLabel, sensor.color, chartName, res, sensor.edges);
@@ -454,12 +425,12 @@ function get(url, callback) {
                 console.log('Error dayData is not String-\'' + dayD[0] + '\'  dayD[1]=' + dayD[1]);
             }
         }
-        var xLabel = 'часы';
+        var xLabel = word.hour;
         var monthN = (month.selectedIndex < 10) ? '/0' + month.selectedIndex : '/' + month.selectedIndex;
-        var chartName = ' ' + sensor.text + ' за ' + dayNum + monthN + '/' + getVal(year);
+        var chartName = ' ' + sensor.text + word.by + dayNum + monthN + '/' + getVal(year);
         var sEdges = sensor.edges;
         if (dayData.length < 1) {
-            drawChart('', '', 'red', 'НЕТ ДАННЫХ для: ' + chartName, [0, 0, 0, 0, 0, 0], {min: -1, max: 1});
+            drawChart('', '', 'red', word.noDataFor + chartName, [0, 0, 0, 0, 0, 0], {min: -1, max: 1});
         } else if (dayData.length === hourInDay.length) {
             dayData = { values: dayData, xAxisLabels: hourInDay};
         }
@@ -485,7 +456,7 @@ function get(url, callback) {
     function drawLast(sensor, data) {
        // if (debug)console.log("drawLast [ name:" + sensor.name + ' text:' + sensor.text + ' ]');
         var arr, x, size;
-        var xLabel = '    время';
+        var xLabel = '    ' + word.time;
         var chartName = sensor.text;
         var toDraw = { values: PrepareArr(sensor.name), xAxisLabels: getFiveMinutePeriods()};
         drawChart(xLabel, sensor.yLabel, sensor.color, chartName, toDraw, sensor.edges);

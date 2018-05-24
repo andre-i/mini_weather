@@ -8,30 +8,11 @@ function MeteoViewer() {
     var maxYear = 2023;
 
 
-    /** object link en and ru  names (weekday,month) */
-    var namesRu = {
-        // month name
-        "jan": "январь", "feb": "февраль", "mar": "март", "apr": "апрель",
-        "may": "май", "jun": "июнь", "jul": "июль", "aug": "август", "sep": "сентябрь",
-        "oct": "октябрь", "nov": "ноябрь", "dec": "декабрь",
-        //  week day
-        'mon': 'понедельник', 'tue': 'вторник', 'wed': 'среда', 'thu': 'четверг',
-        'fri': 'пятница', 'sat': 'суббота', 'sun': 'воскресение'
-    }
-    var shortRu = {
-        // month name
-        "jan": "янв", "feb": "фев", "mar": "март", "apr": "апр",
-        "may": "май", "jun": "июнь", "jul": "июль", "aug": "авг", "sep": "сент",
-        "oct": "окт", "nov": "нояб", "dec": "дек",
-        //  week day
-        'mon': 'пн', 'tue': 'вт', 'wed': 'ср', 'thu': 'чт',
-        'fri': 'пт', 'sat': 'сб', 'sun': 'вс'
-    }
-    /** return dey in week and month name in russian language */
-    var toRu = function (name, isShort) {
+    /** return day in week and month name in browser local */
+    var toLocal = function (name, isShort) {
         if (name.length < 3)return '';
         name = name.trim().substring(0, 3).toLowerCase();
-        return isShort ? shortRu[name] : namesRu[name];
+        return isShort ? word[name] : shortWord[name];
     }
 
     var forecastDays = [];
@@ -89,7 +70,7 @@ function MeteoViewer() {
                     scaleDivideCount: 16
                 },
                 oval: {
-                    label: "&nbsp;мм.рт.ст",
+                    label: "&nbsp;" + word['baro.label'],
                     startAngle: -35,
                     stopAngle: 215,
                     hasRound: false
@@ -135,8 +116,7 @@ function MeteoViewer() {
             return null;
         }
         var monthsEn = [ "   ", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        var monthsRu = [ "весь год", "Январь" , "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь",
-            "Ноябрь", "Декабрь" ];
+        var monthsLocal = [ word.all, word.jan , word.feb, word.mar, word.apr, word.may, word.jun, word.jul, word.aug, word.sep, word.oct, word.nov, word.dec];
         var selected = {
             year: 0,
             month: 0,
@@ -175,16 +155,16 @@ function MeteoViewer() {
         var sType = form.elements['sensorSelect'];
         var sensorsNames = {
             empty: '',
-            tOut: 'Термометр улица',
-            tIn: 'Термометр комната',
-            baro: 'Барометр',
-            humid: 'Гигрометр'
+            tOut: word['tOut.text'],
+            tIn: word['tIn.text'],
+            baro: word['baro.text'],
+            humid: word['humid.text']
         }
         for (i in sensorsNames)sType.appendChild(new Option(sensorsNames[i], i));
         var interval = form.elements['intervalSelect'];
         interval.appendChild(new Option('  ', 'empty'));
-        interval.appendChild(new Option('  За последний час ', 'lastHour'));
-        interval.appendChild(new Option(' Выбрать интервал ', 'checkInterval'));
+        interval.appendChild(new Option( '  ' + word.lastHour + ' ', 'lastHour'));
+        interval.appendChild(new Option(word.checkInterval, 'checkInterval'));
         interval.setAttribute('disabled', 'disabled');
 //year check
         var year = form.elements['yearSelect'];
@@ -195,11 +175,11 @@ function MeteoViewer() {
         year.setAttribute('disabled', 'disabled');
 //month check
         var month = form.elements['monthSelect'];
-        for (i = 0; i < monthsEn.length; i++)month.appendChild(new Option(monthsRu[i], monthsEn[i]));
+        for (i = 0; i < monthsEn.length; i++)month.appendChild(new Option(monthsLocal[i], monthsEn[i]));
         month.setAttribute('disabled', 'disabled');
 //day check
         var day = form.elements['daySelect'];
-        day.appendChild(new Option("все", " "));
+        day.appendChild(new Option(word.all, " "));
         for (i = 1; i < 32; i++)day.appendChild(new Option(i + "", i));
         day.setAttribute('disabled', 'disabled');
 //  submit button
@@ -207,6 +187,7 @@ function MeteoViewer() {
         submitButton.setAttribute('value', 'getChart');
         submitButton.setAttribute('disabled', 'disabled');
         submitButton.setAttribute('class', 'submitButton');
+        submitButton.innerHTML = word.build;
         // submitButton.innerHTML='<div style="width: 40;height: 40"></div>';
         setPeriodDisabled();
         form.addEventListener('click', function (e) {
@@ -301,16 +282,16 @@ function MeteoViewer() {
 
         function addCurrent(atm, today) {
             var date = today['date'];
-            date = toRu(today['day'], true) + '&nbsp;' + getRuMonth(date, false);
+            date = toLocal(today['day'], true) + '&nbsp;' +  getLocalMonth(date, false);
             var infoText = document.createElement('div');
             infoText.setAttribute('class', 'informerText');
             var res = '<div><span class="informer labelColor"> ' + date + '</span></div>' +
-                '<span  class="informer labelColor">влажность: ' + atm['humidity'] + '&nbsp;%</span><br />' +
+                '<span  class="informer labelColor">' + word['humid.label'] + ' ' + atm['humidity'] + '&nbsp;%</span><br />' +
                 '<span  class="informer labelColor">давление:&nbsp;' +
-                (atm['pressure'] / 1000 * 750.0637 + '').substring(0, 3) + '&nbsp;мм.рт.ст</span>' +
+                (atm['pressure'] / 1000 * 750.0637 + '').substring(0, 3) + '&nbsp;' + word['baro.label'] + '</span>' +
                 //  '<hr class="informerDivider">' +
-                '<div style="margin-top: 0.3em;margin-bottom: 3px">&nbsp;<span  class="informerDay"> день: ' + ((today['high'] - 32) * 5 / 9 + "").substring(0, 4) + ' ℃ </span>&nbsp;' +
-                '<span class="informerNight"> ночь: ' + ((today['low'] - 32) * 5 / 9 + "").substring(0, 4) + ' ℃ &nbsp;</span></div>';
+                '<div style="margin-top: 0.3em;margin-bottom: 3px">&nbsp;<span  class="informerDay">' + word.day + ': ' + ((today['high'] - 32) * 5 / 9 + "").substring(0, 4) + ' ℃ </span>&nbsp;' +
+                '<span class="informerNight">' + word.night + ': ' + ((today['low'] - 32) * 5 / 9 + "").substring(0, 4) + ' ℃ &nbsp;</span></div>';
             infoText.innerHTML += res;
             informer.appendChild(infoText);
         }
@@ -322,15 +303,14 @@ function MeteoViewer() {
                 day.picture = 'http://l.yimg.com/a/i/us/we/52/' + forecast[i]['code'] + '.gif';
                 day.max = Math.round((forecast[i]['high'] - 32) * 500 / 9) / 100;
                 day.min = Math.round((forecast[i]['low'] - 32) * 500 / 9) / 100;
-                day.date = toRu(forecast[i]['day'], true) + ' ' + getRuMonth(forecast[i]['date'], true);
+                day.date = toLocal(forecast[i]['day'], true) + ' ' + getLocalMonth(forecast[i]['date'], true);
                 forecastDays[i] = day;
             }
         }
 
-
-        function getRuMonth(date, isShort) {
+        function getLocalMonth(date, isShort) {
             var sp = isShort ? '\n' : '&nbsp;';
-            var mName = toRu(date.split(' ')[1], isShort);
+            var mName = toLocal(date.split(' ')[1], isShort);
             if (!isShort)mName = (mName.indexOf('ь') > 0 || mName.indexOf('й') > 0) ?
                 mName.substring(0, mName.length - 1) + 'я' : mName + 'а';
             return date.split(' ')[0] + sp + mName;

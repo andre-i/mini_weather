@@ -4,46 +4,84 @@
     <meta charset="utf-8">
 
     <script type="text/javascript">
+        /**
+         * build GET ajax request and set gotten data to callback function
+         * @param url
+         * @param callback
+         */
+        function get(url, callback) {
+            var request = new XMLHttpRequest();
+            request.open("GET", url);
+            request.onreadystatechange = function () {
+                if (request.readyState === 4 && request.status === 200) {
+                    //debug
+                    //if (debug)console.log("Success get answer on:" + url);
+                    var type = request.getResponseHeader("Content-Type");
+                    if (type.indexOf("xml") !== -1 && request.responseXML)
+                        callback(request.responseXML);              // Объект XML
+                    else if (type === "application/json")
+                        callback(JSON.parse(request.responseText)); // Объект JSON
+                    else callback(request.responseText);             // строка
+                }
+            };
+            request.send(null); // отправить запрос
+        }
+        // set locale by browser language
+        var word , shortWord;
+        var locale_url = (navigator.language.search("ru") > -1) ? "src?js=local_ru.json" : "src?js=local_def.json";
+        get(locale_url, function (data) {
+            if (data) {
+                word = data.long;
+                shortWord = data.short;
+
+            } else console.log("can`t get locale");
+        })
+
         var svgns = 'http://www.w3.org/2000/svg';
         var debug = true;
         var yahooWeatherData = false;
-        function showManual(){
-          if(debug)console.log("Try open help");
-          var w = document.documentElement.clientWidth;
-          var h = document.documentElement.clientHeight;
-          var t = h/10, l = w/10;
-          w=w/2;
-          h = h-h/8;
-          console.log("window sizes [w=" + w + " h=" +h + " t=" + t + " l="+ l + "]");
-          window.open("/help", "Справка", "width=w,height=h");
+        // show manual
+        // called on help button click
+        function showManual() {
+            if (debug)console.log("Try open help");
+            var w = document.documentElement.clientWidth;
+            var h = document.documentElement.clientHeight;
+            var t = h / 10, l = w / 10;
+            w = w / 2;
+            h = h - h / 8;
+            console.log("window sizes [w=" + w + " h=" + h + " t=" + t + " l=" + l + "]");
+            window.open("/help", "Справка", "width=w,height=h");
+        }
+        // set labels on html elements in locale
+        function setLabels() {
+            document.getElementsByName('tOut')[0].innerHTML = word.innerLabel;
+            document.getElementsByName('tIn')[0].innerHTML = word.outerLabel;
+            document.getElementsByName('sensorsLabel')[0].innerHTML = word.sensorsLabel;
+            document.getElementsByName('intervalsLabel')[0].innerHTML = word.intervalsLabel;
+            document.getElementsByName('fMonthLabel')[0].innerHTML = word.fMonthLabel;
+            document.getElementsByName('fYearLabel')[0].innerHTML = word.fYearLabel;
+            document.getElementsByName('fDayLabel')[0].innerHTML = word.fDayLabel;
         }
     </script>
-    <!-- для сервера   -->
+    <!-- server resource -->
     <link rel="stylesheet" href="src?css=simple.css" type="text/css">
     <script src="src?js=measurer.js"></script>
     <script src="src?js=plotter.js"></script>
     <script src="src?js=meteo.js"></script>
 
-
-    <!-- для локального тестирования
-    <link rel="stylesheet" href="src/css/simple.css" type="text/css">
-    <script src="src/js/plotter.js"></script>
-    <script src="src/js/measurer.js"></script>
-    <script src="src/js/meteo.js"></script>
-    -->
 </head>
-<body>
+<body onload="setLabels()">
 <!--  devices board  -->
 <aside class="inlineTop">
     <table class="deviceBoard">
         <tr>
             <td>
-                <span class="devLabel">Термометр<br>наружный</span>
+                <span class="devLabel" name="tOut"></span>
 
                 <div name="outThermOwner" class="sensors"></div>
             </td>
             <td>
-                <span class="devLabel">Термометр<br>комнатный</span>
+                <span class="devLabel" name="tIn"></span>
 
                 <div name="inThermOwner" class="sensors"></div>
             </td>
@@ -66,15 +104,15 @@
         <form name="checkDuration">
             <table class="inlineTop">
                 <tr>
-                    <td class="leftT"><span class="form labelColor">Датчик: </span></td>
+                    <td class="leftT"><span class="form labelColor" name="sensorsLabel"></span></td>
                     <td class="rightT"><select name="sensorSelect"></select></td>
-                    <td class="leftT"><label htmlfor="fYear" name="fYearLabel" class="'label">Год: </label></td>
+                    <td class="leftT"><label htmlfor="fYear" name="fYearLabel" class="'label"></label></td>
                     <td class="rightT"><select id="fYear" name="yearSelect"></select></td>
                 </tr>
                 <tr>
-                    <td class="leftT"><span class="form labelColor">Интервал: </span></td>
+                    <td class="leftT"><span class="form labelColor" name="intervalsLabel"></span></td>
                     <td class="rightT"><select name="intervalSelect"></select></td>
-                    <td class="leftT"><label htmlfor="fMonth" name="fMonthLabel">Месяц: </label></td>
+                    <td class="leftT"><label htmlfor="fMonth" name="fMonthLabel"></label></td>
                     <td class="rightT"><select id="fMonth" name="monthSelect"></select></td>
                 </tr>
                 <tr>
@@ -82,14 +120,14 @@
                     <td colspan="2" style="text-align: right">
                         <hr class="divider labelColor"/>
                         <button name="submitButton" type="button">
-                            "Построить&nbsp;"
-                            <!--   <img width="36px" height="34px" src="./src/pic/submit.svg" style="vertical-align: middle"/>  -->
-                            <img width="36px" height="34px" src="/src?pic=submit.svg" style="vertical-align: middle"/>
+
+                            <!--   <img width="36px" height="34px" src="./src/pic/submit.svg" style="vertical-align: middle"/>
+                            <img width="36px" height="34px" src="/src?pic=submit.svg" style="vertical-align: middle"/> -->
                         </button>
                         &nbsp;&nbsp;&nbsp;&nbsp;
                     </td>
                     <td class="leftT" style="vertical-align: top">
-                        <label class="form">День: </label></td>
+                        <label class="form" name="fDayLabel"></label></td>
                     <td class="rightT" style="vertical-align: top">
                         <select id="fDay" name="daySelect"></select></td>
                 </tr>
@@ -97,8 +135,9 @@
         </form>
     </div>
     <div name="help" class="inlineTop">
-		<button text="Help" onclick="showManual()"><img name="help" src="/src?pic=help.png" style="vertical-align: top"  /></button>
-	</div>
+        <button text="Help" onclick="showManual()"><img name="help" src="/src?pic=help.png"
+                                                        style="vertical-align: top"/></button>
+    </div>
     <div name="informer" class="inlineTop right"></div>
     <div id="graphCanvas"></div>
 </div>
