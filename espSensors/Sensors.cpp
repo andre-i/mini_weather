@@ -12,18 +12,19 @@ Sensors::Sensors(uint8_t wBus, int dhtType) {
   tIn = tOut = baro = humid = DEVICE_DISCONNECTED_C;
   mediaIn = mediaOut = mediaBaro = mediaHumid = 0;
   oneWire = new OneWire(wBus);
-  if (IS_DS18B20)sensors = new DallasTemperature(oneWire);
   dht = new DHT(wBus, dhtType);
   bme = new Adafruit_BMP280();
 }
 
 /** Try prepare sensors */
-int Sensors::init() {
+int Sensors::init(Util *u) {
   int exitCode = 0;
   maxCounterNumber = REQUEST_COUNT - 1;
   // ds18b20
-  if (IS_DS18B20)sensors->begin();
-  if (IS_DS18B20)Serial.println("Init ds18b20");
+  dsMode = u->getDS18B20Mode();
+  if (dsMode)sensors = new DallasTemperature(oneWire);
+  if (dsMode)sensors->begin();
+  if (dsMode)Serial.println("Init ds18b20");
   // DHT
   dht->begin();
   delay(2000);
@@ -45,7 +46,7 @@ int Sensors::init() {
 
 // ds 18B20 purpose comparison with themperature other sensors
 void Sensors::readDS18B20() {
-  if (IS_DS18B20) {
+  if (dsMode) {
     //if (++lastDS18B20 > maxCounterNumber)lastDS18B20 = 0;
     sensors->requestTemperatures(); // Send the command to get temperatures
     dsTemp = (int)(sensors->getTempCByIndex(0) * 10 + 0.5) / 10;
@@ -106,7 +107,8 @@ String Sensors::getCurrentAsJSON() {
     Serial.print("\"getCurrentAsJSON\": ");
     Serial.print(currentInJSON);
     String res = " [ BMP280 t= " + String(tOut);
-    if(IS_DS18B20) res += " Dallas t= " + String(dsTemp) + " ]";
+    if(dsMode) res += " Dallas t= " + String(dsTemp);
+    res += " ]";
     Serial.println(res);
   }
   return currentInJSON;

@@ -5,7 +5,7 @@
 
 function MeteoViewer() {
     // last year in years list for check year
-    var maxYear = 2023;
+    var maxYear = 2025;
 
 
     /** return day in week and month name in browser local */
@@ -241,7 +241,7 @@ function MeteoViewer() {
             var fore = document.createElement('div');
             fore.setAttribute('class', 'inlineTop informerFore'); // informerImgBord
             fore.onclick = showForecast;
-            fore.innerHTML = 'П&nbsp;&nbsp; &nbsp;&nbsp;р &nbsp;&nbsp;о &nbsp;&nbsp;г &nbsp;&nbsp;н &nbsp;&nbsp;о &nbsp;&nbsp;з';
+            fore.innerHTML = word.forecastButtonName;
             informerOwner.appendChild(fore);
         }
 
@@ -287,7 +287,7 @@ function MeteoViewer() {
             infoText.setAttribute('class', 'informerText');
             var res = '<div><span class="informer labelColor"> ' + date + '</span></div>' +
                 '<span  class="informer labelColor">' + word['humid.label'] + ' ' + atm['humidity'] + '&nbsp;%</span><br />' +
-                '<span  class="informer labelColor">давление:&nbsp;' +
+                '<span  class="informer labelColor">' + word.pressure + '&nbsp;' +
                 (atm['pressure'] / 1000 * 750.0637 + '').substring(0, 3) + '&nbsp;' + word['baro.label'] + '</span>' +
                 //  '<hr class="informerDivider">' +
                 '<div style="margin-top: 0.3em;margin-bottom: 3px">&nbsp;<span  class="informerDay">' + word.day + ': ' + ((today['high'] - 32) * 5 / 9 + "").substring(0, 4) + ' ℃ </span>&nbsp;' +
@@ -361,11 +361,11 @@ function MeteoViewer() {
         }
         res.min = Math.round(min - (max - min) / 5);
         res.max = Math.round(max + (max - min) / 10);
-        res.label = { name: '&nbsp; &nbsp; Прогноз на 10 дней', color: '#752', points: []};
+        res.label = { name: '&nbsp; &nbsp;' + word.forecast , color: '#752', points: []};
         res.space0 = { name: '', color: 'rgba(0,0,0,0)', points: []};
-        res.maxThemp = { name: 'День t℃', color: '#909', points: maxThemp };
+        res.maxThemp = { name: word.day + ' t℃', color: '#909', points: maxThemp };
         res.space1 = { name: '', color: 'rgba(0,0,0,0)', points: []};
-        res.minThemp = {name: 'Ночь t℃', color: '#069', points: minThemp };
+        res.minThemp = {name: word.night + ' t℃', color: '#069', points: minThemp };
         return res;
     }
 

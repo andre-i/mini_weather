@@ -119,12 +119,13 @@
 //
 // ================= STORAGE ===================
 //
-//#define CS_PIN 16
+
 //  SPIFFS
 #define SENSOR_DATA_DIR   "/data"
 #define SEP " "   // divide sensors data by write to file in one string. see top 
 // report to SPIFFS
 #define LOG_FILE "/log.log"
+
 // ================  properties file ==============
 #define PROPS_FILE "/props.txt"
 // starts symbols for wifi params
@@ -133,10 +134,13 @@
 #define AP_SSID "as"
 #define AP_PASSWD "ap"
 #define AP_IP "ip"
-//mode of debug output to serial
-#define DEBUG_MODE "dm"
+//mode of debug output to serial if true - debug ON, otherwise debug OFF
+#define DEBUG_MODE "dm"  // default - false
 // thingspeak write key
 #define THINGSPEAK_KEY "ts"
+// DS18B20 included whether? If 'true' - sensor inwork, otherwise - not work
+#define DS18B20_MODE  "ds"  // default false
+
 
 //
 // =================   WI-FI ====================

@@ -10,6 +10,7 @@
 #include <Adafruit_BMP280.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include "Util.h"
 
 
 class Sensors {
@@ -31,10 +32,12 @@ class Sensors {
     String currentInJSON = "";
     String allIn[REQUEST_COUNT] , allOut[REQUEST_COUNT] , allHumid[REQUEST_COUNT], allBaro[REQUEST_COUNT];
     bool checkDHT();
+    bool getDS18B20Mode(Util *u);
+    bool dsMode;
   public:
     //methods
     Sensors(uint8_t wBus, int dhtType);
-    int init();// if success return 0, else 1
+    int init(Util *u);// if success return 0, else 1
     void readDHT();
     void readDS18B20();
     void readBMP280();

@@ -115,6 +115,7 @@ class Util {
     bool hasWrite();
     // thingspeak service
     void getThingSpeakKey(char* key);
+    bool getDS18B20Mode();
     int writeDataToThingspeak(const char* host, String getRequest);
     //
     String getCurrentProps();

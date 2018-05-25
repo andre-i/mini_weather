@@ -186,7 +186,7 @@ select{
 
 .label{
     /* disabled label */
-    color:rgb(200,190,190);
+    color: #ac9999;
     font-size: 1.2em;
 }
 

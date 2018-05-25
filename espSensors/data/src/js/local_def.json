@@ -30,6 +30,7 @@
         "checkInterval": "Choose interval",
         "informerAlert": "Can`t connect with weather station!\nMaybe wi-fi problem.",
         "baro": "Pressure",
+        "pressure" : "pressure",
         "tIn.text": "Indoor t℃",
         "tIn.label": " t ℃",
         "tOut.text": "Outdoor t℃",
@@ -43,13 +44,15 @@
         "hour": "hour",
         "day": "day",
         "night": "night",
-        "innerLabel": "Outdoor<br> therm ",
-        "outerLabel" : "Indoor<br> therm ",
+        "innerLabel": "Indoor<br> therm ",
+        "outerLabel" : "Outdoor<br> therm ",
         "sensorsLabel" : "Sensor: ",
         "intervalsLabel" : "Interval: ",
         "fYearLabel" : "Year: ",
         "fMonthLabel" : "Month: ",
-        "fDayLabel" : "Day: "
+        "fDayLabel" : "Day: ",
+        "forecast" : " For 10 days forecast",
+        "forecastButtonName" : "Fo&nbsp; &nbsp;&nbsp;r &nbsp;&nbsp;e &nbsp;&nbsp;c &nbsp;&nbsp;a &nbsp;&nbsp;s t&nbsp;&nbsp;&nbsp;"
     },
 
     "short": {

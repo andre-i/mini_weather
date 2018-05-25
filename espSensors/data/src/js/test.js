@@ -17,7 +17,7 @@ var chartBoard;
  * build ajax request and set gotten data to callback function
  * @param url
  * @param callback
- */
+ * /
 function get(url, callback) {
 //debug
 //console.log("\nTry AJAX request to:'" + url + "'");
@@ -40,6 +40,7 @@ function get(url, callback) {
     };
     request.send(null); // отправить запрос
 }
+ */
 
 /**  init page :
  * get weather forecast, call method for: create - chartboard,
@@ -167,9 +168,12 @@ function get(url, callback) {
     month.addEventListener('click', function () {
         if (month.selectedIndex > 0 && day.hasAttribute('disabled')) {
             day.removeAttribute('disabled');
-
+            document.getElementsByName('fDayLabel')[0].style.color = '#403030';
         }
-        if (month.selectedIndex < 1 && !day.hasAttribute('disabled'))day.setAttribute('disabled', 'disabled');
+        if (month.selectedIndex < 1 && !day.hasAttribute('disabled')){
+            day.setAttribute('disabled', 'disabled');
+            document.getElementsByName('fDayLabel')[0].style.color = '#ac9999';
+        }
     });
     // return value option elements
     var getVal = function (select) {
@@ -426,8 +430,9 @@ function get(url, callback) {
             }
         }
         var xLabel = word.hour;
-        var monthN = (month.selectedIndex < 10) ? '/0' + month.selectedIndex : '/' + month.selectedIndex;
-        var chartName = ' ' + sensor.text + word.by + dayNum + monthN + '/' + getVal(year);
+        var monthN = month.getElementsByTagName('option')[month.selectedIndex].innerHTML; //(month.selectedIndex < 10) ? '/0' + month.selectedIndex : '/' + month.selectedIndex;
+        if(monthN.length > 3)monthN = monthN.substr(0,3) + '. ';
+        var chartName = ' ' + sensor.text + word.by + dayNum + " " +  monthN + ' ' + getVal(year) + word.year;
         var sEdges = sensor.edges;
         if (dayData.length < 1) {
             drawChart('', '', 'red', word.noDataFor + chartName, [0, 0, 0, 0, 0, 0], {min: -1, max: 1});

@@ -46,7 +46,10 @@ void SerialHandler::showManual(const char* lang) {
   char ch = *help;
   int i = 0;
   while (ch != '\0') {
-    if (ch == '\n')Serial.println("");
+    if (ch == '\n'){
+      Serial.println("");
+      delay(10);
+    }
     else Serial.print(ch);
     ch = *(help++);
   }

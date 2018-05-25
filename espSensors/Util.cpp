@@ -447,7 +447,7 @@ bool Util::connect(const char* hostName, const int port) {
       if(LOG){
         if(n>100){
           n = 0;
-          serial.println("");
+          Serial.println("");
         }
         Serial.print('.');
         n++;
@@ -659,13 +659,13 @@ String Util::getCurrentProps() {
   else res += " not access (недоступна) \n";
   res += "\nwork mode(режим работы)    : ";
   // debug mode
-  if (LOG) res += " debug (отладка)";
+  if (DEBUG) res += " debug (отладка)";
   else res += " default (обычный)";
   // DS18B20
   res += "\n\nwhether work DS18B20 (включен ли DS18B20 датчик?) : ";
-  if (IS_DS18B20) res += " yes(да)";
+  if (getDS18B20Mode()) res += " yes(да)";
   else res += " no(нет)";
-  res += "\nThingspeak write (передача данных на Thingspeak.com) :";
+  res += "\n\nThingspeak write (передача данных на Thingspeak.com) :";
   fillParam(THINGSPEAK_KEY, tsKey);
   if (!tsKey || tsKey[0] == '\0')res += " no(нет)";
   else res += " yes(да)";
@@ -674,6 +674,16 @@ String Util::getCurrentProps() {
   return res;
 }
 
+/**
+ * read ds18b20 mode return true if ds18b20 want be ON
+ */
+bool Util::getDS18B20Mode(){
+  char m[10];
+  m[0] = '\0';
+  char* dsMode = m;
+  fillParam( DS18B20_MODE, dsMode);
+  return (strncmp( dsMode, "true", 4) == 0 );
+}
 
 void Util::getThingSpeakKey(char* key) {
   fillParam(THINGSPEAK_KEY, key);

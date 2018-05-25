@@ -118,6 +118,8 @@ void listenSerialIfError( int millisecond){
 void upErrorMode(int blinkCount) {
   digitalWrite(STA_PIN, LOW);
   digitalWrite(AP_PIN, LOW);
+  Serial.print("\n\n\t\tERROR  code=");
+  Serial.println(blinkCount);
   listenSerialIfError(2000);
   while (true) {
     if (Serial.available() > 0)sHandler.handle();
@@ -390,7 +392,7 @@ void prepareStartState() {
     isFS = false;
   } else isFS = true;
   // up sensors
-  int sensorCode = s.init();
+  int sensorCode = s.init(&util);
   if ( sensorCode != 0) {
     digitalWrite(STA_PIN, LOW);
     digitalWrite(AP_PIN, LOW);

@@ -28,15 +28,17 @@
         }
         // set locale by browser language
         var word , shortWord;
-        var locale_url = (navigator.language.search("ru") > -1) ? "src?js=local_ru.json" : "src?js=local_def.json";
-        get(locale_url, function (data) {
-            if (data) {
-                word = data.long;
-                shortWord = data.short;
+        (function(){
+            var locale_url = (navigator.language.search("ru") > -1) ? "src?js=local_ru.json" : "src?js=local_def.json";
+            get(locale_url, function (data) {
+                if (data) {
+                    word = data.long;
+                    shortWord = data.short;
 
-            } else console.log("can`t get locale");
-        })
+                } else console.log("can`t get locale");
+            });
 
+        })();
         var svgns = 'http://www.w3.org/2000/svg';
         var debug = true;
         var yahooWeatherData = false;
@@ -54,8 +56,8 @@
         }
         // set labels on html elements in locale
         function setLabels() {
-            document.getElementsByName('tOut')[0].innerHTML = word.innerLabel;
-            document.getElementsByName('tIn')[0].innerHTML = word.outerLabel;
+            document.getElementsByName('tOut')[0].innerHTML = word.outerLabel;
+            document.getElementsByName('tIn')[0].innerHTML = word.innerLabel;
             document.getElementsByName('sensorsLabel')[0].innerHTML = word.sensorsLabel;
             document.getElementsByName('intervalsLabel')[0].innerHTML = word.intervalsLabel;
             document.getElementsByName('fMonthLabel')[0].innerHTML = word.fMonthLabel;
@@ -65,9 +67,11 @@
     </script>
     <!-- server resource -->
     <link rel="stylesheet" href="src?css=simple.css" type="text/css">
+    <!--
     <script src="src?js=measurer.js"></script>
     <script src="src?js=plotter.js"></script>
     <script src="src?js=meteo.js"></script>
+    -->
 
 </head>
 <body onload="setLabels()">
@@ -163,7 +167,7 @@
 
 <script src='https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20%3D%202003841%20&format=json&callback=yahooCallbackFunction&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys'></script>
 
-<script src="src?js=test.js"></script>
+<script src="src?js=app.js"></script>
 <!--   src="src/js/test.js"   -->
 
 

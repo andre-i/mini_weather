@@ -1,13 +1,14 @@
 #!/usr/bin/nodejs
 
 /*
- *	This script purpose - imitation ESP8266 chip
+ *	This script purpose - be mock ESP8266 chip
  *	there emulate answers of chip on request`s from browser
  *  query`s list:
  * 		1) /src?resource_name=resource.file
  *		2) /current
  * 		3) /lastValues?sensor=sensor_name(tIn tOut baro humid)
  * 		4) /availablePeriod
+ *              and e.t.
  *
  *   month names "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
  */
