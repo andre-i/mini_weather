@@ -537,6 +537,7 @@ void SerialHandler::setParameter(char* value) {
      newParams.ds18b20_mode = res;
     res = " =" + res + "\n\ndebug(отладка) true|false?  ";
     parName = DEBUG_MODE;
+    Serial.print(res);
   }else if (strncmp(parName, DEBUG_MODE, 2) == 0) {
     newParams.isDebug = res;
     parName = "ends_of_params";
