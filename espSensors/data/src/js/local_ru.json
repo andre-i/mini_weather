@@ -38,7 +38,7 @@
         "baro.text": "Барометр",
         "baro.label": "мм.рт.ст",
         "humid.text": "Гигрометр",
-        "humid.label": "влажность %",
+        "humid.label": "влажность ",
         "month": "месяц",
         "number": "число",
         "hour": "час",

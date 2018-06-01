@@ -12,7 +12,7 @@ function MeteoViewer() {
     var toLocal = function (name, isShort) {
         if (name.length < 3)return '';
         name = name.trim().substring(0, 3).toLowerCase();
-        return isShort ? word[name] : shortWord[name];
+        return isShort ? shortWord[name] : word[name];
     }
 
     var forecastDays = [];

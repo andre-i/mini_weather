@@ -50,6 +50,8 @@ void Sensors::readDS18B20() {
     //if (++lastDS18B20 > maxCounterNumber)lastDS18B20 = 0;
     sensors->requestTemperatures(); // Send the command to get temperatures
     dsTemp = (int)(sensors->getTempCByIndex(0) * 10 + 0.5) / 10;
+    Serial.print("DS18B20 t=");
+    Serial.println(dsTemp);
   }
 }
 

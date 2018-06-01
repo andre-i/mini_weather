@@ -101,12 +101,6 @@
 #define ONE_WIRE_BUS 2  // one wire
 #define DHT_TYPE DHT11   // may be DHT11 or  DHT22
 
-// whether work DS18B20 
-// this sensor i get as gage themperature, 
-// if value set to true and debug = true, hten in serial(COM) port
-// set value for it 
-#define IS_DS18B20 false
-
 //      sensors data Types
 #define T_IN "tIn"
 #define T_OUT "tOut"

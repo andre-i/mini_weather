@@ -48,11 +48,12 @@
             if (debug)console.log("Try open help");
             var w = document.documentElement.clientWidth;
             var h = document.documentElement.clientHeight;
-            var t = h / 10, l = w / 10;
-            w = w / 2;
-            h = h - h / 8;
+            var t = h / 16, l = w / 5;
+            w = 3 * w / 5;
+            h = h - h / 20;
+            var helpWindowSize = 'width=' + w + ',height=' + h + ',top=' + t + ',left=' + l;
             console.log("window sizes [w=" + w + " h=" + h + " t=" + t + " l=" + l + "]");
-            window.open("/help", "Справка", "width=w,height=h");
+            window.open("/help", "Справка", helpWindowSize);
         }
         // set labels on html elements in locale
         function setLabels() {
@@ -167,9 +168,11 @@
 
 <script src='https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20%3D%202003841%20&format=json&callback=yahooCallbackFunction&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys'></script>
 
+<!--   -->
 <script src="src?js=app.js"></script>
-<!--   src="src/js/test.js"   -->
-
+<!--
+<script src="src?js=test.js"></script>
+-->
 
 </body>
 </html>

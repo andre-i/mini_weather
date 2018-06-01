@@ -13,35 +13,6 @@ if (debug)console.log('Browser: \'' + navigator.userAgent + '\'  ');
 var chartBoard;
 
 
-/**
- * build ajax request and set gotten data to callback function
- * @param url
- * @param callback
- * /
-function get(url, callback) {
-//debug
-//console.log("\nTry AJAX request to:'" + url + "'");
-    var request = new XMLHttpRequest();
-    request.open("GET", url);
-    request.onreadystatechange = function () {
-        if (request.readyState === 4 && request.status === 200) {
-            //debug
-            //if (debug)console.log("Success get answer on:" + url);
-            var type = request.getResponseHeader("Content-Type");
-            if (type.indexOf("xml") !== -1 && request.responseXML)
-                callback(request.responseXML);              // Объект XML
-            else if (type === "application/json")
-                callback(JSON.parse(request.responseText)); // Объект JSON
-            else callback(request.responseText);             // строка
-        } else {
-//debug
-// console.log('fail ajax request [ request readyState:' + request.readyState + ' status: ' + request.status + ' ]')
-        }
-    };
-    request.send(null); // отправить запрос
-}
- */
-
 /**  init page :
  * get weather forecast, call method for: create - chartboard,
  *  set function for fill values to device panel
@@ -159,7 +130,7 @@ function get(url, callback) {
             edges: { min: 0, max: 100},
             yLabel: word['humid.label'],// labels.humid.label
             color: '#46b',
-            text: word['hunid.text'],// labels.humid.text
+            text: word['humid.text'],// labels.humid.text
             numInData: 5
         }
     };

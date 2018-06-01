@@ -462,6 +462,8 @@ void SerialHandler::writeToPropFile( struct params par) {
   if (par.sta_passwd && par.sta_passwd.length() > 6)res += String(STA_PASSWD) + " " + par.sta_passwd + "\n";
   res += "# thingspeak write API key\n";
   if (par.ts_api_key && par.ts_api_key.length() > 15)res += String(THINGSPEAK_KEY) + " " + par.ts_api_key + "\n";
+  res += "# dDS18B20 mode";
+  if (par.ds18b20_mode && par.ds18b20_mode.length() >3) res += String(DS18B20_MODE) + " " + par.ds18b20_mode + "\n";
   res += "# debug mode\n";
   if (par.isDebug && par.isDebug.length() > 3)res += String(DEBUG_MODE) + " " + par.isDebug + "\n";
   file.print( res.c_str());
@@ -528,9 +530,13 @@ void SerialHandler::setParameter(char* value) {
     Serial.print(res);
   }else if (strncmp(parName, THINGSPEAK_KEY, 2) == 0) {
     newParams.ts_api_key = res;
+    res = " =" + res + "\n\nDS18B20 mode(включать ли DS18B20 true|false?  При true - включать ";
+    parName = DS18B20_MODE;
+    Serial.print(res);
+  }else if (strncmp(parName, DS18B20_MODE, 2) == 0){
+     newParams.ds18b20_mode = res;
     res = " =" + res + "\n\ndebug(отладка) true|false?  ";
     parName = DEBUG_MODE;
-    Serial.print(res);
   }else if (strncmp(parName, DEBUG_MODE, 2) == 0) {
     newParams.isDebug = res;
     parName = "ends_of_params";
@@ -557,6 +563,8 @@ void SerialHandler::showSummary() {
   Serial.print(newParams.sta_passwd);
   Serial.print("\nthingspeak key=");
   Serial.print(newParams.ts_api_key);
+  Serial.print("\nDS18B20 mode=");
+  Serial.print(newParams.ds18b20_mode);
   Serial.print("\ndebug=");
   Serial.print(newParams.isDebug);
   Serial.print("\n  Write it(Записать)   y|n?\n");
