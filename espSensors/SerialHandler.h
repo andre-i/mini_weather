@@ -135,17 +135,19 @@ class SerialHandler {
           \n\t write           : after 'equals' sign be char sequense for write\
               \n\t\tWARNING: if after equals sign to be nothing, then file be REMOVED !\n\
           \n\t append          : a_/full/path/with/fName.ext 'equals' \n\t\tfor new line enter '%%' \n\t\tfor exit from append entert '##$'\n\
-      5) See SPIFFS info : \n\t'si' - print info about SPIFFS of chip\n\
-      6) Get date-time on chip : 'time' \n\
+      5) See SPIFFS info : \n\t'si' - print info about SPIFFS of module\n\
+      6) Get date-time on module : 'time' \n\
       6) Set date/time - enter it in format:'year/month/day/hour/minute' \n\tWARNING - date must be strongly follow format, else date be break\n\
         \tyear - 4 numbers\n\t\tmonth - 3 chars( first must be Upper Case)\n\t\tday, hour and minute consist from 2 numbers, if value less than 10 firs must be 0(null)\n\
      7) Show current properties of application : 'current'\n\
            \n\tProperties file for set start parameter values(wifi, debug, log, thingspeak\n\
-     7) Set all start parameters in one command - 'fillParam'\
+     8) Set all start parameters in one command - 'fillParam'\
           \n NOTE in props file first simbols in string have meaning\
           \n\ta)'#' - it is comment \n\t\tb)'ss' - STA ssid, \n\t\t'sp' - STA password, \n\t\t'as' - AP ssid,\
           \n\t\t'ap' - AP password, \n\t\t'ip' - IP address for AP mode \n\t'dm' -debug mode(may be true or false)\
-          \n\t\t'ts' - thingspeak key\n\t\tc) record format first simbol(s)+white space+value\
+          \n\t\t'ts' - thingspeak key\
+          \n\t\t'ds' - whether work DS18B20 sensor (if true - in work, some other - not work\
+          \n\t\tc) record format first simbol(s)+white space+value\ 
           \n\tnew values will be apply on reboot";  
 
 };

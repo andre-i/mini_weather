@@ -110,9 +110,9 @@ void SerialHandler::executeCommand(char answ[100]) {
   if ( strncmp(answ, "debug", 5) == 0) {
     Serial.println(setDebug(String(answ).substring(5)));
   }
-  // get date-time on chip
+  // get date-time on module
   if (strncmp(answ, "time", 4) == 0) {
-    Serial.print("Now on chip  ");
+    Serial.print("Now on module  ");
     Serial.println(util->getFullDate());
   }
   // get current work parameters
