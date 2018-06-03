@@ -356,7 +356,7 @@ void prepareServer() {
   server.on("/availablePeriod", HTTP_GET, sendPeriods);
   server.on("/getProps", HTTP_GET, sendCurrentProperties);
   server.on("/log", HTTP_GET, loadLogFile);
-  server.on("/Help.htm", HTTP_GET, showHelp);
+  server.on("/help", HTTP_GET, showHelp);
   server.on("/gg", HTTP_GET, Sensors::getState); //  ========================================= cannot any thingh only test`s  ==============================================
   server.begin();
   delay(1000);

@@ -568,7 +568,7 @@ void SerialHandler::showSummary() {
   Serial.print(newParams.ds18b20_mode);
   Serial.print("\ndebug=");
   Serial.print(newParams.isDebug);
-  Serial.print("\n  Write it(Записать)   y|n?\n");
+  Serial.print("\n  Write it(Записать)   y|n? (y - записать, любое другое - не записывать)\n");
 }
 
 

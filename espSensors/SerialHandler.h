@@ -107,7 +107,7 @@ class SerialHandler {
                    \n\t\t\t   запись в файл каждую минуту,\
                    \n\t\t\t   идёт вывод сообщений в последовательный порт(COM)\
         \n\t\t\t при false всё работает штатно вывода в 'serial(COM)' не будет\
-      \n Замечание: не введённые параметры при старте модуля берутся из прописанных в прошивке.\
+      \n Замечание: не введённые параметры при старте модуля берутся из прописанных в прошивке(props.h).\
 \n\n\t\t  ФОРМАТ ФАЙЛА С НАЧАЛЬНЫМИ ПАРАМЕТРАМИ\
 \n\t# - коментарий\
 \n\t#AP\
@@ -148,7 +148,7 @@ class SerialHandler {
           \n\t\t'ts' - thingspeak key\
           \n\t\t'ds' - whether work DS18B20 sensor (if true - in work, some other - not work\
           \n\t\tc) record format first simbol(s)+white space+value\ 
-          \n\tnew values will be apply on reboot";  
+          \n\tnew values will be apply on reboot, empty values will replace from props.h";  
 
 };
 

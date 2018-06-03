@@ -61,12 +61,12 @@ void Util::fillParam(const char *key, char *dest) {
       int i;
       for (i = 0; i < cur.length(); i++)*(dest + i) = cur.charAt(i);
       *(dest + i) = '\0';
-      if (LOG)Serial.println(String("On request - ") + String(key) + String("  return - '") + String(dest) + String("' "));
+      if (DEBUG)Serial.println(String("On request - ") + String(key) + String("  return - '") + String(dest) + String("' "));
       file.close();
       return;
     }
   }
-  // wlue by key not found
+  // value by key not found
   if (LOG)Serial.println(String("Can`t read property ") + String(key));
   dest[0] = '\0';
   file.close();
@@ -222,7 +222,7 @@ bool Util::isStaConnect() {
     if ( counter > 15 ) {
       WiFi.disconnect();
       delay(100);
-      if (LOG)Serial.println(String("\nCan`t W-Fi connect to ") + String(ssid) + String("  ") + String(passwd));
+      if (LOG)Serial.println(String("\nWi-Fi STA mode: can`t connect to ") + String(ssid) + String("  ") + String(passwd));
       return false;
     }
   }
