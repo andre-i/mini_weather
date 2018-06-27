@@ -451,7 +451,7 @@ void afterInitAction() {
     case  DEVICE_AP_MODE:
       if (isFS) {
         Serial.println("Need set date for write sensors data to storage. Print 'en' for detail\nУстановите время для записи значений датчиков, для справки жми 'ru'");
-        res += ", wifi: AP_MODE ]";
+        res += ", wifi: AP_MODE ] ";
         res += "date_not_set " + res;
       }
       digitalWrite(STA_PIN, LOW);
@@ -460,8 +460,8 @@ void afterInitAction() {
     case DEVICE_NOT_WIFI:
       if (isFS) {
         Serial.println("WARNING: device can`t start of WiFi!!!\nPerhaps need set date for write sensors data to SPIFFS.\nPrint \"h\" by serial for detail");
-        res += ", WARNING: can`t start Wi-Fi !!!";
-        res += "date_not_set " + res;
+        res += ", can`t start Wi-Fi !!!";
+        res += " date_not_set " + res;
       }
       digitalWrite(STA_PIN, LOW);
       digitalWrite(AP_PIN, LOW);

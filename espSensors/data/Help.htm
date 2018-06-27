@@ -4,8 +4,10 @@
     <meta charset="utf-8">
     <style>
         table {
-            width: fit-content;
+           /* width: fit-content; */
             border: solid black 1px;
+            border-spacing: 7px 5px; /* Расстояние между границ */
+            vertical-align: middle;
         }
 
         td {
@@ -117,14 +119,14 @@
         <tr><td>ssid</td><td>espWeather</td></tr>
         <tr><td>passwd</td><td>espWeather</td></tr>
         <tr><td>ap_ip</td><td>192.168.0.1</td></tr>
-        <tr><td colspan="2"><u> Wi-Fi STA mode </u></td> </tr>
+        <tr><td colspan="2"><br><hr><u> Wi-Fi STA mode </u></td> </tr>
         <tr><td>ssid</td><td>mywifi</td></tr>
         <tr><td>passwd</td><td>mypasswd</td></tr>
-        <tr><td colspan="2"><u> Отладка(Debug) </u></td></tr>
+        <tr><td colspan="2"><br><hr><u> Отладка(Debug) </u></td></tr>
         <tr><td>debug</td><td>false</td></tr>
-        <tr><td colspan="2"><u> Ключ записи Thingpeak </u></td></tr>
+        <tr><td colspan="2"><br><hr><u> Ключ записи Thingpeak </u></td></tr>
         <tr><td>thingpeak key</td><td>значения<br>нет</td></tr>
-        <tr><td colspan="2"><u> DS18B20 mode </u></td></tr>
+        <tr><td colspan="2"><br><hr><u> DS18B20 mode </u></td></tr>
         <tr><td>DS18B20 mode</td><td>false</td></tr>
     </table>
 </div>
@@ -143,9 +145,10 @@
 <h4 align="center">Несправности:</h4>
 <table align="center">
     <tr border="solid black 2px" >
-        <td><b>количество <br><u>&nbsp;&nbsp;&nbsp;&nbsp;импульсов&nbsp;&nbsp;&nbsp;&nbsp;</u></b></td>
-        <td><b>&nbsp;&nbsp;<br><u>&nbsp;&nbsp; проблема c &nbsp;&nbsp;&nbsp;</u></b></td>
+        <td><b>количество <br>импульсов</b></td>
+        <td><b>проблема</b></td>
     </tr>
+    <tr><td colspan="2"><hr></td> </tr>
     <tr>
         <td>1</td>
         <td> датчик DHT</td>
@@ -175,7 +178,7 @@
 
 <div>
     Настройка стартовых параметров происходит путём создания файла настроек. Это делается при соединении с модулем по
-    последавательному порту(COM, UART, serial). Подробности сморим в справке. Смотреть справку надо непосредственно
+    последавательному порту(COM, UART, serial). Подробности смотрим в справке. Смотреть справку надо непосредственно
     через последовательный порт модуля. Проще сделать это в ArduinoIDE, запустив SerialMonitor со скоростью 115200
     без символов окончания строк(no line ending) и отправить по нему "ru"(вводим без кавычек).Модуль в ответ пришлёт
     краткую справку по командам и первичной настройке.

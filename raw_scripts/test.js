@@ -121,7 +121,7 @@ var chartBoard;
         },
         'baro': {
             edges: { min: 600, max: 800},
-            yLabel: word['baro.label]'],//labels.baro.label
+            yLabel: word['baro.label'],//labels.baro.label
             color: 'gray',
             text: word['baro.text'],//labels.baro.text
             numInData: 4

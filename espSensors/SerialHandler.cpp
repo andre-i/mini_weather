@@ -462,7 +462,7 @@ void SerialHandler::writeToPropFile( struct params par) {
   if (par.sta_passwd && par.sta_passwd.length() > 6)res += String(STA_PASSWD) + " " + par.sta_passwd + "\n";
   res += "# thingspeak write API key\n";
   if (par.ts_api_key && par.ts_api_key.length() > 15)res += String(THINGSPEAK_KEY) + " " + par.ts_api_key + "\n";
-  res += "# dDS18B20 mode";
+  res += "# dDS18B20 mode\n";
   if (par.ds18b20_mode && par.ds18b20_mode.length() >3) res += String(DS18B20_MODE) + " " + par.ds18b20_mode + "\n";
   res += "# debug mode\n";
   if (par.isDebug && par.isDebug.length() > 3)res += String(DEBUG_MODE) + " " + par.isDebug + "\n";

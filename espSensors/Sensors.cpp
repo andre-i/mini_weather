@@ -27,8 +27,12 @@ int Sensors::init(Util *u) {
   if (dsMode)Serial.println("Init ds18b20");
   // DHT
   dht->begin();
-  delay(2000);
-  if (LOG)Serial.println("Init DHT");
+  delay(1000);
+  Serial.print("Start DHT .");
+  delay(1000);
+  Serial.print(".");
+  delay(1000);
+  Serial.println(".  ");
   if(!checkDHT()){
     exitCode += 1;
   }
