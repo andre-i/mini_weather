@@ -311,7 +311,7 @@ function MeteoViewer() {
         function getLocalMonth(date, isShort) {
             var sp = isShort ? '\n' : '&nbsp;';
             var mName = toLocal(date.split(' ')[1], isShort);
-            if (!isShort)mName = (mName.indexOf('ь') > 0 || mName.indexOf('й') > 0) ?
+            if (!isShort && navigator.language.search("ru") > -1)mName = (mName.indexOf('ь') > 0 || mName.indexOf('й') > 0) ?
                 mName.substring(0, mName.length - 1) + 'я' : mName + 'а';
             return date.split(' ')[0] + sp + mName;
         }

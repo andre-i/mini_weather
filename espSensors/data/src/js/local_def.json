@@ -38,7 +38,7 @@
         "baro.text": "Barometer",
         "baro.label": "Torr",
         "humid.text": "Hygrometer",
-        "humid.label": "humidity %",
+        "humid.label": "humidity ",
         "month": "month",
         "number": "dayNum",
         "hour": "hour",
