@@ -58,18 +58,25 @@
  * ap password
  * ## AP IP may be walid IP 4bit address
  * ip 192.168.0.1
+ * ## debug mode
+ * dm true
+ * ## thingspeak write api key
+ * ts OLALALA
+ * 
  * 
  * where:     ssid - string with lan name,  
  *          password - string with password      
- * 
+ *    if debug mode true - debug on, any other value - debug off
+ *    empty values - permitted
  */
 
 /* ==================== JSON  answer formats for   browser =========================
  *        query           |       answer
  *        
  *  1) /current           | { "tIn": val, "tOut" : val, "baro" : val, "humid" : val }
- *  2) /lastValues        | { "data_type" : [ "val1", "val2", .... ], "last" : jastGottenNumFromSensor }
+ *  2) /lastValues        | { "data_type" : [ "val1", "val2", .... ], "last" : lastGottenNumFromSensor }
  *  3) /availablePeriod   | [ "/data/year/month1.txt", "...month2.txt", "...", ... ]
+ * 
  *  
  */
 
@@ -83,8 +90,11 @@
   * 			res_type may be: js, pic, css ( link on directory /src/js , /src/css, /src/pic )
   * 			fName - name of resource file with extensions e.g myScript.js
   * 		return resource as file content
-  * 4) /   
+  * 4) /log.log - return content Log file(contains some startup parameters)
+  * 5) /getProps - return current properties
+  * 6) /help - return small help page on russian language
   */
+
 
 
 

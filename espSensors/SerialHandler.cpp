@@ -134,26 +134,6 @@ void SerialHandler::executeCommand(char answ[100]) {
   }
   //     PROPERTIES FILE
   // write start wifi params to PROPS_FILE
-  /*
-  if (answ[0] == 'w' && answ[1] == 'i' && answ[2] == 'f' && answ[3] == 'i') {
-    if (isFS)Serial.println(writeWifiProps(String(answ).substring(4)));
-    else Serial.println("WARNING: Can`t access to file system");
-  }
-  // write to PROPS_FILE Wi-Fi AP mode AP IP4V address
-  if (answ[0] == 'a' && answ[1] == 'p' && answ[2] == 'i' && answ[3] == 'p') {
-    if (isFS)Serial.println(writeApModeIpAddr(answ));
-    else Serial.println("WARNING: Can`t access to file system");
-  }
-  // set write API key for thingspeak
-  if ( strncmp(answ, "key", 3) == 0) {
-    if (isFS)Serial.println(writeTsApiKey(String(answ).substring(3)));
-    else Serial.println("WARNING: Can`t access to file system");
-  }
-  // set debug mode to props file
-  if ( strncmp(answ, "setDebug", 7) == 0) {
-    if (isFS)Serial.println(writeDebugMode(String(answ).substring(9)));
-    else Serial.println("WARNING: Can`t access to file system");
-  } */
   // bulk fill the properties file
   if ( strncmp(answ, "fillParam", 7) == 0) {
     if (isFS)fillStartParameters();
