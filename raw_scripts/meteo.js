@@ -168,7 +168,7 @@ function MeteoViewer() {
         interval.setAttribute('disabled', 'disabled');
 //year check
         var year = form.elements['yearSelect'];
-        year.appendChild(new Option('', 'empty'));
+        year.appendChild(new Option('?', 'empty'));
         for (i = 2018; i < (maxYear + 1); i++)year.appendChild(new Option((i), (i) + ''));
         for (i = 0; i < year.getElementsByTagName('option').length; i++)
             year.getElementsByTagName('option')[i].setAttribute('style', 'color:');

@@ -532,7 +532,8 @@ var chartBoard;
     function setAttributeToPeriods() {
         var years = year.getElementsByTagName('option');
         var isSet = false;
-        for (var i = 0; i < years.length; i++) {
+        var i;
+        for ( i = 0; i < years.length; i++) {
             if (availablePeriods[years[i].getAttribute('value')]) {
                 //	console.log("availablePeriods have:" +  years[i].getAttribute('value'));
                 if (years[i].hasAttribute('disabled'))years[i].removeAttribute('disabled');
@@ -544,6 +545,10 @@ var chartBoard;
                 //	if(debug)console.log("availablePeriods NOT have:" +  years[i].getAttribute('value'));
                 years[i].setAttribute('disabled', 'disabled');
             }
+        }
+        if(i > 0){
+            years[0].innerHTML = '&nbsp;&nbsp!!!!';
+            year.selectedIndex = 0;
         }
         month.selectedIndex = 0;
         day.selectedIndex = 0;
