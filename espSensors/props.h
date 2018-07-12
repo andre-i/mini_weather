@@ -117,6 +117,11 @@
 #define BARO "baro"
 #define HUMID "humid"
 
+// if the themperature values for some sensor is wrong may
+//  be set some shift for it after check with other sensor(I take DS18B20)
+#define DHT_THEMP_SHIFT  0
+#define BMP_THEMP_SHIFT  -1
+
 //  cycle requests 
 #define REQUEST_COUNT 13
 

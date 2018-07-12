@@ -70,7 +70,7 @@ bool Sensors::checkDHT(){
 
 void Sensors::readDHT() {
   if (++lastDHT > maxCounterNumber)lastDHT = 0;
-  tIn = (int)(dht->readTemperature() + 0.5);
+  tIn = (int)(dht->readTemperature() + 0.5) + shiftThemperatureDHT;
   humid = (int)(dht->readHumidity() + 0.5);
   if ( isnan(tIn) || isnan(humid)) {
     if (LOG)Serial.println("Can`t read DHT sensor data");
@@ -93,7 +93,7 @@ void Sensors::readBMP280() {
   allBaro[lastBMP280] = String(baro);
   if (lastBMP280 == 0)mediaBaro = baro;
   else mediaBaro = (int)((mediaBaro + baro) / 2 + 0.5);
-  tOut = bme->readTemperature() - 1;
+  tOut = bme->readTemperature() + shiftThemperatureBMP;
   allOut[lastBMP280] = String(tOut);
   if (lastBMP280 == 0)mediaOut = tOut;
   else mediaOut = (int)((mediaOut + tOut) / 2 + 0.5);

@@ -21,6 +21,9 @@ class Sensors {
     DallasTemperature *sensors;
     DHT *dht;
     Adafruit_BMP280 *bme;
+    // shift for themperature, if sensor calibration is bad
+    int shiftThemperatureDHT = DHT_THEMP_SHIFT;
+    int shiftThemperatureBMP = BMP_THEMP_SHIFT;
     //  max number members of values array init with -1 
     int maxCounterNumber = - 1;
     //  media
