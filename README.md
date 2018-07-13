@@ -12,6 +12,7 @@ Short description of the properties.
  + Show current values for sensors
  + Send sensors values to Thingspeak.com
  + Show diagramm for sensor by hour, day, month, year.(choosed of user`s)
+ + On press *Forecast* button be show the forecast by 10 days(see image)/ For you place need get by yahoo.com and replace in */mini_weather/espSensors/data/index.htm* file script *<script src='https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20%3D%202003841%20&format=json&callback=yahooCallbackFunction&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys'></script>* on script appropriate for your place.
 
 | view | forecast |
 | --------- | --------- |
@@ -71,6 +72,7 @@ ____
   - отправка данных измерений на сайт [thingspeak.com](http://thingspeak.com)(необязательно)
   - передача результатов измерений по wi-fi для просмотра
   - просмотр текущих и сохранённых в модуле значений
+  - при нажатии на кнопку прогноз будет показан прогноз от yahoo для тульской области. Чтобы заменить  местность прогноза надо на сервисах yahoo погоды найти скрипт для определения прогноза для данной местности и заменить скрипт *<script src='https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20%3D%202003841%20&format=json&callback=yahooCallbackFunction&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys'></script>* на полученный в файле */mini-weather/espSensors/data/index.htm*(он находится почти в самом конце файла).
   
 ### Что требуется
   
