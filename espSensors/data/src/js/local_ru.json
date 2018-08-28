@@ -35,6 +35,7 @@
         "tIn.label": " t ℃",
         "tOut.text": "Термометр улица",
         "tOut.label": " t ℃",
+        "celcius": "℃",
         "baro.text": "Барометр",
         "baro.label": "мм.рт.ст",
         "humid.text": "Гигрометр",

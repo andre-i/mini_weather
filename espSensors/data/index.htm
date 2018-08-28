@@ -29,15 +29,20 @@
         // set locale by browser language
         var word , shortWord;
         (function(){
-            var locale_url = (navigator.language.search("ru") > -1) ? "src?js=local_ru.json" : "src?js=local_def.json";
-            get(locale_url, function (data) {
-                if (data) {
-                    word = data.long;
-                    shortWord = data.short;
+            var n = 0;
+            while(word == undefined && n < 5){
+                setTimeout(function(){if(debug)console.log("call get \"word\" object" + n + " times");}, 10000);
+                var locale_url = (navigator.language.search("ru") > -1) ? "src?js=local_ru.json" : "src?js=local_def.json";
+                get(locale_url, function (data) {
+                    if (data) {
+                        console.log("Data for locale :" + locale_url);
+                        word = data.long;
+                        shortWord = data.short;
 
-                } else console.log("can`t get locale");
-            });
-
+                    } else console.log("can`t get locale");
+                });
+                n++;
+            }
         })();
         var svgns = 'http://www.w3.org/2000/svg';
         var debug = true;
@@ -55,6 +60,10 @@
             console.log("window sizes [w=" + w + " h=" + h + " t=" + t + " l=" + l + "]");
             window.open("/help", "Справка", helpWindowSize);
         }
+
+        function getWord(){
+            return word;
+        }
         // set labels on html elements in locale
         function setLabels() {
             document.getElementsByName('tOut')[0].innerHTML = word.outerLabel;
@@ -69,10 +78,10 @@
     <!-- server resource -->
     <link rel="stylesheet" href="src?css=simple.css" type="text/css">
     <!--
+    -->
     <script src="src?js=measurer.js"></script>
     <script src="src?js=plotter.js"></script>
     <script src="src?js=meteo.js"></script>
-    -->
 
 </head>
 <body onload="setLabels()">
@@ -156,8 +165,10 @@
 <!--
 //                    ==================================
 //                 =================== SCRIPTS ===============
-//                    ==================================
+//
+==================================
 -->
+
 
 <script type="text/javascript">
     function yahooCallbackFunction(data) {
@@ -168,11 +179,12 @@
 
 <script src='https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20%3D%202003841%20&format=json&callback=yahooCallbackFunction&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys'></script>
 
-<!--   -->
-<script src="src?js=app.js"></script>
 <!--
+<script src="src?js=app.js"></script>
+  -->
+<!--
+  -->
 <script src="src?js=test.js"></script>
--->
 
 </body>
 </html>
