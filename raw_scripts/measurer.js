@@ -298,7 +298,7 @@ function Measurer(deviceOwner, startParams) {
           //  bigContainer.setAttribute('style', par.hasRound ? 'padding-top:3%':'padding-top:6%');
             startFont = fontSize;
             startWidth = par.width;
-            var h = document.body.clientHeight;
+            var h = screen.height - screen.height/8; //document.body.clientHeight;
             var w = document.body.clientWidth;
             par.width = (w > h) ? Math.round(0.85 * h) : Math.round(0.85 * w);
             fontSize = fontSize * par.width / startWidth;

@@ -25,7 +25,12 @@ function MeteoViewer() {
     // barometer hygrometer
     var baro, humid;
 
+
+
     function createDevicesPanel() {
+
+        //  debug
+        console.log("value of word =" + word);
 
         var colors = {
             devBordStartCol: 'rgba(75,95,130,0.3)'
@@ -60,7 +65,7 @@ function MeteoViewer() {
             });
 // barometer
         colors = {
-            devBordStopCol: 'rgba(80,90,10,0.2'
+            devBordStopCol: 'rgba(80,90,10,0.2)'
         }
         baro = new Measurer(document.getElementsByName("baroOwner")[0],
             {
@@ -109,7 +114,7 @@ function MeteoViewer() {
      * @returns {boolean} false if can not create activity panel
      */
     function createActivityPanel(owner) {
-        if (document.body.clientWidth < document.body.clientHeight)return null;
+        if (screen.width < screen.height)return null;
 //        console.log("callCreateActivity with owner:" + owner);
         if (!(owner instanceof HTMLElement)) {
             console.log("ERROR can`t create activity panel: I get not HTMLElement:" + owner);
@@ -198,7 +203,7 @@ function MeteoViewer() {
 
 
     function createChartCanvas(chartOwner) {
-        if (document.body.clientWidth < document.body.clientHeight)return null;
+        if (screen.width < screen.height)return null;
         var chartWidth = document.body.clientWidth -
             1.1 * document.getElementsByTagName('aside')[0].offsetWidth;
         var padd = getComputedStyle(document.getElementsByTagName('aside')[0]).padding;
@@ -290,8 +295,9 @@ function MeteoViewer() {
                 '<span  class="informer labelColor">' + word.pressure + '&nbsp;' +
                 (atm['pressure'] / 1000 * 750.0637 + '').substring(0, 3) + '&nbsp;' + word['baro.label'] + '</span>' +
                 //  '<hr class="informerDivider">' +
-                '<div style="margin-top: 0.3em;margin-bottom: 3px">&nbsp;<span  class="informerDay">' + word.day + ': ' + ((today['high'] - 32) * 5 / 9 + "").substring(0, 4) + ' ℃ </span>&nbsp;' +
-                '<span class="informerNight">' + word.night + ': ' + ((today['low'] - 32) * 5 / 9 + "").substring(0, 4) + ' ℃ &nbsp;</span></div>';
+                '<div style="margin-top: 0.3em;margin-bottom: 3px">&nbsp;<span  class="informerDay">' +
+                word.day + ': ' + ((today['high'] - 32) * 5 / 9 + "").substring(0, 4) + ' ' + word['celcius'] +' </span>&nbsp;<span class="informerNight">'
+                + word.night + ': ' + ((today['low'] - 32) * 5 / 9 + "").substring(0, 4) + ' ' + word['celcius'] + ' &nbsp;</span></div>';
             infoText.innerHTML += res;
             informer.appendChild(infoText);
         }
@@ -323,17 +329,18 @@ function MeteoViewer() {
 
     function showForecast() {
         if (forecastDays.length < 2)return;
-        if (document.body.clientWidth < document.body.clientHeight)return;
+        if (document.body.clientWidth < screen.height)return;
         var forecastData = prepareDataForChart(forecastDays);
 //console.log('\nFORECAST OBJECT:\n' + JSON.stringify(forecastData));
         if (owner == undefined) owner = document.createElement('div');
         owner.setAttribute('class', 'bigSize');
-        var svgDiv = document.createElement('div');
+        var svgDiv = document.createElement('div');    
         svgDiv.width = document.body.scrollWidth * 4 / 5;
-        svgDiv.height = document.body.scrollHeight * 5 / 6;
-        svgDiv.setAttribute('style', 'margin-top:' + document.body.scrollHeight / 12 + 'px');
+        svgDiv.height = screen.height*4/6;
+        svgDiv.setAttribute('style', 'margin-top:' + screen.height / 12  + 'px');
         owner.appendChild(svgDiv);
         document.body.appendChild(owner);
+//console.log("Try create forecast diagram" );        
         chart.simpleChart(svgDiv, forecastData);
         owner.onclick = function () {
             chart.clearSimpleChart(svgDiv);
@@ -363,9 +370,9 @@ function MeteoViewer() {
         res.max = Math.round(max + (max - min) / 10);
         res.label = { name: '&nbsp; &nbsp;' + word.forecast , color: '#752', points: []};
         res.space0 = { name: '', color: 'rgba(0,0,0,0)', points: []};
-        res.maxThemp = { name: word.day + ' t℃', color: '#909', points: maxThemp };
+        res.maxThemp = { name: word.day + word['tOut.label'], color: '#909', points: maxThemp };
         res.space1 = { name: '', color: 'rgba(0,0,0,0)', points: []};
-        res.minThemp = {name: word.night + ' t℃', color: '#069', points: minThemp };
+        res.minThemp = {name: word.night + word['tOut.label'], color: '#069', points: minThemp };
         return res;
     }
 

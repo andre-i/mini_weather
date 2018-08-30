@@ -1,21 +1,25 @@
-Замечания:
-	MIME типы
-zip 	application/x-zip-compressed
-zip 	application/zip
 
-
----------------------------
+       ---------------------------
      SENSOR     ESP8266	   |
----------------------------
-	    BMP 	   |
-	scl	GPIO5	   |
-	sda	GPIO4	   |
-			   |
- 	    DHT		   |
-	data	GPIO2	   |
-			   |
-      FTDI(COM adaptor)	   |
-	FTDI	ESP8266	   |
-	зел	RX	   |
-	бел	TX	   |
-----------------------------
+      ---------------------------
+	    BMP 	   
+	scl	  GPIO5	   
+	sda  GPIO4	  
+     -----------------------------
+ 	       DHT		   
+	data	GPIO2	   
+     -----------------------------
+	    DS18B20
+	data    GPIO2
+
+//		Для отладки HTML и javascript
+ 1 Нужно node js
+    скрипт ex.js запустить из ноды, он имитирует работу чипа.
+	В папке /espSensors/data/src/js находится итоговый скрипт app.js в сжатом виде 
+для переделки надо брать сктипты из /raw_scripts модифицировать их и сжимать
+ порядок скиптов в итоговом:
+	measurer.js
+	plotter.js
+	meteo.js
+	test.js
+	

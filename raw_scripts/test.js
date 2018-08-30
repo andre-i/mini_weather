@@ -6,8 +6,28 @@ console.log('debug=' + debug);
 if (debug)console.log(" start test execution ON host:" + serverRoot);
 if (debug)console.log('Browser: \'' + navigator.userAgent + '\'  ');
 
-// show forecasts 
-//var yahooCallbackFunction;
+/**
+ *	try get localisation words if yet not 
+(function(){
+	var n=0;
+	while(word == undefined && n < 5) {
+	   if(debug)console.log("call get \"word\" object" + n + " times");
+		var locale_url = ( navigator.language.search("ru") > -1 ) ? "src?js=local_ru.json" : "src?js=local_def.json";
+		get(locale_url, function (data) {
+			if (data) {
+				console.log("Data for locale :" + locale_url);
+				word = data.long;
+				shortWord = data.short;
+
+			} else console.log("can`t get locale");
+		});
+		n++;
+	}
+	if( n == 5 && word == undefined ){
+		document.write("<h1>Can`t get localisation words!!!</h1>");
+	};
+})();
+ */
 
 
 var chartBoard;
@@ -51,7 +71,7 @@ var chartBoard;
 
 // get sensors Values from server and set it to devices
     setTimeout(setCurrentValues, 2500);
-    setInterval(setCurrentValues, 20000);
+    setInterval(setCurrentValues, 80000);
     function setCurrentValues() {
         get(serverRoot + 'current', setDeviceValues);
     }
