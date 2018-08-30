@@ -6,29 +6,6 @@ console.log('debug=' + debug);
 if (debug)console.log(" start test execution ON host:" + serverRoot);
 if (debug)console.log('Browser: \'' + navigator.userAgent + '\'  ');
 
-/**
- *	try get localisation words if yet not 
-(function(){
-	var n=0;
-	while(word == undefined && n < 5) {
-	   if(debug)console.log("call get \"word\" object" + n + " times");
-		var locale_url = ( navigator.language.search("ru") > -1 ) ? "src?js=local_ru.json" : "src?js=local_def.json";
-		get(locale_url, function (data) {
-			if (data) {
-				console.log("Data for locale :" + locale_url);
-				word = data.long;
-				shortWord = data.short;
-
-			} else console.log("can`t get locale");
-		});
-		n++;
-	}
-	if( n == 5 && word == undefined ){
-		document.write("<h1>Can`t get localisation words!!!</h1>");
-	};
-})();
- */
-
 
 var chartBoard;
 
@@ -38,8 +15,6 @@ var chartBoard;
  *  set function for fill values to device panel
  */
 (function () {
-    //var yahooWeather;
-    //  var yahooCallbackFunction;
     var isInformer;
     var meteo = new MeteoViewer();
     //  device to show values

@@ -779,7 +779,7 @@ function Measurer(deviceOwner, startParams) {
             startFont = fontSize;
             startHeight = par.height;
             startWidth = par.width;
-            par.height = Math.round(0.85 * document.body.clientHeight);
+            par.height = Math.round(0.85 * screen.height);
             par.width = Math.round(startWidth * par.height / startHeight);
             computeSizes(true);
             bigContainer.setAttribute('style', 'height:' + par.height + 'px;padding-top:' + (par.height*3/34) + 'px;');

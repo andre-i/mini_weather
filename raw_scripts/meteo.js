@@ -26,7 +26,9 @@ function MeteoViewer() {
     var baro, humid;
 
 
-
+	/**
+	*  create panel with thermometers, barometer and hyhrometer
+	*/
     function createDevicesPanel() {
 
         //  debug
