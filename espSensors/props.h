@@ -50,6 +50,8 @@
  *      props.txt
  * (contains start parameters of wi-fi for two cases STA and AP mode)
  * # first phund - comment
+ * ## ONLY_STA
+ * os false
  * ## STA
  * ss ssid 
  * sp password
@@ -64,9 +66,13 @@
  * ts OLALALA
  * 
  * 
- * where:     ssid - string with lan name,  
- *          password - string with password      
- *    if debug mode true - debug on, any other value - debug off
+ * where:     
+ *    if ONLY_STA true - chip try work only as STA 
+ *          any other walue - chip try work as STA,if not successed -  try as AP
+ *    ssid - string with lan name,  
+ *    password - string with password      
+ *    if debug mode true - debug on
+ *          any other value - debug off
  *    empty values - permitted
  */
 
@@ -138,6 +144,7 @@
 // ================  properties file ==============
 #define PROPS_FILE "/props.txt"
 // starts symbols for wifi params
+#define ONLY_STA "os"
 #define STA_SSID "ss"
 #define STA_PASSWD "sp"
 #define AP_SSID "as"

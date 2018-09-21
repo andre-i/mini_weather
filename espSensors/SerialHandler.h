@@ -36,10 +36,11 @@ class SerialHandler {
     // set content to PARAMS FILE
     //
     struct params {
-      String ap_ssid = "";
-      String ap_passwd = "";
+      String only_sta = "false";
       String sta_ssid = "";
       String sta_passwd = "";
+      String ap_ssid = "";
+      String ap_passwd = "";
       String ap_ip = "";
       String ts_api_key = "";
       String ds18b20_mode = "false";
@@ -110,6 +111,7 @@ class SerialHandler {
       \n Замечание: не введённые параметры при старте модуля берутся из прописанных в прошивке(props.h).\
 \n\n\t\t  ФОРМАТ ФАЙЛА С НАЧАЛЬНЫМИ ПАРАМЕТРАМИ\
 \n\t# - коментарий\
+\n\t# ONLY_STA - будет ли работать только как клиент\
 \n\t#AP\
 \n\tas далее имя сети\
 \n\tap далее пароль\
@@ -143,7 +145,7 @@ class SerialHandler {
            \n\tProperties file for set start parameter values(wifi, debug, log, thingspeak\n\
      8) Set all start parameters in one command - 'fillParam'\
           \n NOTE in props file first simbols in string have meaning\
-          \n\ta)'#' - it is comment \n\t\tb)'ss' - STA ssid, \n\t\t'sp' - STA password, \n\t\t'as' - AP ssid,\
+          \n\ta)'#' - it is comment \n\t\tb)'ss' - STA ssid, \n\t\t'sp' - STA password, \n\t\t'as' - AP ssid, \n\t\t\'os' - whether only STA mode\
           \n\t\t'ap' - AP password, \n\t\t'ip' - IP address for AP mode \n\t'dm' -debug mode(may be true or false)\
           \n\t\t'ts' - thingspeak key\
           \n\t\t'ds' - whether work DS18B20 sensor (if true - in work, some other - not work\

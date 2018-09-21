@@ -11,13 +11,12 @@
 #include <FS.h>
 
 // mark for version software
-static String version = "0.04";
-
-String getFullDate(void);
+static String version = "0.05";
 
 bool LOG = true;
 bool DEBUG = false;
 int wifiMode = DEVICE_NOT_WIFI;
+int errorCode = 0;
 
 //  led controll
 // if wifi STA_mode - up the GPIO12
@@ -97,16 +96,18 @@ void printFullDate() {
 }
 
 /**
- * listen serial port for execute some action on  
- * serial request if error case
- */
-void listenSerialIfError( int millisecond){
+   listen serial port for execute some action on
+   serial request if error case
+*/
+void listenSerialIfError( int millisecond) {
   unsigned long now = millis();
-  while((millis() - now) < millisecond){
+  while ((millis() - now) < millisecond) {
     if (Serial.available() > 0)sHandler.handle();
   }
 }
 
+//
+//      ===============  ERROR`S  ==============
 /*
     On error mode with led blink
     blink codes:
@@ -114,14 +115,27 @@ void listenSerialIfError( int millisecond){
     2 times - wrong BMP280
     3 times - wrong both sensors
     4 times - wrong wifi
+    5 times - can`t connect with server for get time
+
+    If error cause  wifi chip reboot after ~ 10 minutes
 */
 void upErrorMode(int blinkCount) {
+  int n = 1;
   digitalWrite(STA_PIN, LOW);
   digitalWrite(AP_PIN, LOW);
+  Serial.println("Error code:\n  1 - wrong DHT\n  2  - wrong BMP280\n  3 - wrong both sensors\n  4 - wrong up wifi\n  5 - can`t connect with server for get time");
   Serial.print("\n\n\t\tERROR  code=");
-  Serial.println(blinkCount);
+  Serial.print(blinkCount);
+  if(errorCode > 0){
+    Serial.print( " | error sensors  code=");
+    Serial.print(errorCode);
+    Serial.print("  ");
+    Serial.print(getErrorCase(false));
+  }
+  Serial.println();
   listenSerialIfError(2000);
   while (true) {
+    if (blinkCount > 3) n++;
     if (Serial.available() > 0)sHandler.handle();
     for (int i = 0; i < blinkCount; i++) {
       digitalWrite(AP_PIN, HIGH);
@@ -130,9 +144,33 @@ void upErrorMode(int blinkCount) {
       listenSerialIfError(300);
     }
     listenSerialIfError(8000);
+    if (blinkCount > 3 && (n + 20) % 21 == 0) {
+      Serial.println( String("\nwifi ERROR = ") +
+                      String(blinkCount) +
+                      String("  reboot after ") +
+                      String((63 - n) * 11) + String(" second!!!"));
+    }
+    if ( n > 63) ESP.restart();
   }
 }
 
+/*
+   return error case
+   param:
+   @ isHTML - if true return error case as part html code
+*/
+String getErrorCase(bool isHTML) {
+  String clause = "";
+  switch (errorCode) {
+    case 1: clause = " [ DHT error ]"; break;
+    case 2: clause = " [ BMP280 error ]"; break;
+    case 3: clause = " [ DHT error, BMP280 error ]"; break;
+  }
+  if(!isHTML)return clause;
+  String mess = "<br><h2 style=\"color:red;\"> ERROR code=";
+  mess += errorCode + clause + " </h2>";
+  return mess;
+}
 
 
 // ==========================================
@@ -174,6 +212,10 @@ void handleNotFound() {
 
 void handleRoot() {
   Serial.println("Call \"handleRoot\"");
+  if (errorCode > 0) {
+    sendCurrentProperties();
+    return;
+  }
   if (isFS) loadFile(serverRoot + "index.htm");
   else Serial.println("WARNING : Can`t load root");
 }
@@ -321,7 +363,9 @@ void sendCurrentProperties() {
   String header = "<html><head><meta charset=utf-8></head><br><br><br><h2 align='center'>Current application parameters<br>Настройки чипа</h2><h3>";
   res.replace("\n", "<br>");
   res.replace(" ", "&nbsp;");
-  res = header + res + String("</h3><hr width='80%'></html>");
+  res = header + res + String("</h3><hr width='80%'>");
+  String ends = (errorCode > 0) ? getErrorCase(true)  + "</html>" : "</html>";
+  res +=  ends;
   if (LOG)Serial.println(res);
   server.send(200, "text/html", res.c_str());
 }
@@ -396,10 +440,8 @@ void prepareStartState() {
   if ( sensorCode != 0) {
     digitalWrite(STA_PIN, LOW);
     digitalWrite(AP_PIN, LOW);
-    if (isFS)util.writeLog(String(" EXIT ON ERROR ___ exit code:") + String(sensorCode));
-    delay(2000);
-    // blink on fail sensors init, and nothing
-    upErrorMode(sensorCode);
+    errorCode = sensorCode;
+    // on error - message appear in root server page
   }
   // up wifi
   wifiMode = util.initWIFI();
@@ -433,17 +475,25 @@ void startMDNS() {
    information message
 */
 void afterInitAction() {
-  String res = " Start weather : [ sensors - success , " ;
+  String res = " Start weather : [ sensors ";
+  res += (errorCode > 0) ? getErrorCase(false): "- success " ;
+  res += ", ";
   switch (wifiMode) {
     case DEVICE_STA_MODE:
-      if (util.sync()) {
-        printFullDate();
-        if (isFS) {
-          res += ",  wi-fi: STA_MODE ]";
-          res =  util.getFullDate() + res;
+      if (!util.sync() || !util.hasSyncTime()) {
+        if ( !util.restartWiFi() || !util.sync()) {
+          if (!util.hasSyncTime() && util.isOnlySta()) {
+            upErrorMode(5);
+          } else {
+            Serial.println("Can`t connect to Time server, require set date-time. See help by 'en'\n Установите время для записи значений датчиков, для справки жми 'ru'");
+          }
         }
       } else {
-        Serial.println("Can`t connect to WEB, require set date-time. See help by 'en'\n Установите время для записи значений датчиков, для справки жми 'ru'");
+        printFullDate();
+      }
+      if (isFS) {
+        res += ",  wi-fi: STA_MODE ]";
+        res =  util.getFullDate() + res;
       }
       digitalWrite(STA_PIN, HIGH);
       digitalWrite(AP_PIN, LOW);
@@ -459,19 +509,19 @@ void afterInitAction() {
       break;
     case DEVICE_NOT_WIFI:
       if (isFS) {
-        Serial.println("WARNING: device can`t start of WiFi!!!\nPerhaps need set date for write sensors data to SPIFFS.\nPrint \"h\" by serial for detail");
+        Serial.println("WARNING: device can`t start of WiFi!!!\nCheck start parameters or outer wifi(if work as STA).\nPrint \"en\" by serial for detail");
+        Serial.println(" WiFi не стартовал проверьте начальные настройки или наличие wifi сети(если модуль настроен как клиент).\n   Для справки введи 'ru'");
         res += ", can`t start Wi-Fi !!!";
         res += " date_not_set " + res;
       }
       digitalWrite(STA_PIN, LOW);
       digitalWrite(AP_PIN, LOW);
       res = "FATAL EXIT - " + res;
-      if (isFS)util.writeLog(res);
+      if (isFS && !util.isOnlySta())util.writeLog(res);
       // enter blink on error
       upErrorMode(4);
       break;
   }
-
   if (wifiMode == DEVICE_STA_MODE) {
     writeApiKey = key;
     util.getThingSpeakKey(writeApiKey);
@@ -549,6 +599,11 @@ void sendDataToThingSpeak() {
   // delay 15sec and yet one connection if fail
   if (res > 1) {
     if (isResendThingspeak) {
+      // on fail send data to thingspeak check wifi connect
+      if ( res == 2 && !util.sync() ) {
+        if(LOG)Serial.println(util.getFullDate() + String(" WARNING [ On fail thingspeak try restart wifi or chip] "));
+        if (!util.restartWiFi())ESP.restart();
+      }
       printFullDate();
       Serial.println(" twice fail send data to thingspeak");
       isResendThingspeak = false;
@@ -610,7 +665,7 @@ void executeOnAddMinute() {
   }
   if (LOG) {
     Serial.println("call util.addMinute()");
-   if(DEBUG) Serial.println(s.getCurrentAsJSON());
+    if (DEBUG) Serial.println(s.getCurrentAsJSON());
   }
   util.addMinute();   // shift time on 1 minute
   isAddMinute = false;

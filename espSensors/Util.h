@@ -32,8 +32,9 @@ class Util {
     const char *pathSeparator = "/";
     const char *valSeparator = SEP;
     File opened;
-    bool isFS = false;      
+    bool isFS = false;
     //methods
+    void prepareLogFile(); // if log size > 10000 byte it truncated to 1000 bytes
     void fillParam(const char *key_for_parameter, char *destination);
 
     // ===== ThingSpeak =====
@@ -43,19 +44,22 @@ class Util {
 
     // =======  Wi-Fi =======
     // variables
+    int tryCount = 0;
+    bool hasOnlySta = false;
+    // methods
     bool isStaConnect();
     bool isSetApMode();
     WiFiClient client;
 
     // ======= date time =========
     int wifiMode = DEVICE_NOT_WIFI;
-    String year;
-    String month;
-    String day;
-    String hour;
-    String s_min;
+    String year = "-1";
+    String month = "-1";
+    String day = "-1";
+    String hour = "-1";
+    String s_min = "-1";
     bool isCheck = false; // true if at time try get date-time from web
-    bool isSetTime = false; // has set time 
+    bool isSetTime = false; // has set time
     // date-time params =====
     int y_count = 0;
     uint8_t m_count = 0, /* month_counter*/
@@ -96,9 +100,11 @@ class Util {
     String getPeriodsAsJSON();
     bool initFS();
     void writeLog(String mess);
-    void writeSensorsValues(int tIn, int tOut, int baro, int humid); 
+    void writeSensorsValues(int tIn, int tOut, int baro, int humid);
     bool hasFS();
     //  WI-FI
+    bool isOnlySta(); // return true if may be wifi mode only sta.
+    bool restartWiFi(); // return true if wifi UP
     int initWIFI(); // try up wifi inSTA or AP mode
     void parseAddr(char *ip, int addr[4]); // fill addr numbers from IP4V address
     // date time
@@ -111,7 +117,7 @@ class Util {
     String getDay();
     String getHour();
     String getFullDate();
-    // whether write sensors values to SD card
+    // whether write sensors values to SPIFFS
     bool hasWrite();
     // thingspeak service
     void getThingSpeakKey(char* key);

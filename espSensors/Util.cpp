@@ -75,6 +75,25 @@ void Util::fillParam(const char *key, char *dest) {
 
 // ==================== SPIFFS =====================
 
+// private 
+void Util::prepareLogFile(){
+   File logFile = SPIFFS.open(LOG_FILE, "w+");
+   int size = logFile.size();
+   if(size < 10000){
+    logFile.close();
+    return;
+   }
+   int last = 1000;
+   logFile.seek(last,SeekEnd);
+   unsigned char res[1001];
+   last = 0;
+   while(logFile.available()){
+    res[last] = logFile.read();
+    last++;
+   }
+   logFile.write(*res);
+}
+
 //  public :
 bool Util::initFS() {
   if (LOG)Serial.print("init SPIFFS : ");
@@ -83,6 +102,7 @@ bool Util::initFS() {
   } else if (SPIFFS.begin()) {
     Serial.println("success");
     isFS = true;
+    prepareLogFile();
   } else {
     Serial.println("fail!  WARNING \"esp_server can`t write data to storage\"");
     isFS = false;
@@ -188,15 +208,42 @@ bool Util::hasFS() {
 
 //  public
 
-int Util::initWIFI() {
-  wifiMode = DEVICE_NOT_WIFI;
-  if ( isStaConnect()) {
-    wifiMode = DEVICE_STA_MODE;
-  } else {
-    if ( isSetApMode() ) {
-      wifiMode = DEVICE_AP_MODE;
+bool Util::isOnlySta() {
+  return hasOnlySta;
+}
+
+bool Util::restartWiFi() {
+  WiFi.disconnect();
+  if (LOG)Serial.println("Try restart WiFi");
+  long now = millis();
+  int n = 0;
+  while ((millis() - now) < 10000) {
+    delay(20);
+    if (LOG) {
+      Serial.print(".");
+      if (n % 100 == 0)Serial.println();
+      n++;
     }
   }
+  return initWIFI() != DEVICE_NOT_WIFI;
+}
+
+int Util::initWIFI() {
+  wifiMode = DEVICE_NOT_WIFI;
+  char staOnly[6];
+  staOnly[0] = '\0';
+  fillParam(ONLY_STA, staOnly);
+  hasOnlySta = (strncmp(staOnly, "true", 4) == 0);
+  if(LOG)Serial.println("\n-----\n ------  work ONLY STA  ------ \n----- ");
+  if ( isStaConnect()) {
+    wifiMode = DEVICE_STA_MODE;
+    return wifiMode;
+  }
+  if (hasOnlySta){
+    WiFi.disconnect();
+    return wifiMode;
+  }
+  if ( isSetApMode() )wifiMode = DEVICE_AP_MODE;
   return wifiMode;
 }
 
@@ -214,6 +261,7 @@ bool Util::isStaConnect() {
   if (!passwd || passwd[0] == '\0')passwd = STA_PASSWD_DEF;
   WiFi.begin(ssid, passwd);
   // Wait for connection
+  if (DEBUG)Serial.println(String("Try connect by WiFi [ ssid=") + String(ssid) + String("  password=") + String(passwd) + String(" ]"));
   int counter = 0;
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -222,14 +270,14 @@ bool Util::isStaConnect() {
     if ( counter > 15 ) {
       WiFi.disconnect();
       delay(100);
-      if (LOG)Serial.println(String("\nWi-Fi STA mode: can`t connect to ") + String(ssid) + String("  ") + String(passwd));
+      if (LOG)Serial.println(String("\nWi-Fi STA mode: can`t connect to ") + String(ssid));
       return false;
     }
   }
   Serial.println("");
   if (LOG) {
     Serial.print("\nWiFi work as STA connected to ");
-    Serial.print(ssid);
+    Serial.print(String(ssid) + String("  password:'") +String("?????' "));
     Serial.print("  IP address: ");
     Serial.println(WiFi.localIP());
   }
@@ -344,6 +392,10 @@ bool Util::assignTime(char * current) {
   return true;
 }
 
+/*
+    if connect successed return true
+    if success get time from server hasSyncTime return true
+*/
 bool Util::sync() {
   isCheck = true;
   if (wifiMode != DEVICE_NOT_WIFI && connect(server_addr, defaultPort) ) {
@@ -361,6 +413,8 @@ bool Util::sync() {
         s_min = dateAndTime.substring(index, index - 2);
         setDateTime(true);
         if (LOG)Serial.println("Success sync date-time by WEB");
+        disconnect();
+        return true;
       }
     }
     disconnect();
@@ -371,16 +425,53 @@ bool Util::sync() {
   return false;
 }
 
+/*
+    add minute by current time,
+    for sta moder every day check internet connect
+    if connect is succes - restart chip
+*/
 void Util::addMinute() {
   minute++;
+  if ( minute == 1 && wifiMode == DEVICE_STA_MODE) {
+    //  check connect if success - restart
+    if ( h_count == 1) {
+      if (LOG)Serial.print("Days restart: ");
+      if (sync() && hasSyncTime()) {
+        if (LOG) {
+          if (isFS) {
+            File logFile = SPIFFS.open("/reboot.txt", "w");
+            if (!logFile) {
+              String fail = "Can`t write reboot";
+              Serial.println(fail);
+            } else {
+              logFile.println(getFullDate() + String("  EveryDay chip reboot") );
+              logFile.close();
+            }
+          }
+          Serial.println(" reboot chip");
+        }
+        ESP.restart();
+      } else {
+        if (LOG)Serial.println(" reboot WiFi");
+        restartWiFi();
+        if (hasOnlySta)tryCount++;
+      }
+    }
+  }
   if ( minute == 60 ) {
     minute = 0;
     if ( h_count < 23) {
       h_count++;
+      //  check connect after fail check if success - restart
+      if ( hasOnlySta && !hasSyncTime()) {
+        if (LOG)Serial.println("On Fail Day restart: try yet once");
+        if ((sync() && hasSyncTime()) || tryCount > 5 ) ESP.restart();
+        restartWiFi();
+        tryCount++;
+      }
     } else {
       h_count = 0;
       syncDay();
-      sync();
     }
   }
 }
@@ -438,22 +529,22 @@ bool Util::connect(const char* hostName, const int port) {
   bool ok = client.connect(hostName, port);
   // in fail connection - try yet one
   if (!ok) {
-    if(LOG)Serial.print("reconnect ");
+    if (LOG)Serial.print("\nreconnect ");
     unsigned long start = millis();
     int n = 0;
     while ((millis() - start) < 3000) {
       delay(20);
       // display reconnect process
-      if(LOG){
-        if(n>100){
-          n = 0;
-          Serial.println("");
-        }
+      if (LOG) {
         Serial.print('.');
         n++;
+        if (n%50 == 0 ) {
+          n = 0;
+          Serial.println(" ");
+        }
       }
-      if(LOG)Serial.println("");
     }
+    if (LOG)Serial.println(" ");
     ok = client.connect(hostName, port);
   }
   if ( LOG ) Serial.println(ok ? " : Connected" : "  : Connection Failed!");
@@ -675,9 +766,9 @@ String Util::getCurrentProps() {
 }
 
 /**
- * read ds18b20 mode return true if ds18b20 want be ON
- */
-bool Util::getDS18B20Mode(){
+   read ds18b20 mode return true if ds18b20 want be ON
+*/
+bool Util::getDS18B20Mode() {
   char m[10];
   m[0] = '\0';
   char* dsMode = m;
@@ -696,7 +787,7 @@ void Util::getThingSpeakKey(char* key) {
 
 /**
    send data to thingspeak and check answer
-   if content lenght =1 and last symbols in answer is 0 - data not reseived
+   if content lenght = 1 and last symbols in answer is 0 - data not reseived
    @ return 0 - success
             1 - indefinite(not response)
             2 - fail connect
@@ -717,21 +808,21 @@ int Util::writeDataToThingspeak(const char* host, String contentGetRequest) {
       String line = "";
       while (client.available()) {
         line = client.readStringUntil('\n');
-       // if (LOG)Serial.print(line);
+        // if (LOG)Serial.print(line);
         if (line.startsWith("Content-Length: 1")) {
           isCheck = true;
-         // if (LOG)Serial.print(" isCheck = TRUE");
+          // if (LOG)Serial.print(" isCheck = TRUE");
         }
-       // if (LOG)Serial.write('\n');
+        // if (LOG)Serial.write('\n');
       }
       /*
-      if (LOG) {
+        if (LOG) {
         Serial.print("Last string in answer is '");
         Serial.print(line);
         Serial.print("' \nlast line ");
         if (line.equals("0"))Serial.println("equals noll");
         else Serial.println(" not equals noll");
-      }
+        }
       */
       // succes check - return 0
       if ( !isCheck || !line.equals("0")) {

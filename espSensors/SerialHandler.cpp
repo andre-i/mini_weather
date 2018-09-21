@@ -245,187 +245,6 @@ String SerialHandler::setDebug(String mode) {
 // ============================  properties file  ==========================
 //
 
-/**
-   write wi-fi properties:
-   format:
-   wifi ap [ssid password] sta [ssid password]
-* /
-String SerialHandler::writeWifiProps(String prop) {
-  prop.trim();
-  struct params wParam = getParamsFromFile();
-  if (!checkAndFillWifiProps(prop, &wParam)) {
-    if (LOG)Serial.println("FAIL get WiFi params. ");
-    util->writeLog(String("FAIL write Wifi parameters - Wrong format for string[") + prop + String("]"));
-    return "WARNING - can`t write wifi params";
-  }
-  writeToPropFile(wParam);
-  return String("Ok");
-}
-
-/**
-   parse prop string and get from it wi-fi parameters
-   if any error occured - set params.isErr to true and return params
-   @return struct params witch filled wifi properties,
-     if properties(ap or sta) missing in prop string - appropriate property set to empty string
-* /
-bool SerialHandler::checkAndFillWifiProps(String prop, struct params *par) {
-  //if(LOG)Serial.println(String("wifi for set: ") + prop);
-  bool isErr = false;
-  String ap_ssid = "", ap_passwd = "", sta_ssid = "", sta_passwd = "";
-  String buf = "";
-  int sepInd;
-  int staInd = prop.indexOf("sta");
-  int apInd = prop.indexOf("ap");
-  if ( apInd >= staInd && staInd > -1) {
-    Serial.println("Wrong parameters for WiFi: ap params - first, sta params - second");
-    return isErr = true;
-  }
-  if (apInd >= 0) {
-    //if (LOG)Serial.print("Try get ap params. ");
-    buf = prop.substring(prop.indexOf('[') + 1, prop.indexOf(']'));
-    buf.trim();
-    if ( buf.length() > 10 ) {
-      sepInd = buf.indexOf(' ');
-      if (sepInd > 2) {
-        ap_ssid = buf.substring(0, sepInd);
-        ap_passwd = buf.substring( buf.lastIndexOf(' ') + 1);
-      } else {
-        isErr = true;
-      }
-    } else {
-      isErr = true;
-    }
-    if (isErr) {
-      Serial.println( "Can`t write AP parameters - it missed or wrong");
-      return isErr;
-    }
-  }
-  if ( staInd >= 0 ) {
-    //if (LOG)Serial.print("Try get sta params. ");
-    buf = prop.substring(prop.lastIndexOf('[') + 1, prop.lastIndexOf(']'));
-    buf.trim();
-    if (buf.length() > 10) {
-      sepInd = buf.indexOf(' ');
-      if (sepInd > 2) {
-        sta_ssid = buf.substring(0, sepInd);
-        sta_passwd = buf.substring( buf.lastIndexOf(' ') + 1);
-      } else {
-        isErr = true;
-      }
-    } else {
-      isErr = true;
-    }
-    if (isErr) {
-      Serial.println( "Can`t write STA parameters - it missed or wrong");
-      return isErr;
-    }
-  }
-  if (LOG) {
-    Serial.println(" Success get wifi params!");
-    Serial.println(String("\tAP [ssid:") + String(ap_ssid) + String(" passwd:") + String(ap_passwd) +
-                   String("] \n\tSTA [ssid:") + String(sta_ssid) + String("  passwd:") + String(sta_passwd) + String("] "));
-  }
-  if (!ap_ssid.equals(""))par->ap_ssid = ap_ssid;
-  if (!ap_passwd.equals(""))par->ap_passwd = ap_passwd;
-  if (!sta_ssid.equals(""))par->sta_ssid = sta_ssid;
-  if (!sta_passwd.equals(""))par->sta_passwd = sta_passwd;
-  return !isErr;
-}
-
-/*
-struct SerialHandler::params SerialHandler::getParamsFromFile() {
-  struct params par;
-  if (SPIFFS.exists(PROPS_FILE)) {
-    // if (LOG)Serial.println(String("try get param: ") + String(parName));
-    char cur;
-    bool flag = false;
-    bool isReadProp = false;
-    char sec[3];
-    int i = 0;
-    String res = "";
-    File params = SPIFFS.open(PROPS_FILE, "r");
-    if (!params) par;
-    if (LOG)Serial.println("parse props.txt");
-    while ( params.available() ) {
-      cur = params.read();
-      if (cur == ' ')continue;
-      if (cur = '#')flag = false;
-      if (cur == '\n') {
-        if (isReadProp) {
-          if (strncmp(sec, AP_SSID, 2) == 0)par.ap_ssid = res;
-          if (strncmp(sec, AP_PASSWD, 2) == 0)par.ap_passwd = res;
-          if (strncmp(sec, AP_IP, 2) == 0)par.ap_ip = res;
-          if (strncmp(sec, STA_SSID, 2) == 0) par.sta_ssid = res;
-          if (strncmp(sec, STA_PASSWD, 2) == 0) par.sta_passwd = res;
-          if (strncmp(sec, THINGSPEAK_KEY, 2) == 0) par.ts_api_key = res;
-          if (strncmp(sec, DEBUG_MODE, 2) == 0) par.isDebug = res;
-          res = "";
-          isReadProp = false;
-        }
-        flag = true;
-      } else if (flag) {
-        if (i == 1) {
-          // if (LOG)Serial.println(String("check param") + String(*parName) + String(*(parName + 1)) + String(" with: ") + String(sec[0]) + String(cur));
-          sec[1] = cur;
-          sec[2] = '\0';
-          isReadProp = true;
-          i = 0;
-          flag = false;
-        } else {
-          sec[i] = cur;
-          i++;
-        }
-      } else if (isReadProp) {
-        res += cur;
-      }
-    }
-    params.close();
-    //if (LOG)Serial.println(String("On end check have param = ") + res);
-  }
-  return par;
-}
-
-
-String SerialHandler::writeApModeIpAddr(char *addr) {
-  int n = 0;
-  while (*(addr + n) != ' ')n++;
-  n++;
-  char *ip = (addr + n);
-  int res[4];
-  if (LOG)Serial.println(String(" IP address = ") + String(ip));
-  util->parseAddr(ip, res);
-  if (res[0] == -1)return String("ERROR - wrong IP address - \"") + ip + String("\" !");
-  struct params par = getParamsFromFile();
-  par.ap_ip = String(ip);
-  writeToPropFile( par);
-  return "Ok";
-}
-
-
-String SerialHandler::writeDebugMode(String isDebug) {
-  isDebug.trim();
-  if (!isDebug.equals("true") && !isDebug.equals("false"))return String("Wrong debug mode  - \"") + isDebug + String("\"! it may be only 'true' or 'false'");
-  struct params par = getParamsFromFile();
-  par.isDebug = isDebug;
-  writeToPropFile( par );
-  return "Ok";
-}
-
-String SerialHandler::writeTsApiKey(String tsApiKey) {
-  String res = "  write Thingspeak API key ";
-  tsApiKey.trim();
-  if (tsApiKey.length() < 16) {
-    res += " is WRONG can`t write it! " ;
-    return res;
-  }
-  struct params par = getParamsFromFile();
-  par.ts_api_key = tsApiKey;
-  writeToPropFile( par );
-  res += "Ok success" + res + tsApiKey;
-  return res;
-}
-
-*/
 
 void SerialHandler::writeToPropFile( struct params par) {
   File file = SPIFFS.open(PROPS_FILE, "w");
@@ -433,6 +252,8 @@ void SerialHandler::writeToPropFile( struct params par) {
     Serial.println("WARNING: Can`t access to fileSystem, WiFi properties do not written!");
   }
   String res = "## property file contain properties for Wi-Fi in AP and STA mode\n";
+  res+= "# ONLY_STA mode( if  'true' chip work only as STA)\n";
+  if(par.only_sta && par.only_sta.length() > 0 ) res += String(ONLY_STA) + " " + par.only_sta + "\n";
   res += "# AP mode\n";
   if (par.ap_ssid && par.ap_ssid.length() > 2)res += String(AP_SSID) + " " + par.ap_ssid + "\n";
   if (par.ap_passwd && par.ap_passwd.length() > 6)res += String(AP_PASSWD) + " " + par.ap_passwd + "\n";
@@ -462,6 +283,7 @@ void SerialHandler::writeToPropFile( struct params par) {
 void SerialHandler::fillStartParameters() {
   isSetParam = true;
   // prepare structure with default values
+  newParams.only_sta = "false";
   newParams.ap_ssid = "";
   newParams.ap_passwd = "";
   newParams.ap_ip = "192.168.0.1";
@@ -474,18 +296,23 @@ void SerialHandler::fillStartParameters() {
   Serial.println("If some parameter be empty string, then it NO WRITE");
   Serial.println("Пустые значения допускаются, но не записываются!");
   Serial.println("AP ssid, AP password, AP_IP - is mandatory. Other may be empty");
-  Serial.println("поля AP ssid, AP password, AP_IP - обязательны для заполнения, остальные нет");
-  Serial.print("    WI-FI\n\n    AP(Точка доступа)\nssid(имя сети) ?  " );
-  parName = AP_SSID;
+  Serial.println("Если only_sta установлено в 'false' поля AP ssid, AP password, AP_IP - обязательны для заполнения, остальные нет");
+  Serial.print("    WI-FI\n\n wifi mode|режим вай-фай true|false \n  if 'true' work only as STA | при 'true' только клиент   ONLY_STA ?  " );
+  parName = ONLY_STA;
 }
 
 
 void SerialHandler::setParameter(char* value) {
   String res = value;
   res.trim();
-  if (strncmp(parName, AP_SSID, 2) == 0) {
+  if (strncmp(parName, ONLY_STA, 2) == 0){
+    newParams.only_sta = res;
+    res =  " = " + res + "\nAP(Точка доступа)\nssid(имя сети) ? ";
+    parName = AP_SSID;
+    Serial.println(res);
+  } else if (strncmp(parName, AP_SSID, 2) == 0) {
     newParams.ap_ssid = res;
-    res = " =" + res + "\npassword(пароль)?  ";
+    res = " = " + res + "\npassword(пароль)?  ";
     parName = AP_PASSWD;
     Serial.print(res);
   } else if (strncmp(parName, AP_PASSWD, 2) == 0) {
@@ -532,7 +359,9 @@ void SerialHandler::showSummary() {
   Serial.println("");
   Serial.println("I have for write parameters:");
   Serial.println("Значения параметров для записи:");
-  Serial.print("AP (точка доступа)  ssid=");
+  Serial.print("\nonly_sta =");
+  Serial.print(newParams.only_sta);
+  Serial.print("\nAP (точка доступа)  ssid=");
   Serial.print(newParams.ap_ssid);
   Serial.print("  password=");
   Serial.print(newParams.ap_passwd);

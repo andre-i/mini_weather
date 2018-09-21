@@ -16,7 +16,7 @@ Sensors::Sensors(uint8_t wBus, int dhtType) {
   bme = new Adafruit_BMP280();
 }
 
-/** Try prepare sensors */
+/** Try prepare sensors  on success return 0*/
 int Sensors::init(Util *u) {
   int exitCode = 0;
   maxCounterNumber = REQUEST_COUNT - 1;
