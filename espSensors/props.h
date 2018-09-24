@@ -144,9 +144,14 @@
 // ================  properties file ==============
 #define PROPS_FILE "/props.txt"
 // starts symbols for wifi params
-#define ONLY_STA "os"
+#define ONLY_STA "os"  // default false
+// if chip work in onlySta need set AP network 
+// interface address for check connect on suspend
+#define AP_NETWORK_ADDRESS "an"
+//  sta parameters
 #define STA_SSID "ss"
 #define STA_PASSWD "sp"
+//  ap parameters
 #define AP_SSID "as"
 #define AP_PASSWD "ap"
 #define AP_IP "ip"

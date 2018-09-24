@@ -46,6 +46,7 @@ class Util {
     // variables
     int tryCount = 0;
     bool hasOnlySta = false;
+    char *apInterfaceAddress;
     // methods
     bool isStaConnect();
     bool isSetApMode();
@@ -103,6 +104,7 @@ class Util {
     void writeSensorsValues(int tIn, int tOut, int baro, int humid);
     bool hasFS();
     //  WI-FI
+    bool isApConnected(); // try connect by access point network interface return true if success
     bool isOnlySta(); // return true if may be wifi mode only sta.
     bool restartWiFi(); // return true if wifi UP
     int initWIFI(); // try up wifi inSTA or AP mode

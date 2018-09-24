@@ -75,23 +75,23 @@ void Util::fillParam(const char *key, char *dest) {
 
 // ==================== SPIFFS =====================
 
-// private 
-void Util::prepareLogFile(){
-   File logFile = SPIFFS.open(LOG_FILE, "w+");
-   int size = logFile.size();
-   if(size < 10000){
+// private
+void Util::prepareLogFile() {
+  File logFile = SPIFFS.open(LOG_FILE, "w+");
+  int size = logFile.size();
+  if (size < 10000) {
     logFile.close();
     return;
-   }
-   int last = 1000;
-   logFile.seek(last,SeekEnd);
-   unsigned char res[1001];
-   last = 0;
-   while(logFile.available()){
+  }
+  int last = 1000;
+  logFile.seek(last, SeekEnd);
+  unsigned char res[1001];
+  last = 0;
+  while (logFile.available()) {
     res[last] = logFile.read();
     last++;
-   }
-   logFile.write(*res);
+  }
+  logFile.write(*res);
 }
 
 //  public :
@@ -212,6 +212,24 @@ bool Util::isOnlySta() {
   return hasOnlySta;
 }
 
+/**
+ * Try connect to AP by address from property file and 80 port, if success return true
+ * it is maked for check wifi connect on suspend state
+ * If this method return false -> chip can`t connect with AP and 
+ * leave wifi is suspend. 
+ * Method be work, if access point have network interface on given address.
+ */
+bool Util::isApConnected(){
+  if(wifiMode == DEVICE_AP_MODE)return true;
+  char apAddr[100];
+  apInterfaceAddress = apAddr;
+  fillParam(AP_NETWORK_ADDRESS, apInterfaceAddress);
+  const char *addr = apInterfaceAddress;
+  if(!connect(addr, defaultPort))return false;
+  disconnect();
+  return true;
+}
+
 bool Util::restartWiFi() {
   WiFi.disconnect();
   if (LOG)Serial.println("Try restart WiFi");
@@ -234,12 +252,12 @@ int Util::initWIFI() {
   staOnly[0] = '\0';
   fillParam(ONLY_STA, staOnly);
   hasOnlySta = (strncmp(staOnly, "true", 4) == 0);
-  if(LOG)Serial.println("\n-----\n ------  work ONLY STA  ------ \n----- ");
+  if (LOG)Serial.println("\n-----\n ------  work ONLY STA  ------ \n----- ");
   if ( isStaConnect()) {
     wifiMode = DEVICE_STA_MODE;
     return wifiMode;
   }
-  if (hasOnlySta){
+  if (hasOnlySta) {
     WiFi.disconnect();
     return wifiMode;
   }
@@ -277,7 +295,7 @@ bool Util::isStaConnect() {
   Serial.println("");
   if (LOG) {
     Serial.print("\nWiFi work as STA connected to ");
-    Serial.print(String(ssid) + String("  password:'") +String("?????' "));
+    Serial.print(String(ssid) + String("  password:'") + String("?????' "));
     Serial.print("  IP address: ");
     Serial.println(WiFi.localIP());
   }
@@ -463,11 +481,12 @@ void Util::addMinute() {
     if ( h_count < 23) {
       h_count++;
       //  check connect after fail check if success - restart
-      if ( hasOnlySta && !hasSyncTime()) {
-        if (LOG)Serial.println("On Fail Day restart: try yet once");
-        if ((sync() && hasSyncTime()) || tryCount > 5 ) ESP.restart();
-        restartWiFi();
-        tryCount++;
+      if ((h_count + 1)%5 == 0 && hasOnlySta && !hasSyncTime()) {
+        if ( restartWiFi()) {
+          if (LOG)Serial.println("On Fail Day restart: try yet once");
+          if ((sync() && hasSyncTime())) ESP.restart();
+          tryCount++;
+        }
       }
     } else {
       h_count = 0;
@@ -538,7 +557,7 @@ bool Util::connect(const char* hostName, const int port) {
       if (LOG) {
         Serial.print('.');
         n++;
-        if (n%50 == 0 ) {
+        if (n % 50 == 0 ) {
           n = 0;
           Serial.println(" ");
         }

@@ -254,6 +254,8 @@ void SerialHandler::writeToPropFile( struct params par) {
   String res = "## property file contain properties for Wi-Fi in AP and STA mode\n";
   res+= "# ONLY_STA mode( if  'true' chip work only as STA)\n";
   if(par.only_sta && par.only_sta.length() > 0 ) res += String(ONLY_STA) + " " + par.only_sta + "\n";
+  res += "# AP network interface address\n";
+  if(par.ap_network && par.ap_network.length() > 0) res += String(AP_NETWORK_ADDRESS) + " " + par.ap_network + "\n";
   res += "# AP mode\n";
   if (par.ap_ssid && par.ap_ssid.length() > 2)res += String(AP_SSID) + " " + par.ap_ssid + "\n";
   if (par.ap_passwd && par.ap_passwd.length() > 6)res += String(AP_PASSWD) + " " + par.ap_passwd + "\n";
@@ -284,6 +286,7 @@ void SerialHandler::fillStartParameters() {
   isSetParam = true;
   // prepare structure with default values
   newParams.only_sta = "false";
+  newParams.ap_network = "";
   newParams.ap_ssid = "";
   newParams.ap_passwd = "";
   newParams.ap_ip = "192.168.0.1";
@@ -307,9 +310,12 @@ void SerialHandler::setParameter(char* value) {
   res.trim();
   if (strncmp(parName, ONLY_STA, 2) == 0){
     newParams.only_sta = res;
-    res =  " = " + res + "\nAP(Точка доступа)\nssid(имя сети) ? ";
+    res =  " = " + res + "\n AP network interface address(адрес сетевого интерфейса точки доступа)\n need if ONLY_STA - true( нужен, если чип работает только как клиент(ONLY_STA=true)\n  apAddress ? ";
     parName = AP_SSID;
     Serial.println(res);
+  } else if (strncmp(parName, AP_NETWORK_ADDRESS, 2) == 0){
+    newParams.ap_network = res;
+    res = " = " + res + "\nAP(Точка доступа)\nssid(имя сети) ?  ";
   } else if (strncmp(parName, AP_SSID, 2) == 0) {
     newParams.ap_ssid = res;
     res = " = " + res + "\npassword(пароль)?  ";

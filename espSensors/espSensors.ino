@@ -126,7 +126,7 @@ void upErrorMode(int blinkCount) {
   Serial.println("Error code:\n  1 - wrong DHT\n  2  - wrong BMP280\n  3 - wrong both sensors\n  4 - wrong up wifi\n  5 - can`t connect with server for get time");
   Serial.print("\n\n\t\tERROR  code=");
   Serial.print(blinkCount);
-  if(errorCode > 0){
+  if (errorCode > 0) {
     Serial.print( " | error sensors  code=");
     Serial.print(errorCode);
     Serial.print("  ");
@@ -166,7 +166,7 @@ String getErrorCase(bool isHTML) {
     case 2: clause = " [ BMP280 error ]"; break;
     case 3: clause = " [ DHT error, BMP280 error ]"; break;
   }
-  if(!isHTML)return clause;
+  if (!isHTML)return clause;
   String mess = "<br><h2 style=\"color:red;\"> ERROR code=";
   mess += errorCode + clause + " </h2>";
   return mess;
@@ -476,7 +476,7 @@ void startMDNS() {
 */
 void afterInitAction() {
   String res = " Start weather : [ sensors ";
-  res += (errorCode > 0) ? getErrorCase(false): "- success " ;
+  res += (errorCode > 0) ? getErrorCase(false) : "- success " ;
   res += ", ";
   switch (wifiMode) {
     case DEVICE_STA_MODE:
@@ -601,13 +601,14 @@ void sendDataToThingSpeak() {
     if (isResendThingspeak) {
       // on fail send data to thingspeak check wifi connect
       if ( res == 2 && !util.sync() ) {
-        if(LOG)Serial.println(util.getFullDate() + String(" WARNING [ On fail thingspeak try restart wifi or chip] "));
+        if (LOG)Serial.println(util.getFullDate() + String(" WARNING [ On fail thingspeak try restart wifi or chip] "));
         if (!util.restartWiFi())ESP.restart();
       }
       printFullDate();
       Serial.println(" twice fail send data to thingspeak");
       isResendThingspeak = false;
     } else {
+      if (res == 2)util.restartWiFi();
       isResendThingspeak = true;
       startDelayThingspeak = millis();
     }
