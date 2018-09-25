@@ -492,39 +492,11 @@ bool Util::sync() {
 */
 void Util::addMinute() {
   minute++;
-  if ( minute == 2 && wifiMode == DEVICE_STA_MODE) {
-    //  check connect if success - restart
-    if ( h_count == 1) {
-      if (LOG)Serial.print("Days restart: ");
-      if (sync() && hasSyncTime()) {
-        if (LOG) {
-          if (isFS) {
-            File logFile = SPIFFS.open("/reboot.txt", "w");
-            if (!logFile) {
-              String fail = "Can`t write reboot";
-              Serial.println(fail);
-            } else {
-              logFile.println(getFullDate() + String("  EveryDay chip reboot") );
-              logFile.close();
-            }
-          }
-          Serial.println(" reboot chip");
-        }
-        ESP.restart();
-      }
-    }
-  }
+  if ( minute == 29 && wifiMode == DEVICE_STA_MODE)everyDayReboot();
   if ( minute == 60 ) {
     minute = 0;
     if ( h_count < 23) {
       h_count++;
-      //  check connect after fail check if success - restart
-      if ((h_count + 1) % 5 == 0 && hasOnlySta && !hasSyncTime()) {
-        if ( restartWiFi()) {
-          if (LOG)Serial.println("On Fail Day restart: try yet once restart");
-          if ((sync() && hasSyncTime())) ESP.restart();
-        }
-      }
     } else {
       h_count = 0;
       syncDay();
@@ -562,6 +534,44 @@ String Util::getFullDate() {
 //
 //   private
 //
+
+/**
+   reboot system if have web connect
+*/
+void Util::everyDayReboot() {
+  //  check connect if success - restart
+  if ( h_count == 1) {
+    if (LOG)Serial.print("Every Days restart: ");
+    if (sync() && hasSyncTime()) {
+      if (LOG) {
+        if (isFS) {
+          File logFile = SPIFFS.open("/reboot.txt", "w");
+          if (!logFile) {
+            String fail = "Can`t write reboot";
+            Serial.println(fail);
+          } else {
+            logFile.println(getFullDate() + String("  EveryDay chip reboot") );
+            logFile.close();
+          }
+        }
+        Serial.println(" reboot chip");
+      }
+      ESP.restart();
+    } else {
+      Serial.println("  fail reboot chip");
+    }
+  }
+  //  check connect after fail check if success - restart
+  if (hasOnlySta && !hasSyncTime() && (h_count + 1) % 7 == 0) {
+    if ( restartWiFi()) {
+      if (LOG)Serial.println("On Fail Day restart: try yet once restart");
+      if ((sync() && hasSyncTime())) ESP.restart();
+    }else{
+      if(LOG)writeLog(getFullDate() + " WARNING [ module reboot on fail restart WiFi in ONLY_STA mode ]");
+      ESP.restart();
+    }
+  }
+}
 
 
 /**
@@ -798,7 +808,7 @@ String Util::getCurrentProps() {
       if (!ssidSTA || ssidSTA[0] == '\0') ssidSTA = STA_SSID_DEF;
       res += "  ssid=" + String(ssidSTA);
       res += "\n ONLY_STA (работает ли чип в режиме 'только клиент' ?) : " + (isOnlySta()) ? "yes(да)" : "no(нет)";
-      res += "\n address for check on suspend (адрес для проверки  работоспособности WiFi):\n   " + String(apInterfaceAddress); 
+      res += "\n address for check on suspend (адрес для проверки  работоспособности WiFi):\n   " + String(apInterfaceAddress);
       break;
     case DEVICE_NOT_WIFI:
       res += "WARNING WiFi not work!!!(вай-фай не работает)";

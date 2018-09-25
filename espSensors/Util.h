@@ -90,6 +90,7 @@ class Util {
     void setDateTime(bool isWeb);
     void syncMonth();
     void syncDay();
+    void everyDayReboot();
 
   public:
     Util(bool isDebug);
