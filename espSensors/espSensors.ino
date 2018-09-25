@@ -574,6 +574,8 @@ void writeSensorsValues() {
 
 /**
    Call util methods for write data to thingspeak site
+   if send data fail, then restart WiFi and try yet once send data
+   if WiFi not restarted, then restart chip
 */
 void sendDataToThingSpeak() {
   const char* host = THING_SPEAK_HOST;
@@ -592,10 +594,11 @@ void sendDataToThingSpeak() {
     switch (res) {
       case 0: Serial.println("Succes"); break;
       case 1: Serial.println("Empty server response"); break;
-      case 2: Serial.println("Can`t connect to thingspeak"); break;
+      case 2: Serial.print("Can`t connect to thingspeak "); break;
       case 3: Serial.println("Server Error"); break;
     }
   }
+  // if send fail then res > 0
   // delay 15sec and yet one connection if fail
   if (res > 1) {
     if (isResendThingspeak) {
@@ -608,7 +611,11 @@ void sendDataToThingSpeak() {
       Serial.println(" twice fail send data to thingspeak");
       isResendThingspeak = false;
     } else {
-      if (res == 2)util.restartWiFi();
+      if (res == 2 && util.restartWiFi()){
+        Serial.println(" after [ success restart WiFi");
+      }else{
+        Serial.println(" after [ WiFi not restarted ]");
+      }
       isResendThingspeak = true;
       startDelayThingspeak = millis();
     }

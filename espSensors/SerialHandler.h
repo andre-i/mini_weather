@@ -91,12 +91,14 @@ class SerialHandler {
  \n\t\t УСТАНОВКА ПАРАМЕТРОВ ЗАПУСКА\
 \n\t'fillParam'\t  после ввода этой команды будут вводиться запросы\
 \n\t  на заполнение отдельных полей они вступят в силу после перезагрузки\
- \n\tможно вводить пробелы(пустые параметры)\
+ \n\tесли устраивает параметр по умолчанию вместо значения ОБЯЗАТЕЛЬНО надо вводить пробел(ы).Пустые строки не позволены.\
  \n Назначение отдельных  параметров\
     \n  а) работа только в режиме WiFi клиента\
       \n\t  ONLY_STA - при true чип работает только как клиент\
       \n\t  AP_NETWORK_ADDRESS - параметр нужен для работы в режиме клиента\n  так-как wifi не очень надёжен - его надо переодически проверять\
-\n проверка сводится к запросу сетевого интерфейса точки доступа, если соединение неудачное надо перезапустить WiFi\ 
+\n проверка сводится к запросу сетевого интерфейса точки доступа, если соединение неудачное надо перезапустить WiFi\
+\n если данный параметр неопределён проверки WiFi не происходит и считается что всё работает нормально\
+\n если определён, то каждый час происходит проверка соединения с веб интерфейсом точки доступа в случае неудачного соединения WiFi перезапустится.\
     \n  б) параметры Wi-Fi для клиента и точки доступа \
       \n\t\tssid - имя сети\
       \n\t\tpasswd - пароль\
@@ -151,14 +153,14 @@ class SerialHandler {
         \tyear - 4 numbers\n\t\tmonth - 3 chars( first must be Upper Case)\n\t\tday, hour and minute consist from 2 numbers, if value less than 10 firs must be 0(null)\n\
      7) Show current properties of application : 'current'\n\
            \n\tProperties file for set start parameter values(wifi, debug, log, thingspeak\n\
-     8) Set all start parameters in one command - 'fillParam'\
+     8) Set all start parameters in one command - 'fillParam'\n Whitespace value mean default value. Empty values not permitted(it must be whitespace)
           \n NOTE in props file first simbols in string have meaning\
-          \n\ta)'#' - it is comment \n\t\tb)'ss' - STA ssid, \n\t\t'sp' - STA password, \n\t\t'as' - AP ssid, \n\t\t\'os' - whether only STA mode\
+          \n\ta)'#' - it is comment \n\t\tb)'ss' - STA ssid, \n\t\t'sp' - STA password, \n\t\t'as' - AP ssid, \n\t\t\'os' - whether only STA mode, \n\t\t'an' - address of access point network interface, for check suspend WiFi whether \
           \n\t\t'ap' - AP password, \n\t\t'ip' - IP address for AP mode \n\t'dm' -debug mode(may be true or false)\
           \n\t\t'ts' - thingspeak key\
           \n\t\t'ds' - whether work DS18B20 sensor (if true - in work, some other - not work\
           \n\t\tc) record format first simbol(s)+white space+value\ 
-          \n\tnew values will be apply on reboot, empty values will replace from props.h";  
+          \n\tnew values will be apply on reboot, empty values will replaced on default";  
 
 };
 

@@ -213,23 +213,33 @@ bool Util::isOnlySta() {
 }
 
 /**
- * Try connect to AP by address from property file and 80 port, if success return true
- * it is maked for check wifi connect on suspend state
- * If this method return false -> chip can`t connect with AP and 
- * leave wifi is suspend. 
- * Method be work, if access point have network interface on given address.
- */
-bool Util::isApConnected(){
-  if(wifiMode == DEVICE_AP_MODE)return true;
-  char apAddr[100];
-  apInterfaceAddress = apAddr;
-  fillParam(AP_NETWORK_ADDRESS, apInterfaceAddress);
+   Try connect to AP by address from property file and 80 port, if success return true
+   it is maked for check wifi connect on suspend state
+   If this method return false -> chip can`t connect with AP and
+   leave wifi is suspend.
+
+   Method be work, if access point have network interface on given address otherwise
+   return true.
+   return &
+      true if 1)success connect with access point
+              2)AP mode
+              3)address not set
+      false on fail connect
+*/
+bool Util::isApConnected() {
+  if (wifiMode == DEVICE_AP_MODE)return true;
+  if (apInterfaceAddress[0] == '\0')return true;
   const char *addr = apInterfaceAddress;
-  if(!connect(addr, defaultPort))return false;
+  if (!connect(addr, defaultPort))return false;
   disconnect();
   return true;
 }
 
+/**
+    restart WiFi on demand.
+    return @
+    true if success restart otherwise - false
+*/
 bool Util::restartWiFi() {
   WiFi.disconnect();
   if (LOG)Serial.println("Try restart WiFi");
@@ -246,15 +256,43 @@ bool Util::restartWiFi() {
   return initWIFI() != DEVICE_NOT_WIFI;
 }
 
+/*
+   tru init wifi as STA or AP
+   return wif mode (sta, ap or not wifi)
+*/
 int Util::initWIFI() {
   wifiMode = DEVICE_NOT_WIFI;
+  //  set from file whether only STA mode
   char staOnly[6];
   staOnly[0] = '\0';
   fillParam(ONLY_STA, staOnly);
   hasOnlySta = (strncmp(staOnly, "true", 4) == 0);
   if (LOG)Serial.println("\n-----\n ------  work ONLY STA  ------ \n----- ");
+
   if ( isStaConnect()) {
     wifiMode = DEVICE_STA_MODE;
+    // set from file address network interface of access point
+    char apAddr[100];
+    apAddr[0] = '\0';
+    apInterfaceAddress = apAddr;
+    fillParam(AP_NETWORK_ADDRESS, apAddr);
+    int n = 0;
+    while (apAddr[n] != '\0')n++;
+    if ( n < 6) {
+      char str[1];
+      str[0] = '0';
+      apInterfaceAddress = str;
+    }
+    else {
+      char str[n + 1];
+      n = 0;
+      while (apAddr[n] != '\0') {
+        str[n] = apAddr[n];
+        n++;
+      }
+      str[n] = apAddr[n];
+      apInterfaceAddress = str;
+    }
     return wifiMode;
   }
   if (hasOnlySta) {
@@ -267,7 +305,7 @@ int Util::initWIFI() {
 
 // private
 
-// return true if conneted to wifi
+// return true if conneted to wifi access point
 bool Util::isStaConnect() {
   char s[15], p[15];
   s[0] = '\0';
@@ -353,6 +391,10 @@ bool Util::isSetApMode() {
   }
 }
 
+/**
+   make divide given string into integer array
+   if can`t make this first memeber be -1
+*/
 void Util::parseAddr(char *ip, int addr[4]) {
   char c;
   char curr[4];
@@ -450,7 +492,7 @@ bool Util::sync() {
 */
 void Util::addMinute() {
   minute++;
-  if ( minute == 1 && wifiMode == DEVICE_STA_MODE) {
+  if ( minute == 2 && wifiMode == DEVICE_STA_MODE) {
     //  check connect if success - restart
     if ( h_count == 1) {
       if (LOG)Serial.print("Days restart: ");
@@ -469,10 +511,6 @@ void Util::addMinute() {
           Serial.println(" reboot chip");
         }
         ESP.restart();
-      } else {
-        if (LOG)Serial.println(" reboot WiFi");
-        restartWiFi();
-        if (hasOnlySta)tryCount++;
       }
     }
   }
@@ -481,17 +519,17 @@ void Util::addMinute() {
     if ( h_count < 23) {
       h_count++;
       //  check connect after fail check if success - restart
-      if ((h_count + 1)%5 == 0 && hasOnlySta && !hasSyncTime()) {
+      if ((h_count + 1) % 5 == 0 && hasOnlySta && !hasSyncTime()) {
         if ( restartWiFi()) {
-          if (LOG)Serial.println("On Fail Day restart: try yet once");
+          if (LOG)Serial.println("On Fail Day restart: try yet once restart");
           if ((sync() && hasSyncTime())) ESP.restart();
-          tryCount++;
         }
       }
     } else {
       h_count = 0;
       syncDay();
     }
+    if (!isApConnected())restartWiFi();
   }
 }
 

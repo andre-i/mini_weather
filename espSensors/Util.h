@@ -44,7 +44,6 @@ class Util {
 
     // =======  Wi-Fi =======
     // variables
-    int tryCount = 0;
     bool hasOnlySta = false;
     char *apInterfaceAddress;
     // methods
