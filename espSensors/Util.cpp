@@ -807,7 +807,9 @@ String Util::getCurrentProps() {
       fillParam(STA_SSID, ssidSTA);
       if (!ssidSTA || ssidSTA[0] == '\0') ssidSTA = STA_SSID_DEF;
       res += "  ssid=" + String(ssidSTA);
-      res += "\n ONLY_STA (работает ли чип в режиме 'только клиент' ?) : " + (isOnlySta()) ? "yes(да)" : "no(нет)";
+      res += "\n ONLY_STA (работает ли чип в режиме 'только клиент' ?) : ";
+      if(isOnlySta()) res += "yes(да)";
+      else res += "no(нет)";
       res += "\n address for check on suspend (адрес для проверки  работоспособности WiFi):\n   " + String(apInterfaceAddress);
       break;
     case DEVICE_NOT_WIFI:
@@ -824,6 +826,7 @@ String Util::getCurrentProps() {
   else res += " default (обычный)";
   // DS18B20
   res += "\n\nwhether work DS18B20 (включен ли DS18B20 датчик?) : ";
+  
   if (getDS18B20Mode()) res += " yes(да)";
   else res += " no(нет)";
   res += "\n\nThingspeak write (передача данных на Thingspeak.com) :";

@@ -601,7 +601,7 @@ void sendDataToThingSpeak() {
   // if send fail then res > 0
   // delay 15sec and yet one connection if fail
   if (res > 1) {
-    if (isResendThingspeak) {
+    if (isResendThingspeak) { 
       // on fail send data to thingspeak check wifi connect
       if ( res == 2 && !util.sync() ) {
         if (LOG)Serial.println(util.getFullDate() + String(" WARNING [ On fail thingspeak try restart wifi or chip] "));
