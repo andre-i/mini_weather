@@ -782,6 +782,7 @@ String Util::getCurrentProps() {
   p[0] = '\0';
   ts[0] = '\0';
   addr_str[0] = '\0';
+  res += "   WiFi (Параметры вай-фай)\n";
   switch (wifiMode) {
     case DEVICE_AP_MODE:
       res += "AP (точка доступа)";
@@ -796,6 +797,8 @@ String Util::getCurrentProps() {
       fillParam(STA_SSID, ssidSTA);
       if (!ssidSTA || ssidSTA[0] == '\0') ssidSTA = STA_SSID_DEF;
       res += "  ssid=" + String(ssidSTA);
+      res += "\n ONLY_STA (работает ли чип в режиме 'только клиент' ?) : " + (isOnlySta()) ? "yes(да)" : "no(нет)";
+      res += "\n address for check on suspend (адрес для проверки  работоспособности WiFi):\n   " + String(apInterfaceAddress); 
       break;
     case DEVICE_NOT_WIFI:
       res += "WARNING WiFi not work!!!(вай-фай не работает)";

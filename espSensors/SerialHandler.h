@@ -121,7 +121,7 @@ class SerialHandler {
 \n\t# ONLY_STA - будет ли работать только как клиент\
 \n\tos далее значение\
 \n\t# AP_NETWORK_ADDRESS\
-\N\Tan далее адрес сетевого интерфейса точки доступа\
+\n\tan далее адрес сетевого интерфейса точки доступа\
 \n\t#AP\
 \n\tas далее имя сети\
 \n\tap далее пароль\
@@ -153,13 +153,13 @@ class SerialHandler {
         \tyear - 4 numbers\n\t\tmonth - 3 chars( first must be Upper Case)\n\t\tday, hour and minute consist from 2 numbers, if value less than 10 firs must be 0(null)\n\
      7) Show current properties of application : 'current'\n\
            \n\tProperties file for set start parameter values(wifi, debug, log, thingspeak\n\
-     8) Set all start parameters in one command - 'fillParam'\n Whitespace value mean default value. Empty values not permitted(it must be whitespace)
+     8) Set all start parameters in one command - 'fillParam'\n Whitespace value mean default value. Empty values not permitted(it must be whitespace)\
           \n NOTE in props file first simbols in string have meaning\
           \n\ta)'#' - it is comment \n\t\tb)'ss' - STA ssid, \n\t\t'sp' - STA password, \n\t\t'as' - AP ssid, \n\t\t\'os' - whether only STA mode, \n\t\t'an' - address of access point network interface, for check suspend WiFi whether \
           \n\t\t'ap' - AP password, \n\t\t'ip' - IP address for AP mode \n\t'dm' -debug mode(may be true or false)\
           \n\t\t'ts' - thingspeak key\
           \n\t\t'ds' - whether work DS18B20 sensor (if true - in work, some other - not work\
-          \n\t\tc) record format first simbol(s)+white space+value\ 
+          \n\t\tc) record format first simbol(s)+white space+value\
           \n\tnew values will be apply on reboot, empty values will replaced on default";  
 
 };
