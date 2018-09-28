@@ -332,7 +332,7 @@ bool Util::isStaConnect() {
   Serial.println("");
   if (LOG) {
     Serial.print("\nWiFi work as STA connected to ");
-    Serial.print(String(ssid) + String("  password:'") + String("?????' "));
+    Serial.print(String(ssid) + String("  password:'") + String("****' "));
     Serial.print("  IP address: ");
     Serial.println(WiFi.localIP());
   }
