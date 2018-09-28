@@ -444,7 +444,7 @@ void prepareStartState() {
     // on error - message appear in root server page
   }
   // up wifi
-  wifiMode = util.initWIFI();
+  wifiMode = util.initWIFI(DEVICE_NOT_WIFI);
   //  set FS state to serial handler
   sHandler.setFSstate(isFS);
   //  on exit from init set debug mode
@@ -481,7 +481,7 @@ void afterInitAction() {
   switch (wifiMode) {
     case DEVICE_STA_MODE:
       if (!util.sync() || !util.hasSyncTime()) {
-        if ( !util.restartWiFi() || !util.sync()) {
+        if ( !util.restartWiFi(DEVICE_STA_MODE) || !util.sync()) {
           if (!util.hasSyncTime() && util.isOnlySta()) {
             upErrorMode(5);
           } else {
@@ -578,18 +578,19 @@ void writeSensorsValues() {
    if WiFi not restarted, then restart chip
 */
 void sendDataToThingSpeak() {
+  if(wifiMode != DEVICE_STA_MODE && !util.restartWiFi(DEVICE_STA_MODE)) ESP.restart();
   const char* host = THING_SPEAK_HOST;
-  String result = "/update?api_key=";
-  result += writeApiKey;
-  result += "&field1=";
-  result += s.getT_In();
-  result += "&field2=";
-  result += s.getT_Out();
-  result += "&field3=";
-  result += s.getHumid();
-  result += "&field4=";
-  result += s.getBaro();
-  int res = util.writeDataToThingspeak(host, result);
+  String request = "/update?api_key=";
+  request += writeApiKey;
+  request += "&field1=";
+  request += s.getT_In();
+  request += "&field2=";
+  request += s.getT_Out();
+  request += "&field3=";
+  request += s.getHumid();
+  request += "&field4=";
+  request += s.getBaro();
+  int res = util.writeDataToThingspeak(host, request);
   if (LOG) {
     switch (res) {
       case 0: Serial.println("Succes"); break;
@@ -605,13 +606,13 @@ void sendDataToThingSpeak() {
       // on fail send data to thingspeak check wifi connect
       if ( res == 2 && !util.sync() ) {
         if (LOG)Serial.println(util.getFullDate() + String(" WARNING [ On fail thingspeak try restart wifi or chip] "));
-        if (!util.restartWiFi())ESP.restart();
+        if (!util.restartWiFi(DEVICE_STA_MODE))ESP.restart();
       }
       printFullDate();
       Serial.println(" twice fail send data to thingspeak");
       isResendThingspeak = false;
     } else {
-      if (res == 2 && util.restartWiFi()){
+      if (res == 2 && util.restartWiFi(DEVICE_STA_MODE)){
         Serial.println(" after [ success restart WiFi");
       }else{
         Serial.println(" after [ WiFi not restarted ]");

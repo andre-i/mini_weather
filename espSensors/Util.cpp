@@ -230,7 +230,10 @@ bool Util::isApConnected() {
   if (wifiMode == DEVICE_AP_MODE)return true;
   if (apInterfaceAddress[0] == '\0')return true;
   const char *addr = apInterfaceAddress;
-  if (!connect(addr, defaultPort))return false;
+  if (!connect(addr, defaultPort)) {
+    if (LOG)Serial.println(String(" WARNING [ can`t connect to ") + String(addr) + String(" ]"));
+    return false;
+  }
   disconnect();
   return true;
 }
@@ -240,48 +243,46 @@ bool Util::isApConnected() {
     return @
     true if success restart otherwise - false
 */
-bool Util::restartWiFi() {
+bool Util::restartWiFi(int mode) {
   WiFi.disconnect();
   if (LOG)Serial.println("Try restart WiFi");
   long now = millis();
   int n = 0;
-  while ((millis() - now) < 10000) {
-    delay(20);
+  while ((millis() - now) < 20000) {
+    delay(100);
     if (LOG) {
       Serial.print(".");
-      if (n % 100 == 0)Serial.println();
+      if (n % 70 == 0)Serial.println();
       n++;
     }
   }
-  return initWIFI() != DEVICE_NOT_WIFI;
+  return initWIFI(mode) != DEVICE_NOT_WIFI;
 }
 
 /*
    tru init wifi as STA or AP
    return wif mode (sta, ap or not wifi)
 */
-int Util::initWIFI() {
+int Util::initWIFI(int mode) {
   wifiMode = DEVICE_NOT_WIFI;
   //  set from file whether only STA mode
   char staOnly[6];
   staOnly[0] = '\0';
   fillParam(ONLY_STA, staOnly);
   hasOnlySta = (strncmp(staOnly, "true", 4) == 0);
-  if (LOG)Serial.println("\n-----\n ------  work ONLY STA  ------ \n----- ");
-
-  if ( isStaConnect()) {
+  if (LOG && hasOnlySta)Serial.println("\n-----\n ------  work in ONLY STA mode  ------ \n----- ");
+  //  try connect by access point
+  if (mode != DEVICE_AP_MODE && isStaConnect()) {
     wifiMode = DEVICE_STA_MODE;
     // set from file address network interface of access point
     char apAddr[100];
     apAddr[0] = '\0';
-    apInterfaceAddress = apAddr;
     fillParam(AP_NETWORK_ADDRESS, apAddr);
     int n = 0;
+    // get address for check WiFi connection
     while (apAddr[n] != '\0')n++;
     if ( n < 6) {
-      char str[1];
-      str[0] = '0';
-      apInterfaceAddress = str;
+      apInterfaceAddress = "";
     }
     else {
       char str[n + 1];
@@ -293,13 +294,11 @@ int Util::initWIFI() {
       str[n] = apAddr[n];
       apInterfaceAddress = str;
     }
-    return wifiMode;
   }
-  if (hasOnlySta) {
-    WiFi.disconnect();
-    return wifiMode;
+  if (!hasOnlySta && mode != DEVICE_STA_MODE ) {
+    if ( isSetApMode() )wifiMode = DEVICE_AP_MODE;
   }
-  if ( isSetApMode() )wifiMode = DEVICE_AP_MODE;
+  if(wifiMode == DEVICE_NOT_WIFI) WiFi.disconnect();
   return wifiMode;
 }
 
@@ -501,7 +500,8 @@ void Util::addMinute() {
       h_count = 0;
       syncDay();
     }
-    if (!isApConnected())restartWiFi();
+    // check wifi state by every hour
+    if (!isApConnected())restartWiFi(DEVICE_STA_MODE);
   }
 }
 
@@ -556,19 +556,16 @@ void Util::everyDayReboot() {
         }
         Serial.println(" reboot chip");
       }
+      //  disconnect WiFi and restart chip
+      WiFi.disconnect();
+      int i = 0;
+      while( i < 100){
+        delay(100);
+        i++;
+      }
       ESP.restart();
     } else {
       Serial.println("  fail reboot chip");
-    }
-  }
-  //  check connect after fail check if success - restart
-  if (hasOnlySta && !hasSyncTime() && (h_count + 1) % 7 == 0) {
-    if ( restartWiFi()) {
-      if (LOG)Serial.println("On Fail Day restart: try yet once restart");
-      if ((sync() && hasSyncTime())) ESP.restart();
-    }else{
-      if(LOG)writeLog(getFullDate() + " WARNING [ module reboot on fail restart WiFi in ONLY_STA mode ]");
-      ESP.restart();
     }
   }
 }
@@ -808,7 +805,7 @@ String Util::getCurrentProps() {
       if (!ssidSTA || ssidSTA[0] == '\0') ssidSTA = STA_SSID_DEF;
       res += "  ssid=" + String(ssidSTA);
       res += "\n ONLY_STA (работает ли чип в режиме 'только клиент' ?) : ";
-      if(isOnlySta()) res += "yes(да)";
+      if (isOnlySta()) res += "yes(да)";
       else res += "no(нет)";
       res += "\n address for check on suspend (адрес для проверки  работоспособности WiFi):\n   " + String(apInterfaceAddress);
       break;
@@ -826,7 +823,7 @@ String Util::getCurrentProps() {
   else res += " default (обычный)";
   // DS18B20
   res += "\n\nwhether work DS18B20 (включен ли DS18B20 датчик?) : ";
-  
+
   if (getDS18B20Mode()) res += " yes(да)";
   else res += " no(нет)";
   res += "\n\nThingspeak write (передача данных на Thingspeak.com) :";

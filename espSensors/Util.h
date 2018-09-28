@@ -106,8 +106,8 @@ class Util {
     //  WI-FI
     bool isApConnected(); // try connect by access point network interface return true if success
     bool isOnlySta(); // return true if may be wifi mode only sta.
-    bool restartWiFi(); // return true if wifi UP
-    int initWIFI(); // try up wifi inSTA or AP mode
+    bool restartWiFi(int WiFi_Mode); // return true if wifi UP
+    int initWIFI(int WiFi_Mode); // try up wifi inSTA or AP mode
     void parseAddr(char *ip, int addr[4]); // fill addr numbers from IP4V address
     // date time
     bool assignTime(char* userTime);
