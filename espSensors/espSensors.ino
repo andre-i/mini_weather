@@ -578,7 +578,7 @@ void writeSensorsValues() {
    if WiFi not restarted, then restart chip
 */
 void sendDataToThingSpeak() {
-  if(wifiMode == DEVICE_AP_MODE)return;
+  if (wifiMode == DEVICE_AP_MODE)return;
   const char* host = THING_SPEAK_HOST;
   String request = "/update?api_key=";
   request += writeApiKey;
@@ -602,21 +602,19 @@ void sendDataToThingSpeak() {
   // if send fail then res > 0
   // delay 15sec and yet one connection if fail
   if (res > 1) {
-    if (isResendThingspeak) { 
-      if(res == 2 && !util.restartWiFi(DEVICE_STA_MODE))ESP.restart();
-      // on fail send data to thingspeak check wifi connect
-      if ( res == 2 && !util.sync() ) {
-        if (LOG)Serial.println(util.getFullDate() + String(" WARNING [ On fail thingspeak try restart wifi or chip] "));
-        if (!util.restartWiFi(DEVICE_STA_MODE))ESP.restart();
-      }
-      printFullDate();
-      Serial.println(" twice fail send data to thingspeak");
+    if (isResendThingspeak) {
+      // on fail send data to thingspeak check wifi connect af if fail - restart
+      if (res == 2 && !util.sync() && !util.restartWiFi(DEVICE_STA_MODE))ESP.restart();
+      if (LOG)Serial.println(util.getFullDate() + String(" WARNING [ Twice fail connect to thingspeak ] "));
       isResendThingspeak = false;
     } else {
-      if (res == 2 && !util.isApConnected() && util.restartWiFi(DEVICE_STA_MODE)){
-        Serial.println(" after [ success restart WiFi");
-      }else{
-        Serial.println(" after [ WiFi not restarted ]");
+      if (res == 2 ) {
+        if(!util.isApConnected() && util.restartWiFi(DEVICE_STA_MODE)) {
+          if (LOG)Serial.println(" after [ success restart WiFi ]");
+        } else {
+          if (LOG)Serial.println(" after [ WiFi not restarted ]");
+          ESP.restart();
+        }
       }
       isResendThingspeak = true;
       startDelayThingspeak = millis();

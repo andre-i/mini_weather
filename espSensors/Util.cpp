@@ -234,6 +234,7 @@ bool Util::isApConnected() {
     if (LOG)Serial.println(String(" WARNING [ can`t connect to ") + String(addr) + String(" ]"));
     return false;
   }
+  if(LOG)Serial.println("WiFi connect is good");
   disconnect();
   return true;
 }
@@ -491,7 +492,7 @@ bool Util::sync() {
 */
 void Util::addMinute() {
   minute++;
-  if ( minute == 29 && wifiMode == DEVICE_STA_MODE)everyDayReboot();
+  if ( minute == 26 && wifiMode == DEVICE_STA_MODE)everyDayReboot();
   if ( minute == 60 ) {
     minute = 0;
     if ( h_count < 23) {
@@ -501,7 +502,7 @@ void Util::addMinute() {
       syncDay();
     }
     // check wifi state by every hour
-    if (!isApConnected())restartWiFi(DEVICE_STA_MODE);
+    if (wifiMode != DEVICE_AP_MODE && !isThingSpeak && !isApConnected() && !restartWiFi(DEVICE_STA_MODE)) ESP.restart();
   }
 }
 
@@ -565,7 +566,7 @@ void Util::everyDayReboot() {
       }
       ESP.restart();
     } else {
-      Serial.println("  fail reboot chip");
+      if(LOG)Serial.println("  fail every day reboot chip");
     }
   }
 }
