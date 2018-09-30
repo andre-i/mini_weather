@@ -329,32 +329,32 @@ void SerialHandler::setParameter(char* value) {
     Serial.print(res);
   } else if (strncmp(parName, AP_PASSWD, 2) == 0) {
     newParams.ap_passwd = res;
-    res = " =" + res + "\nAP_IP(адрес сети)?  ";
+    res = " = " + res + "\nAP_IP(адрес сети)?  ";
     parName = AP_IP;
     Serial.print(res);
   } else  if (strncmp(parName, AP_IP, 2) == 0) {
     newParams.ap_ip = res;
-    res = " =" + res + "\n\n  STA\nssid(имя сети)?  ";
+    res = " = " + res + "\n\n  STA\nssid(имя сети)?  ";
     parName = STA_SSID;
     Serial.print(res);
   } else if (strncmp(parName, STA_SSID, 2) == 0) {
     newParams.sta_ssid = res;
-    res = " =" + res + "\npassword(пароль)?  ";
+    res = " = " + res + "\npassword(пароль)?  ";
     parName = STA_PASSWD;
     Serial.print(res);
   } else if (strncmp(parName, STA_PASSWD, 2) == 0) {
     newParams.sta_passwd = res;
-    res = " =" + res + "\n\nthingspeak key(ключ для записи на thingspeak)?  ";
+    res = " = " + res + "\n\nthingspeak key(ключ для записи на thingspeak)?  ";
     parName = THINGSPEAK_KEY;
     Serial.print(res);
   } else if (strncmp(parName, THINGSPEAK_KEY, 2) == 0) {
     newParams.ts_api_key = res;
-    res = " =" + res + "\n\nDS18B20 mode(включать ли DS18B20 true|false?  При true - включать ";
+    res = " = " + res + "\n\nDS18B20 mode(включать ли DS18B20 true|false?  При true - включать ";
     parName = DS18B20_MODE;
     Serial.print(res);
   } else if (strncmp(parName, DS18B20_MODE, 2) == 0) {
     newParams.ds18b20_mode = res;
-    res = " =" + res + "\n\ndebug(отладка) true|false?  ";
+    res = " = " + res + "\n\ndebug(отладка) true|false?  ";
     parName = DEBUG_MODE;
     Serial.print(res);
   } else if (strncmp(parName, DEBUG_MODE, 2) == 0) {

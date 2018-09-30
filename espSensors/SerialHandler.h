@@ -88,6 +88,7 @@ class SerialHandler {
       май may    |   июнь jun  |  июль jul  |август aug \n\
     сентябрь sep | октябрь oct | ноябрь nov | декабрь dec \n\
 7) Посмотреть текущие настройки приложения \n\t'current' \n\
+8) Перезапуск модуля \n\t'restart'\n\
  \n\t\t УСТАНОВКА ПАРАМЕТРОВ ЗАПУСКА\
 \n\t'fillParam'\t  после ввода этой команды будут вводиться запросы\
 \n\t  на заполнение отдельных полей они вступят в силу после перезагрузки\
@@ -152,8 +153,9 @@ class SerialHandler {
       6) Set date/time - enter it in format:'year/month/day/hour/minute' \n\tWARNING - date must be strongly follow format, else date be break\n\
         \tyear - 4 numbers\n\t\tmonth - 3 chars( first must be Upper Case)\n\t\tday, hour and minute consist from 2 numbers, if value less than 10 firs must be 0(null)\n\
      7) Show current properties of application : 'current'\n\
+     8) Restart module : 'restart'\n\
            \n\tProperties file for set start parameter values(wifi, debug, log, thingspeak\n\
-     8) Set all start parameters in one command - 'fillParam'\n Whitespace value mean default value. Empty values not permitted(it must be whitespace)\
+     9) Set all start parameters in one command - 'fillParam'\n Whitespace value mean default value. Empty values not permitted(it must be whitespace)\
           \n NOTE in props file first simbols in string have meaning\
           \n\ta)'#' - it is comment \n\t\tb)'ss' - STA ssid, \n\t\t'sp' - STA password, \n\t\t'as' - AP ssid, \n\t\t\'os' - whether only STA mode, \n\t\t'an' - address of access point network interface, for check suspend WiFi whether \
           \n\t\t'ap' - AP password, \n\t\t'ip' - IP address for AP mode \n\t'dm' -debug mode(may be true or false)\

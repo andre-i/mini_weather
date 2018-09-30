@@ -544,7 +544,7 @@ String Util::getFullDate() {
 void Util::everyDayReboot() {
   //  check connect if success - restart
   if ( h_count == 1) {
-    if (LOG)Serial.print("Every Days restart: ");
+    if (LOG)Serial.print("Every Days restart module: ");
     if (sync() && hasSyncTime()) {
       if (LOG) {
         if (isFS) {
@@ -569,6 +569,7 @@ void Util::everyDayReboot() {
       ESP.restart();
     } else {
       if(LOG)Serial.println("  fail every day reboot chip");
+      restartWiFi(DEVICE_STA_MODE);
     }
   }
 }
