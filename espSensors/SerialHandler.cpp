@@ -46,7 +46,7 @@ void SerialHandler::showManual(const char* lang) {
   char ch = *help;
   int i = 0;
   while (ch != '\0') {
-    if (ch == '\n'){
+    if (ch == '\n') {
       Serial.println("");
       delay(10);
     }
@@ -69,7 +69,7 @@ void SerialHandler::handle(void) {
   if (isSetParam) {
     setParameter(answ);
     // append to file
-  } else if(isAppend){
+  } else if (isAppend) {
     append(answ);
   } else {
     // show manual and toggle log out state
@@ -115,6 +115,10 @@ void SerialHandler::executeCommand(char answ[100]) {
     Serial.print("Now on module  ");
     Serial.println(util->getFullDate());
   }
+  if (strncmp(answ, "restart", 6) == 0) {
+    Serial.println(" Try restart chip!!!");
+    ESP.restart();
+  }
   // get current work parameters
   if (strncmp(answ, "curr", 4) == 0) {
     Serial.println("  ------- Current application parameters -------");
@@ -145,17 +149,17 @@ bool SerialHandler::writeToFile(char req[]) {
   String all = req;
   // for write
   int ind = all.indexOf("=");
-  // for append 
-  if(req[0] == 'a')ind = all.length();
+  // for append
+  if (req[0] == 'a')ind = all.length();
   if (ind < 1) {
     Serial.println("Error: bad request format, it must contain \"=\"(equals sign) !");
     return false;
   }
   String fName = all.substring(2, ind);
   String toWrite = all.substring(++ind);
-  if(req[0] == 'a'){
+  if (req[0] == 'a') {
     toAppend = SPIFFS.open(fName, "a");
-    if(toAppend){
+    if (toAppend) {
       Serial.print(" Start append to file: ");
       Serial.println(fName);
       Serial.println("For get to new line enter '%%', for end of append enter '##$");
@@ -163,20 +167,20 @@ bool SerialHandler::writeToFile(char req[]) {
       toAppend.print("");
       isAppend = true;
       return true;
-    }else{
-      Serial.print("ERROR [ Can`t open file '"); 
+    } else {
+      Serial.print("ERROR [ Can`t open file '");
       Serial.print(fName);
       Serial.println("' for append ] ");
       return false;
     }
-  }else{
-   return write(fName, toWrite);
+  } else {
+    return write(fName, toWrite);
   }
 
 }
 
-bool SerialHandler::write( String fName, String toWrite){
-    File file = SPIFFS.open(fName, "w");
+bool SerialHandler::write( String fName, String toWrite) {
+  File file = SPIFFS.open(fName, "w");
   if (file) {
     Serial.print("Write to File: ");
     Serial.println(fName);
@@ -200,23 +204,23 @@ bool SerialHandler::write( String fName, String toWrite){
 }
 
 /**
- * str - char sequence for append to file
- * return 0 if success
- */
-int SerialHandler::append(char* str){
-  if(!toAppend){
+   str - char sequence for append to file
+   return 0 if success
+*/
+int SerialHandler::append(char* str) {
+  if (!toAppend) {
     Serial.println("ERROR: can`t append line to empty file");
     isAppend = false;
     return 1;
-  }else if(str[0] == '#' && str[1] =='#' && str[2] == '$'){
+  } else if (str[0] == '#' && str[1] == '#' && str[2] == '$') {
     toAppend.flush();
     toAppend.close();
-    Serial.println( "\n\t ____  end append  ____"); 
-    isAppend = false; 
-  }else if(str[0] =='%' && str[1] =='%'){
+    Serial.println( "\n\t ____  end append  ____");
+    isAppend = false;
+  } else if (str[0] == '%' && str[1] == '%') {
     toAppend.println("");
     Serial.println("");
-  }else{
+  } else {
     toAppend.print(str);
     Serial.print(str);
   }
@@ -224,7 +228,7 @@ int SerialHandler::append(char* str){
 }
 
 /*
-// ================= set DEBUG MODE ================
+  // ================= set DEBUG MODE ================
 */
 String SerialHandler::setDebug(String mode) {
   String res = " DEBUG ";
@@ -252,10 +256,10 @@ void SerialHandler::writeToPropFile( struct params par) {
     Serial.println("WARNING: Can`t access to fileSystem, WiFi properties do not written!");
   }
   String res = "## property file contain properties for Wi-Fi in AP and STA mode\n";
-  res+= "# ONLY_STA mode( if  'true' chip work only as STA)\n";
-  if(par.only_sta && par.only_sta.length() > 0 ) res += String(ONLY_STA) + " " + par.only_sta + "\n";
+  res += "# ONLY_STA mode( if  'true' chip work only as STA)\n";
+  if (par.only_sta && par.only_sta.length() > 0 ) res += String(ONLY_STA) + " " + par.only_sta + "\n";
   res += "# AP network interface address\n";
-  if(par.ap_network && par.ap_network.length() > 0) res += String(AP_NETWORK_ADDRESS) + " " + par.ap_network + "\n";
+  if (par.ap_network && par.ap_network.length() > 0) res += String(AP_NETWORK_ADDRESS) + " " + par.ap_network + "\n";
   res += "# AP mode\n";
   if (par.ap_ssid && par.ap_ssid.length() > 2)res += String(AP_SSID) + " " + par.ap_ssid + "\n";
   if (par.ap_passwd && par.ap_passwd.length() > 6)res += String(AP_PASSWD) + " " + par.ap_passwd + "\n";
@@ -266,7 +270,7 @@ void SerialHandler::writeToPropFile( struct params par) {
   res += "# thingspeak write API key\n";
   if (par.ts_api_key && par.ts_api_key.length() > 15)res += String(THINGSPEAK_KEY) + " " + par.ts_api_key + "\n";
   res += "# dDS18B20 mode\n";
-  if (par.ds18b20_mode && par.ds18b20_mode.length() >3) res += String(DS18B20_MODE) + " " + par.ds18b20_mode + "\n";
+  if (par.ds18b20_mode && par.ds18b20_mode.length() > 3) res += String(DS18B20_MODE) + " " + par.ds18b20_mode + "\n";
   res += "# debug mode\n";
   if (par.isDebug && par.isDebug.length() > 3)res += String(DEBUG_MODE) + " " + par.isDebug + "\n";
   file.print( res.c_str());
@@ -308,14 +312,16 @@ void SerialHandler::fillStartParameters() {
 void SerialHandler::setParameter(char* value) {
   String res = value;
   res.trim();
-  if (strncmp(parName, ONLY_STA, 2) == 0){
+  if (strncmp(parName, ONLY_STA, 2) == 0) {
     newParams.only_sta = res;
     res =  " = " + res + "\n AP network interface address(адрес сетевого интерфейса точки доступа)\n need if ONLY_STA - true( нужен, если чип работает только как клиент(ONLY_STA=true)\n  apAddress ? ";
-    parName = AP_SSID;
+    parName = AP_NETWORK_ADDRESS;
     Serial.println(res);
-  } else if (strncmp(parName, AP_NETWORK_ADDRESS, 2) == 0){
+  } else if (strncmp(parName, AP_NETWORK_ADDRESS, 2) == 0) {
     newParams.ap_network = res;
     res = " = " + res + "\nAP(Точка доступа)\nssid(имя сети) ?  ";
+    parName = AP_SSID;
+    Serial.println(res);
   } else if (strncmp(parName, AP_SSID, 2) == 0) {
     newParams.ap_ssid = res;
     res = " = " + res + "\npassword(пароль)?  ";
@@ -326,32 +332,32 @@ void SerialHandler::setParameter(char* value) {
     res = " =" + res + "\nAP_IP(адрес сети)?  ";
     parName = AP_IP;
     Serial.print(res);
-  }else  if (strncmp(parName, AP_IP, 2) == 0) {
+  } else  if (strncmp(parName, AP_IP, 2) == 0) {
     newParams.ap_ip = res;
     res = " =" + res + "\n\n  STA\nssid(имя сети)?  ";
     parName = STA_SSID;
     Serial.print(res);
-  }else if (strncmp(parName, STA_SSID, 2) == 0) {
+  } else if (strncmp(parName, STA_SSID, 2) == 0) {
     newParams.sta_ssid = res;
     res = " =" + res + "\npassword(пароль)?  ";
     parName = STA_PASSWD;
     Serial.print(res);
-  }else if (strncmp(parName, STA_PASSWD, 2) == 0) {
+  } else if (strncmp(parName, STA_PASSWD, 2) == 0) {
     newParams.sta_passwd = res;
     res = " =" + res + "\n\nthingspeak key(ключ для записи на thingspeak)?  ";
     parName = THINGSPEAK_KEY;
     Serial.print(res);
-  }else if (strncmp(parName, THINGSPEAK_KEY, 2) == 0) {
+  } else if (strncmp(parName, THINGSPEAK_KEY, 2) == 0) {
     newParams.ts_api_key = res;
     res = " =" + res + "\n\nDS18B20 mode(включать ли DS18B20 true|false?  При true - включать ";
     parName = DS18B20_MODE;
     Serial.print(res);
-  }else if (strncmp(parName, DS18B20_MODE, 2) == 0){
-     newParams.ds18b20_mode = res;
+  } else if (strncmp(parName, DS18B20_MODE, 2) == 0) {
+    newParams.ds18b20_mode = res;
     res = " =" + res + "\n\ndebug(отладка) true|false?  ";
     parName = DEBUG_MODE;
     Serial.print(res);
-  }else if (strncmp(parName, DEBUG_MODE, 2) == 0) {
+  } else if (strncmp(parName, DEBUG_MODE, 2) == 0) {
     newParams.isDebug = res;
     parName = "ends_of_params";
     showSummary();

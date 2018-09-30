@@ -246,7 +246,7 @@ bool Util::isApConnected() {
 */
 bool Util::restartWiFi(int mode) {
   WiFi.disconnect();
-  if (LOG)Serial.println("Try restart WiFi");
+  if(LOG)Serial.println(" WiFi disconnected ");
   long now = millis();
   int n = 0;
   while ((millis() - now) < 20000) {
@@ -257,6 +257,7 @@ bool Util::restartWiFi(int mode) {
       n++;
     }
   }
+  if (LOG)Serial.println("Try restart WiFi");
   return initWIFI(mode) != DEVICE_NOT_WIFI;
 }
 
@@ -296,10 +297,11 @@ int Util::initWIFI(int mode) {
       apInterfaceAddress = str;
     }
   }
-  if (!hasOnlySta && mode != DEVICE_STA_MODE ) {
+  if (!hasOnlySta && mode != DEVICE_STA_MODE  && wifiMode != DEVICE_STA_MODE) {
     if ( isSetApMode() )wifiMode = DEVICE_AP_MODE;
   }
   if(wifiMode == DEVICE_NOT_WIFI) WiFi.disconnect();
+  if(LOG)Serial.println(String("WiFi mode = ") + String(wifiMode));
   return wifiMode;
 }
 

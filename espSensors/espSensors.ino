@@ -11,7 +11,7 @@
 #include <FS.h>
 
 // mark for version software
-static String version = "0.05";
+static String version = "0.06";
 
 bool LOG = true;
 bool DEBUG = false;
@@ -578,7 +578,6 @@ void writeSensorsValues() {
    if WiFi not restarted, then restart chip
 */
 void sendDataToThingSpeak() {
-  if (wifiMode == DEVICE_AP_MODE)return;
   const char* host = THING_SPEAK_HOST;
   String request = "/update?api_key=";
   request += writeApiKey;
