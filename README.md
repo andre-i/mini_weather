@@ -12,7 +12,7 @@ Short description of the properties.
  + Show current values for sensors
  + Send sensors values to Thingspeak.com
  + Show diagramm for sensor by hour, day, month, year.(choosed of user`s)
- + On press *Forecast* button be show the forecast by 10 days(see image)/ For you place need get by yahoo.com and replace in */mini_weather/espSensors/data/index.htm* file script *<script src='https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20%3D%202003841%20&format=json&callback=yahooCallbackFunction&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys'></script>* on script appropriate for your place.
+ + On press *Forecast* button be show the forecast by 10 days(see image)/ For you place need get by yahoo.com and replace in */mini_weather/espSensors/data/index.htm* file script `<script src="https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20%3D%20`**woeid_for your_place**`%20&format=json&callback=yahooCallbackFunction&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"></script>` on script appropriate for your place. For It make replace **woeid_for_your_place** on WOEID. To find your WOEID, browse or search for your city from the [Weather](http://weather.yahoo.com/) home page? it is in ends of browser address bar.
 
 | view | forecast |
 | --------- | --------- |
@@ -72,7 +72,11 @@ ____
   - отправка данных измерений на сайт [thingspeak.com](http://thingspeak.com)(необязательно)
   - передача результатов измерений по wi-fi для просмотра
   - просмотр текущих и сохранённых в модуле значений
-  - при нажатии на кнопку прогноз будет показан прогноз от yahoo для тульской области. Чтобы заменить  местность прогноза надо на сервисах yahoo погоды найти скрипт для определения прогноза для данной местности и заменить скрипт *<script src='https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20%3D%202003841%20&format=json&callback=yahooCallbackFunction&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys'></script>* на полученный в файле */mini-weather/espSensors/data/index.htm*(он находится почти в самом конце файла).
+  - при нажатии на кнопку прогноз будет показан прогноз от yahoo для тульской области. Чтобы заменить  местность прогноза надо  в нижеприведённом скрипте заменить  **woeid_вашего_места** на полученный в Yahoo  WOEID.Для этого идём на [Weather](http://weather.yahoo.com/) и там находим своё место. Щёлкнули серый прямоугольник со словами _change location_ и начали печатать своё место можно латинницей а можно и кирилицей. После того как выбрали смотрим в панель адреса браузера. Конечные цифры и есть WOEID. Сам скрипт находится в файле */mini-weather/espSensors/data/index.htm*(почти в самом конце файла).
+  
+  `<script src='https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20%3D%20`woeid_вашего_места`%20&format=json&callback=yahooCallbackFunction&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys'></script>` 
+  
+  
   
 ### Что требуется
   
