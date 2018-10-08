@@ -105,7 +105,8 @@ function Measurer(deviceOwner, startParams) {
         hasEdgeCircle: true, /* whether has on side circle(like thermometer) */
         hasGlass: true, /* whether cover scale glass or plain color */
         hasRoundRect: true, /* whether corners of device rounded */
-        label: "" /* label on top device */
+        label: "", /* label on top device */
+        hasFlip: true /* whether  flip device size */
     };
 
 // oval parameter only
@@ -117,7 +118,8 @@ function Measurer(deviceOwner, startParams) {
         "stopAngle": 180    /*defScaleStop*/,
         "width": Math.round(getHeight() / 4.1)/*defWidth*/,
         "strokeWidth": 1    /*defStrokeWidth*/,
-        "hasRound": true /* form device(true - circle, false - oval) */
+        "hasRound": true, /* form device(true - circle, false - oval) */
+        "hasFlip":true  /* whether flip device size */
     };
 
     function getHeight(){
@@ -326,7 +328,7 @@ function Measurer(deviceOwner, startParams) {
             var stops=deviceSVG.getElementsByTagNameNS(svgns, 'stop');
             for(var i = 0; i < stops.length; i++)if(stops[i].hasAttribute('name')
                 && stops[i].getAttribute('name') == 'brightness') brightnessElem = stops[i];
-            brightnessElem.addEventListener("click", flip);;
+            if(par.hasFlip)brightnessElem.addEventListener("click", flip);
             var name = '';
             var elem;
             for ( i = 0; i < deviceSVG.childNodes.length; i++) {
@@ -337,7 +339,7 @@ function Measurer(deviceOwner, startParams) {
                     name = elem.getAttribute('name');
                     if (name == 'arrow') arrowElem = elem;
                     if (name == 'text') textElem = elem;
-                    if (name == 'flip') elem.addEventListener('click', flip);
+                    if (name == 'flip' && par.hasFlip) elem.addEventListener('click', flip);
                     if (name == 'valuesPane') elem.addEventListener('click', flipText);
                 }
                 }catch(err){ console.log(err)}// if node not is element - it try exception. Drop it!
@@ -815,12 +817,12 @@ function Measurer(deviceOwner, startParams) {
                         name = elem.getAttribute('name');
                         if (name == 'scale') scaleElem = elem;
                         if (name == 'brightness') {
-                            elem.addEventListener('click', flip);
+                            if(par.hasFlip)elem.addEventListener('click', flip);
                             brightnessElem = elem;
                         }
                         if (name == 'text') textElem = elem;
                         if (name == 'valuesPane') elem.addEventListener('click', flipText);
-                        if (name == 'housing') elem.addEventListener('click', flip);
+                        if (name == 'housing' && par.hasFlip) elem.addEventListener('click', flip);
                     }
                 }catch(err){}// if node not is element - it try exception. Drop it!
                 // who sort SVG elements i do not know
